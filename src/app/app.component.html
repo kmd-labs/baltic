@@ -1,0 +1,77 @@
+@let t = i18n.t();
+
+<main class="viewport">
+  <app-splash (revealed)="splash.finish()"></app-splash>
+
+  <!-- Top HUD: Left Logotype + Language, Right View Switcher -->
+  <header class="header" [class.header--popup-open]="isPopupOpen()">
+    <div class="header__left">
+      <div class="header__brand glass-panel">
+        <button
+          type="button"
+          class="header__brand-btn"
+          aria-label="KMD Labs – About us"
+          (click)="about.open({ lang: i18n.lang() })">
+          <img
+            class="header__logo-img"
+            src="assets/design-system/logo/kmd-black-orange.svg"
+            alt="KMD" />
+          <span class="header__divider" aria-hidden="true"></span>
+          <h1 class="header__app-name">${appTitle}</h1>
+        </button>
+      </div>
+
+      <div class="header__settings glass-panel" role="group" [attr.aria-label]="t.changeLanguage">
+        <app-dropdown
+          variant="ghost"
+          [icon]="bp.mobile() ? null : globeIcon"
+          [options]="langOptions()"
+          [value]="i18n.lang()"
+          [ariaLabel]="t.changeLanguage"
+          (valueChange)="i18n.setLang($event)">
+        </app-dropdown>
+      </div>
+    </div>
+
+    <div class="header__right">
+      <div class="header__view glass-panel">
+        <app-dropdown
+          variant="ghost"
+          align="right"
+          [fullWidth]="true"
+          [options]="viewOptions()"
+          [value]="currentView()"
+          [icon]="currentViewIcon()"
+          [ariaLabel]="t.chooseView"
+          (valueChange)="currentView.set($event)">
+        </app-dropdown>
+      </div>
+    </div>
+  </header>
+
+  <!-- Fullscreen Visualization Stage -->
+  <section class="stage" [attr.aria-label]="t.stageAriaLabel"></section>
+
+  <!-- Bottom Dock: Sliders & Glossaries -->
+  <footer class="dock-wrap">
+    <div class="dock glass-panel">
+      <div class="dock__slider">
+        <app-timeline-slider
+          [min]="-100"
+          [max]="100"
+          [step]="1"
+          [value]="sliderValue()"
+          [ariaLabel]="t.timelineLabel"
+          (valueChange)="sliderValue.set($event)">
+        </app-timeline-slider>
+      </div>
+      <app-button variant="ghost" (btnClick)="openGlossary()">
+        <lucide-icon [img]="bookOpenIcon" [size]="15"></lucide-icon>
+        <span>{{ t.glossary }}</span>
+      </app-button>
+    </div>
+  </footer>
+
+  <app-popup [closeAriaLabel]="t.close"></app-popup>
+  <app-tooltip></app-tooltip>
+</main>
