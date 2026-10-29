@@ -1,0 +1,1920 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bałtyk w 45 zadaniach</title>
+<meta name="description" content="Plan pracy warstwy danych Bałtyku: 7 epików, 45 zadań, roadmapa i graf zależności.">
+<!--
+  Bałtyk w 45 zadaniach — widok backlogu warstwy danych.
+  Rozpisanie docs/research/baltic-data-plan.md; pełna treść zadań
+  w docs/research/baltic-issues-backlog.md.
+
+  Samodzielna strona — otwórz plik w przeglądarce, nic nie trzeba budować.
+  Nawigacja: strzałki, chipy epików i skok do slajdu w dockach.
+  Kroje pism pobierane z fonts.googleapis.com; offline zadziała fallback
+  systemowy zadeklarowany w --font / --mono.
+-->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --ground:#f2f5f9;
+  --surface:#ffffff;
+  --surface-2:#fbfcfe;
+  --ink:#11161d;
+  --ink-2:#4a5563;
+  --ink-3:#7b8798;
+  --rule:#d8e0ea;
+  --rule-soft:#e8eef4;
+  --accent:#d37400;
+  --accent-soft:#fdf3e6;
+  --blocker:#b3261e;
+  --blocker-soft:#fbeceb;
+  --water:#1f5f8b;
+  --water-2:#4e87a8;
+  --water-3:#7eb0cd;
+  --ice:#c3d6e3;
+  --ok:#2f6b4f;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+  --fs-1:.715rem; --fs-2:.815rem; --fs-3:.94rem; --fs-4:1.12rem;
+  --fs-5:1.45rem; --fs-6:2rem;
+  --dock-h:62px; --top-h:54px;
+  --shadow:0 1px 2px rgba(17,22,29,.05),0 8px 24px -12px rgba(17,22,29,.14);
+  --glass:rgba(251,252,254,.82);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--font); font-size:var(--fs-3); line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{margin:0; text-wrap:balance; letter-spacing:-.018em; line-height:1.14}
+p{margin:0}
+ul,ol{margin:0; padding:0; list-style:none}
+code,.mono{font-family:var(--mono); font-variant-ligatures:none}
+strong{font-weight:650}
+em{font-style:italic}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:3px}
+
+/* ---------- HUD ---------- */
+.hud{position:fixed; left:0; right:0; z-index:20; display:flex; gap:10px;
+  padding:10px clamp(12px,2vw,20px); pointer-events:none}
+.hud--top{top:0; align-items:flex-start; justify-content:space-between}
+.hud--dock{bottom:0; align-items:flex-end; justify-content:center; flex-wrap:wrap}
+.pill{pointer-events:auto; display:flex; align-items:center; gap:10px;
+  background:var(--glass); backdrop-filter:blur(14px) saturate(1.3);
+  -webkit-backdrop-filter:blur(14px) saturate(1.3);
+  border:1px solid var(--rule); border-radius:999px; box-shadow:var(--shadow);
+  padding:0 12px; height:34px}
+
+.brand{font-weight:800; letter-spacing:-.03em; font-size:var(--fs-2)}
+.brand .dot{color:var(--accent)}
+.divider{width:1px; height:16px; background:var(--rule); flex:none}
+.brand-app{font-size:var(--fs-2); font-weight:500; color:var(--ink-2); white-space:nowrap}
+
+.jump{display:flex; align-items:center; gap:8px}
+.jump-label{font-size:var(--fs-1); text-transform:uppercase; letter-spacing:.09em;
+  color:var(--ink-3); font-weight:600}
+#jump{font-family:var(--font); font-size:var(--fs-2); font-weight:550; color:var(--ink);
+  background:transparent; border:0; max-width:34vw; padding:2px 0}
+
+.chips{display:flex; gap:4px; padding:0 6px}
+.chip{font-family:var(--mono); font-size:var(--fs-1); font-weight:700; color:var(--ink-2);
+  background:transparent; border:1px solid transparent; border-radius:999px;
+  min-width:26px; height:24px; padding:0 7px; cursor:pointer; line-height:1}
+.chip:hover{background:var(--rule-soft); color:var(--ink)}
+.chip[aria-current="true"]{background:var(--ink); border-color:var(--ink); color:#fff}
+
+.pager{gap:4px; padding:0 6px}
+.nav-btn{width:26px; height:26px; border-radius:999px; border:1px solid var(--rule);
+  background:var(--surface); color:var(--ink); cursor:pointer; font-size:14px; line-height:1;
+  display:grid; place-items:center; padding:0}
+.nav-btn:hover{border-color:var(--ink-3)}
+.nav-btn[disabled]{opacity:.32; cursor:default}
+.count{font-family:var(--mono); font-size:var(--fs-1); color:var(--ink-2);
+  font-variant-numeric:tabular-nums; min-width:52px; text-align:center}
+
+.dots{display:flex; gap:5px; align-items:center; padding:0 10px}
+.dots li{width:5px; height:5px; border-radius:999px; background:var(--rule); transition:none}
+.dots li[aria-current="true"]{background:var(--accent); width:16px}
+@media (prefers-reduced-motion:no-preference){
+  .dots li{transition:width .18s ease, background .18s ease}
+}
+
+/* ---------- track ---------- */
+.track{display:flex; height:100dvh; overflow-x:auto; overflow-y:hidden;
+  scroll-snap-type:x mandatory; scrollbar-width:none}
+.track::-webkit-scrollbar{display:none}
+@media (prefers-reduced-motion:no-preference){ .track{scroll-behavior:smooth} }
+
+.slide{flex:0 0 100%; min-width:100%; scroll-snap-align:center; overflow-y:auto;
+  padding:calc(var(--top-h) + 14px) clamp(16px,3.2vw,40px) calc(var(--dock-h) + 20px)}
+.sheet{max-width:1140px; margin:0 auto; display:flex; flex-direction:column; gap:20px}
+
+.eyebrow{display:flex; align-items:center; gap:10px; font-family:var(--mono);
+  font-size:var(--fs-1); text-transform:uppercase; letter-spacing:.12em;
+  color:var(--ink-3); font-weight:500}
+.eyebrow .bar{width:22px; height:2px; background:var(--accent); flex:none; border-radius:2px}
+.h-sec{font-size:var(--fs-6); font-weight:750}
+.h-sub{font-size:var(--fs-4); font-weight:600; letter-spacing:-.01em}
+.lead{font-size:var(--fs-4); color:var(--ink-2); max-width:62ch; line-height:1.45}
+.note{font-size:var(--fs-2); color:var(--ink-3); max-width:72ch}
+.note-plan{font-family:var(--mono); font-size:var(--fs-1); color:var(--ink-3)}
+
+/* ---------- title slide ---------- */
+.title-wrap{display:flex; flex-direction:column; gap:26px; padding-block:clamp(8px,3vh,36px)}
+.h-title{font-size:clamp(2.3rem,5.4vw,3.7rem); font-weight:800; letter-spacing:-.035em; line-height:1.02}
+.h-title .accent{color:var(--accent)}
+.title-meta{display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); border-radius:12px; overflow:hidden}
+.tm{background:var(--surface); padding:14px 16px; display:flex; flex-direction:column; gap:3px}
+.tm-n{font-family:var(--mono); font-size:1.5rem; font-weight:700; letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums; line-height:1}
+.tm-l{font-size:var(--fs-1); text-transform:uppercase; letter-spacing:.08em; color:var(--ink-3); font-weight:600}
+.scroll-hint{display:flex; align-items:center; gap:8px; font-size:var(--fs-2); color:var(--ink-3)}
+.scroll-hint kbd{font-family:var(--mono); font-size:var(--fs-1); border:1px solid var(--rule);
+  background:var(--surface); border-radius:4px; padding:1px 5px}
+
+/* ---------- generic blocks ---------- */
+.grid-2{display:grid; grid-template-columns:repeat(auto-fit,minmax(286px,1fr)); gap:14px}
+.grid-3{display:grid; grid-template-columns:repeat(auto-fit,minmax(214px,1fr)); gap:12px}
+
+.card{background:var(--surface); border:1px solid var(--rule); border-radius:12px;
+  padding:16px 18px; display:flex; flex-direction:column; gap:8px}
+.card-t{font-size:var(--fs-3); font-weight:650}
+.card-b{font-size:var(--fs-2); color:var(--ink-2); line-height:1.5}
+
+.flat{display:flex; flex-direction:column; gap:7px}
+.flat li{display:grid; grid-template-columns:auto 1fr; gap:10px; font-size:var(--fs-2);
+  color:var(--ink-2); line-height:1.48}
+.flat li::before{content:""; width:4px; height:4px; border-radius:999px;
+  background:var(--water-3); margin-top:8px}
+.flat li b{color:var(--ink); font-weight:620}
+
+/* blocker cards */
+.blk{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--blocker);
+  border-radius:10px; padding:15px 17px; display:flex; flex-direction:column; gap:9px}
+.blk-h{display:flex; align-items:baseline; gap:9px}
+.blk-n{font-family:var(--mono); font-size:var(--fs-1); font-weight:700; color:var(--blocker)}
+.blk-t{font-size:var(--fs-3); font-weight:650}
+.blk-b{font-size:var(--fs-2); color:var(--ink-2); line-height:1.5}
+.formula{font-family:var(--mono); font-size:var(--fs-2); background:var(--surface-2);
+  border:1px solid var(--rule-soft); border-radius:7px; padding:9px 11px;
+  overflow-x:auto; white-space:nowrap}
+.formula.bad{color:var(--blocker); text-decoration:line-through; text-decoration-thickness:1px;
+  text-decoration-color:rgba(179,38,30,.5)}
+.formula.good{color:var(--ok); border-color:rgba(47,107,79,.3); background:#f4faf6}
+
+/* ---------- epic overview ---------- */
+.epics{display:grid; grid-template-columns:repeat(auto-fit,minmax(152px,1fr)); gap:10px}
+.epic-card{background:var(--surface); border:1px solid var(--rule); border-radius:11px;
+  padding:14px; display:flex; flex-direction:column; gap:7px; text-align:left;
+  cursor:pointer; font:inherit; color:inherit}
+.epic-card:hover{border-color:var(--ink-3)}
+.epic-top{display:flex; align-items:center; justify-content:space-between}
+.epic-k{font-family:var(--mono); font-size:1.3rem; font-weight:700; line-height:1}
+.epic-c{font-family:var(--mono); font-size:var(--fs-1); color:var(--ink-3);
+  font-variant-numeric:tabular-nums}
+.epic-n{font-size:var(--fs-2); font-weight:620; line-height:1.3}
+.epic-d{font-size:var(--fs-1); color:var(--ink-3); line-height:1.45}
+.epic-card[data-tone="block"] .epic-k{color:var(--blocker)}
+.epic-card[data-tone="core"] .epic-k{color:var(--water)}
+.epic-card[data-tone="val"] .epic-k{color:var(--accent)}
+
+/* ---------- tasks ---------- */
+.tasks{display:flex; flex-direction:column; gap:1px; background:var(--rule);
+  border:1px solid var(--rule); border-radius:11px; overflow:hidden}
+.task{background:var(--surface)}
+.task>summary{display:grid; grid-template-columns:52px 1fr auto; gap:12px; align-items:baseline;
+  padding:11px 15px; cursor:pointer; list-style:none}
+.task>summary::-webkit-details-marker{display:none}
+.task>summary:hover{background:var(--surface-2)}
+.task[open]>summary{background:var(--surface-2); border-bottom:1px solid var(--rule-soft)}
+.t-id{font-family:var(--mono); font-size:var(--fs-2); font-weight:700; letter-spacing:-.02em}
+.t-title{font-size:var(--fs-3); font-weight:600; line-height:1.3}
+.t-title .pl{display:block; font-size:var(--fs-2); font-weight:400; color:var(--ink-3); margin-top:1px}
+.t-dep{font-family:var(--mono); font-size:var(--fs-1); color:var(--ink-3); white-space:nowrap}
+.t-dep.block{color:var(--blocker); font-weight:600}
+.task[data-block="1"] .t-id{color:var(--blocker)}
+.t-body{padding:12px 15px 15px 79px; display:flex; flex-direction:column; gap:10px}
+.t-body p{font-size:var(--fs-2); color:var(--ink-2); line-height:1.52; max-width:78ch}
+.dod{display:flex; flex-direction:column; gap:5px}
+.dod-l{font-size:var(--fs-1); text-transform:uppercase; letter-spacing:.09em;
+  color:var(--ink-3); font-weight:650}
+.dod li{display:grid; grid-template-columns:auto 1fr; gap:9px; font-size:var(--fs-2);
+  color:var(--ink-2); line-height:1.45}
+.dod li::before{content:"☐"; font-family:var(--mono); color:var(--ink-3); font-size:.9em}
+.dod .dod-l{display:block}
+.dod .dod-l::before{content:none}
+.t-src{font-family:var(--mono); font-size:var(--fs-1); color:var(--ink-3)}
+@media (min-width:720px){ .t-body{padding-left:79px} }
+
+/* ---------- charts ---------- */
+.figure{background:var(--surface); border:1px solid var(--rule); border-radius:12px;
+  padding:16px 18px 14px; display:flex; flex-direction:column; gap:10px}
+.fig-scroll{overflow-x:auto}
+.fig-svg{display:block; width:100%; min-width:620px; height:auto}
+.fig-cap{font-size:var(--fs-1); color:var(--ink-3); line-height:1.5; max-width:84ch}
+.legend{display:flex; flex-wrap:wrap; gap:6px 16px}
+.legend li{display:flex; align-items:center; gap:7px; font-size:var(--fs-1); color:var(--ink-2)}
+.sw{width:11px; height:11px; border-radius:3px; flex:none}
+
+/* ---------- milestones ---------- */
+.ms{display:flex; flex-direction:column; gap:1px; background:var(--rule);
+  border:1px solid var(--rule); border-radius:11px; overflow:hidden}
+.ms-row{background:var(--surface); display:grid;
+  grid-template-columns:48px minmax(130px,1.1fr) minmax(150px,1.3fr) minmax(170px,1.5fr);
+  gap:12px; padding:11px 15px; align-items:baseline}
+.ms-row[data-star="1"]{background:var(--accent-soft)}
+.ms-k{font-family:var(--mono); font-size:var(--fs-2); font-weight:700; color:var(--ink-3)}
+.ms-row[data-star="1"] .ms-k{color:var(--accent)}
+.ms-n{font-size:var(--fs-3); font-weight:620; line-height:1.3}
+.ms-t{font-family:var(--mono); font-size:var(--fs-1); color:var(--water); line-height:1.5}
+.ms-g{font-size:var(--fs-2); color:var(--ink-2); line-height:1.42}
+.ms-head{background:var(--surface-2)}
+.ms-head span{font-size:var(--fs-1); text-transform:uppercase; letter-spacing:.09em;
+  color:var(--ink-3); font-weight:650}
+
+/* ---------- lanes ---------- */
+.lanes{display:flex; flex-direction:column; gap:8px}
+.lane{display:grid; grid-template-columns:minmax(104px,auto) 1fr minmax(118px,auto);
+  gap:12px; align-items:center; background:var(--surface); border:1px solid var(--rule);
+  border-radius:9px; padding:10px 14px}
+.lane-n{font-size:var(--fs-2); font-weight:650}
+.lane-bar{height:8px; border-radius:999px; background:var(--rule-soft); position:relative; overflow:hidden}
+.lane-fill{position:absolute; inset:0 auto 0 0; border-radius:999px}
+.lane-ids{font-family:var(--mono); font-size:var(--fs-1); color:var(--ink-2); text-align:right}
+.lane-gate{font-family:var(--mono); font-size:var(--fs-1); color:var(--ink-3)}
+
+/* ---------- tables ---------- */
+.tbl-scroll{overflow-x:auto; border:1px solid var(--rule); border-radius:11px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; min-width:560px}
+th,td{text-align:left; padding:10px 14px; font-size:var(--fs-2); vertical-align:top;
+  border-bottom:1px solid var(--rule-soft); line-height:1.45}
+th{font-size:var(--fs-1); text-transform:uppercase; letter-spacing:.09em; color:var(--ink-3);
+  font-weight:650; background:var(--surface-2); white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.m{font-family:var(--mono); font-size:var(--fs-1); color:var(--water); white-space:nowrap}
+td b{font-weight:620; color:var(--ink)}
+
+.callout{background:var(--accent-soft); border:1px solid #f0dcbe; border-radius:10px;
+  padding:14px 16px; font-size:var(--fs-2); color:#6b4a12; line-height:1.52}
+.callout b{color:#4d3409}
+
+.kv{display:grid; grid-template-columns:repeat(auto-fit,minmax(168px,1fr)); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); border-radius:11px; overflow:hidden}
+.kv div{background:var(--surface); padding:12px 14px; display:flex; flex-direction:column; gap:3px}
+.kv dt{font-size:var(--fs-1); text-transform:uppercase; letter-spacing:.08em;
+  color:var(--ink-3); font-weight:620}
+.kv dd{margin:0; font-family:var(--mono); font-size:var(--fs-3); font-weight:600;
+  font-variant-numeric:tabular-nums}
+
+@media (max-width:640px){
+  :root{--dock-h:94px}
+  .hud--dock{gap:6px}
+  .brand-app,.divider{display:none}
+  .dots{display:none}
+  .task>summary{grid-template-columns:48px 1fr; row-gap:4px}
+  .t-dep{grid-column:2; white-space:normal}
+  .t-body{padding-left:15px}
+  .ms-row{grid-template-columns:34px 1fr; row-gap:4px}
+  .ms-t,.ms-g{grid-column:2}
+  .lane{grid-template-columns:1fr; row-gap:7px}
+  .lane-ids{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<header class="hud hud--top">
+  <div class="pill">
+    <span class="brand">KMD<span class="dot">.</span></span>
+    <span class="divider"></span>
+    <span class="brand-app">Bałtyk · warstwa danych</span>
+  </div>
+  <div class="pill jump">
+    <span class="jump-label">Slajd</span>
+    <select id="jump" aria-label="Przejdź do slajdu"></select>
+  </div>
+</header>
+
+<main class="track" id="track" role="region" aria-label="Prezentacja planu pracy" tabindex="0">
+
+  <!-- 1 -->
+  <section class="slide" id="s1" aria-label="Tytuł">
+    <div class="sheet title-wrap">
+      <div class="eyebrow"><span class="bar"></span>Plan pracy · warstwa danych · październik 2026</div>
+      <h1 class="h-title">Bałtyk<br>w <span class="accent">45 zadaniach</span></h1>
+      <p class="lead">Rozpisanie <code>baltic-data-plan.md</code> na backlog wykonawczy: skąd wziąć dane
+        o paleogeograficznej ewolucji Morza Bałtyckiego, jak je przetworzyć i w jakim kontrakcie
+        wystawić aplikacji.</p>
+      <ul class="title-meta">
+        <li class="tm"><span class="tm-n">7</span><span class="tm-l">epików</span></li>
+        <li class="tm"><span class="tm-n">45</span><span class="tm-l">zadań</span></li>
+        <li class="tm"><span class="tm-n">4</span><span class="tm-l">reżimy danych</span></li>
+        <li class="tm"><span class="tm-n">541 Ma</span><span class="tm-l">zakres czasowy</span></li>
+        <li class="tm"><span class="tm-n">~195</span><span class="tm-l">klatek</span></li>
+        <li class="tm"><span class="tm-n">25 MB</span><span class="tm-l">budżet assetów</span></li>
+      </ul>
+      <p class="scroll-hint"><kbd>←</kbd><kbd>→</kbd> nawigacja · chipy epików i skok do slajdu w dockach</p>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide" id="s2" aria-label="Kontekst i zakres">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>01 · Punkt startowy</div>
+      <h2 class="h-sec">Zero logiki domenowej, zero danych</h2>
+      <p class="lead">W repozytorium stoi świeży scaffold KMD (Angular 21, <code>f3c4f6d</code>):
+        <code>AppComponent</code>, i18n EN/PL, submoduł design-systemu. UI jest przesądzone
+        przez <code>AGENTS.md</code> i świadomie poza zakresem — plan odpowiada na jedno pytanie:
+        skąd dane i w jakim kontrakcie.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 class="card-t">Ustalenia zakresowe</h3>
+          <ul class="flat">
+            <li><span><b>Pełny fanerozoik</b>, trzy równorzędne reżimy czasowe — nie jedna dłuższa oś.</span></li>
+            <li><span>Paleogeografia <b>hybrydowo</b>: policzony paleo-DEM weryfikowany literaturą.</span></li>
+            <li><span>Warstwy: <b>lądolód</b>, <b>zasolenie i połączenie z oceanem</b>, <b>krzywe poziomu wody i wypiętrzania</b>.</span></li>
+            <li><span>Rozdzielczość postglacjalna <b>500 lat</b>, jednolicie dla 20–0 ka.</span></li>
+            <li><span>Mikroskala <b>symetrycznie dla czterech wybrzeży</b> — PL, SE, EE, DK.</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 class="card-t">Co zostało poza zakresem</h3>
+          <ul class="flat">
+            <li><span>Archeologia i paleoklimat jako warstwa narracyjna — <b>wyjątek:</b> zatopione lasy, bo są danymi walidacyjnymi.</span></li>
+            <li><span>Rastry paleo-DEM jako artefakt runtime'owy — zastąpione TopoJSON-em.</span></li>
+            <li><span>Klatki paleogeograficzne dla czwartorzędu — <b>nie istnieją</b> w tej rozdzielczości.</span></li>
+            <li><span>Dark mode, modale ustawień, onboarding — zakazane przez <code>AGENTS.md</code>.</span></li>
+          </ul>
+        </div>
+      </div>
+      <p class="callout">To <b>największy z rozważanych zakresów</b>: cztery niezależne pipeline'y i cztery
+        krajowe zbiory wysokościowe do zharmonizowania. Kolejność prac jest dobrana tak, by działająca
+        aplikacja powstała <b>przed</b> ukończeniem całości.</p>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide" id="s3" aria-label="Trzy blokery">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>02 · Poprawki blokujące · §0</div>
+      <h2 class="h-sec">Trzy rzeczy do naprawienia przed pierwszą linią ETL</h2>
+      <p class="lead">Plan jest scaleniem dwóch wcześniejszych. Z drugiego usunięty jest błąd,
+        który przeszedłby niezauważony aż do walidacji — i wtedy kosztowałby cały reżim C.</p>
+
+      <div class="blk">
+        <div class="blk-h"><span class="blk-n">§0.1</span><h3 class="blk-t">Formuła paleo-DEM podwójnie liczyła eustatykę</h3></div>
+        <div class="formula bad">H_paleo(x,y,t) = H_now(x,y) + ΔGIA(x,y,t) − ΔEustatic(t)</div>
+        <p class="blk-b">Formuła nie nazywała pola modelu GIA, które konsumuje. Przy najbardziej naturalnym
+          odczycie — <code>Topo</code> / <code>Topo_Diff</code> z ICE-6G_C — paleotopografia jest podana
+          <b>względem współczesnej sobie powierzchni morza</b>, czyli już zawiera składnik eustatyczny
+          i geoidalny. Odjęcie <code>ΔEustatic(t)</code> liczy ten sam sygnał drugi raz, <b>na dziesiątki
+          metrów</b>. Znak przy <code>ΔGIA</code> był dodatkowo dwuznaczny.</p>
+        <div class="formula good">H_paleo(x,y,t) = H_now(x,y) + [Topo(t) − Topo(0)]</div>
+        <p class="blk-b">Osobny człon RSL jest uprawniony <b>tylko</b> przy czystym polu odkształcenia
+          sprężystego bez członu oceanicznego. Metodyka musi wskazywać <b>plik i nazwę zmiennej</b>, nie pojęcie.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="blk">
+          <div class="blk-h"><span class="blk-n">§0.2</span><h3 class="blk-t">Datum musi być w kontrakcie</h3></div>
+          <p class="blk-b">Poziomy faz jeziornych (+25 m BIL, +10 m Ancylus) jako skalary są poprawne
+            <b>wyłącznie</b> dla paleo-DEM-u wyrażonego względem współczesnej sobie geoidy — powierzchnia
+            jeziora jest wtedy ekwipotencjalna, czyli stała. Zalanie DEM-u w <b>dzisiejszym</b> układzie
+            tą samą liczbą daje wynik jawnie fałszywy: rebound jest silnie zróżnicowany przestrzennie.</p>
+          <dl class="kv">
+            <div><dt>Zatoka Botnicka</dt><dd>&gt; 285 m</dd></div>
+            <div><dt>Wybrzeże Polski</dt><dd>~ 0 m</dd></div>
+          </dl>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><span class="blk-n">§0.3</span><h3 class="blk-t">Maska wody wymaga flood-fill</h3></div>
+          <p class="blk-b">Prosty próg <code>H &lt; poziom</code> tworzy <b>fałszywe jeziora</b> w każdym
+            zamkniętym obniżeniu terenu. Zbiornik musi być hydrologicznie połączony z progiem odpływu —
+            analiza spójnych składowych z zasiewem w cieśninie aktywnej dla danego <em>t</em>.</p>
+          <div class="formula">water_mask(t) = flood_fill(dem, level, seed=outlet(t))</div>
+          <p class="blk-b">Przy ~47 przekrojach × 4 regiony mikroskalowe to krok <b>obowiązkowy</b>,
+            nie optymalizacja.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide" id="s4" aria-label="Cztery reżimy danych">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>03 · Reżimy · §1</div>
+      <h2 class="h-sec">Fanerozoik nie jest dłuższą osią czasu</h2>
+      <p class="lead">To inna klasa danych — jeden pipeline ich nie obsłuży. Oś logarytmiczna pokazuje,
+        dlaczego: reżim C zajmuje ostatnie 0,004 % zakresu.</p>
+
+      <figure class="figure">
+        <div class="fig-scroll">
+          <svg class="fig-svg" viewBox="0 0 1000 306" role="img"
+            aria-label="Logarytmiczna oś czasu od 541 mln lat BP do dziś z czterema reżimami danych">
+            <!-- gridlines + ticks -->
+            <g font-family="JetBrains Mono, monospace" font-size="10" fill="#7b8798">
+              <line x1="60" y1="46" x2="60" y2="258" stroke="#d8e0ea" stroke-width="1"/>
+              <line x1="158" y1="46" x2="158" y2="258" stroke="#e8eef4" stroke-width="1"/>
+              <line x1="292" y1="46" x2="292" y2="258" stroke="#e8eef4" stroke-width="1"/>
+              <line x1="425" y1="46" x2="425" y2="258" stroke="#e8eef4" stroke-width="1"/>
+              <line x1="559" y1="46" x2="559" y2="258" stroke="#e8eef4" stroke-width="1"/>
+              <line x1="693" y1="46" x2="693" y2="258" stroke="#e8eef4" stroke-width="1"/>
+              <line x1="826" y1="46" x2="826" y2="258" stroke="#e8eef4" stroke-width="1"/>
+              <line x1="960" y1="46" x2="960" y2="258" stroke="#d8e0ea" stroke-width="1"/>
+              <text x="60" y="276" text-anchor="start">541 Ma</text>
+              <text x="158" y="276" text-anchor="middle">100 Ma</text>
+              <text x="292" y="276" text-anchor="middle">10 Ma</text>
+              <text x="425" y="276" text-anchor="middle">1 Ma</text>
+              <text x="559" y="276" text-anchor="middle">100 ka</text>
+              <text x="693" y="276" text-anchor="middle">10 ka</text>
+              <text x="826" y="276" text-anchor="middle">1 ka</text>
+              <text x="960" y="276" text-anchor="end">dziś</text>
+              <text x="60" y="294" text-anchor="start" font-size="9" fill="#a8b2c0">skala logarytmiczna · cal yr BP</text>
+            </g>
+            <!-- A -->
+            <rect x="60" y="56" width="310" height="28" rx="5" fill="#c3d6e3"/>
+            <text x="72" y="74" font-family="Inter, sans-serif" font-size="12" font-weight="650" fill="#11161d">A · Fanerozoik</text>
+            <text x="382" y="74" font-family="JetBrains Mono, monospace" font-size="10" fill="#4a5563">krok 5 Ma · ~108 klatek · Bałtyku nie ma</text>
+            <!-- B -->
+            <rect x="370" y="98" width="283" height="28" rx="5" fill="#f2f5f9" stroke="#b3261e"
+              stroke-width="1" stroke-dasharray="4 3"/>
+            <text x="382" y="116" font-family="Inter, sans-serif" font-size="12" font-weight="650" fill="#11161d">B · Czwartorzęd</text>
+            <text x="665" y="116" font-family="JetBrains Mono, monospace" font-size="10" fill="#b3261e">luka danych · 8–12 kart · bez klatek</text>
+            <!-- C -->
+            <rect x="653" y="140" width="307" height="28" rx="5" fill="#1f5f8b"/>
+            <text x="665" y="158" font-family="Inter, sans-serif" font-size="12" font-weight="650" fill="#ffffff">C · Postglacjał</text>
+            <text x="665" y="186" font-family="JetBrains Mono, monospace" font-size="10" fill="#1f5f8b">krok 500 lat · 41 + 6 klatek · rdzeń produktu</text>
+            <!-- D -->
+            <rect x="682" y="200" width="278" height="28" rx="5" fill="#4e87a8"/>
+            <text x="694" y="218" font-family="Inter, sans-serif" font-size="12" font-weight="650" fill="#ffffff">D · Mikroskala</text>
+            <text x="694" y="246" font-family="JetBrains Mono, monospace" font-size="10" fill="#4e87a8">fazowo · ~10 × 4 regiony · krajowy LiDAR</text>
+          </svg>
+        </div>
+        <figcaption class="fig-cap">Reżim B jest celowo narysowany jako kontur, nie wypełnienie —
+          w tym przedziale nie ma rekonstrukcji GIS, więc nie powstaną klatki, tylko karty z flagą
+          <code>dataQuality: "qualitative"</code>. Udawanie precyzji, której źródła nie mają,
+          byłoby tu najgorszym możliwym wyborem.</figcaption>
+      </figure>
+
+      <div class="grid-3">
+        <div class="card"><h3 class="card-t">Uczciwość w A</h3>
+          <p class="card-b">Pokazujemy region, nie morze. Nazwa „Bałtyk” przed ~1 Ma jest anachronizmem —
+            to opowieść o kratonie Baltiki i basenie bałtyckim.</p></div>
+        <div class="card"><h3 class="card-t">Decyzja o kroku w C</h3>
+          <p class="card-b">Odrzucono 1000 lat dla 8–0 ka: transgresja littorynowa, mierzeje i jeziora
+            przybrzeżne mieszczą się właśnie tam. <b>Jednolite 500 lat.</b></p></div>
+        <div class="card"><h3 class="card-t">Granica D</h3>
+          <p class="card-b">GIA ma siatkę 1°×1°, LiDAR ma 1 m. Downscaling byłby pozorną precyzją —
+            D to osobne wstawki, nie zagęszczenie C.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide" id="s5" aria-label="Siedem faz postglacjalnych">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>04 · Chronologia reżimu C · §2</div>
+      <h2 class="h-sec">Siedem faz i tylko tyle poziomów, ile podaje literatura</h2>
+
+      <figure class="figure">
+        <div class="fig-scroll">
+          <svg class="fig-svg" viewBox="0 0 1000 308" role="img"
+            aria-label="Siedem faz postglacjalnych od 20 tysięcy lat BP do dziś z udokumentowanymi poziomami wody">
+            <!-- y axis -->
+            <g font-family="JetBrains Mono, monospace" font-size="10" fill="#7b8798">
+              <line x1="70" y1="56" x2="70" y2="200" stroke="#d8e0ea" stroke-width="1"/>
+              <line x1="70" y1="70" x2="960" y2="70" stroke="#e8eef4" stroke-width="1"/>
+              <line x1="70" y1="120" x2="960" y2="120" stroke="#b9c6d4" stroke-width="1" stroke-dasharray="3 3"/>
+              <line x1="70" y1="176" x2="960" y2="176" stroke="#e8eef4" stroke-width="1"/>
+              <text x="62" y="74" text-anchor="end">+25 m</text>
+              <text x="62" y="104" text-anchor="end">+10 m</text>
+              <text x="62" y="124" text-anchor="end">0 m</text>
+              <text x="62" y="180" text-anchor="end">−28 m</text>
+              <text x="70" y="42" font-size="9" fill="#a8b2c0">poziom wody względem geoidy współczesnej t</text>
+            </g>
+            <!-- documented level segments -->
+            <line x1="248" y1="70" x2="439" y2="70" stroke="#2f6b4f" stroke-width="3"/>
+            <text x="252" y="62" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#2f6b4f">+25 m · próg odpływu, nie eustatyka</text>
+            <line x1="484" y1="100" x2="524" y2="100" stroke="#2f6b4f" stroke-width="3"/>
+            <text x="488" y="94" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#2f6b4f">+10 m</text>
+            <!-- Billingen drop -->
+            <path d="M439 72 L439 150" stroke="#b3261e" stroke-width="2"/>
+            <path d="M439 150 l-4 -8 l8 0 z" fill="#b3261e"/>
+            <text x="446" y="140" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#b3261e">−25…28 m</text>
+            <text x="446" y="152" font-family="JetBrains Mono, monospace" font-size="9" fill="#b3261e">11 620–11 700 BP</text>
+            <!-- undocumented connector -->
+            <path d="M524 100 L582 176 L649 140 L960 120" stroke="#a8b2c0" stroke-width="1.5"
+              stroke-dasharray="5 4" fill="none"/>
+            <!-- control dots -->
+            <circle cx="582" cy="176" r="4.5" fill="#1f5f8b"/>
+            <text x="582" y="196" font-family="JetBrains Mono, monospace" font-size="9" fill="#1f5f8b" text-anchor="middle">−28 m · 8,5 ka</text>
+            <circle cx="649" cy="140" r="4.5" fill="#1f5f8b"/>
+            <text x="655" y="134" font-family="JetBrains Mono, monospace" font-size="9" fill="#1f5f8b">−10 m · 7,0 ka</text>
+            <circle cx="960" cy="120" r="4.5" fill="#1f5f8b"/>
+            <text x="954" y="112" font-family="JetBrains Mono, monospace" font-size="9" fill="#1f5f8b" text-anchor="end">0 m · dziś</text>
+            <!-- phase bands -->
+            <rect x="70"  y="215" width="178" height="24" fill="#c3d6e3"/>
+            <rect x="248" y="215" width="191" height="24" fill="#7eb0cd"/>
+            <rect x="439" y="215" width="45"  height="24" fill="#4e87a8"/>
+            <rect x="484" y="215" width="40"  height="24" fill="#7eb0cd"/>
+            <rect x="524" y="215" width="58"  height="24" fill="#4e87a8"/>
+            <rect x="582" y="215" width="200" height="24" fill="#1f5f8b"/>
+            <rect x="782" y="215" width="178" height="24" fill="#4e87a8"/>
+            <!-- leaders + labels -->
+            <g stroke="#b9c6d4" stroke-width="1">
+              <line x1="159" y1="239" x2="159" y2="249"/>
+              <line x1="343" y1="239" x2="343" y2="269"/>
+              <line x1="461" y1="239" x2="461" y2="249"/>
+              <line x1="504" y1="239" x2="504" y2="269"/>
+              <line x1="553" y1="239" x2="553" y2="249"/>
+              <line x1="682" y1="239" x2="682" y2="269"/>
+              <line x1="871" y1="239" x2="871" y2="249"/>
+            </g>
+            <g font-family="JetBrains Mono, monospace" font-size="10" fill="#11161d" text-anchor="middle">
+              <text x="159" y="261">deglaciation</text>
+              <text x="343" y="281">bil</text>
+              <text x="461" y="261">yoldia</text>
+              <text x="504" y="281">ancylus</text>
+              <text x="553" y="261">mastogloia</text>
+              <text x="682" y="281">littorina</text>
+              <text x="871" y="261">post-littorina</text>
+            </g>
+            <g font-family="JetBrains Mono, monospace" font-size="9" fill="#7b8798">
+              <text x="70" y="298">20 ka</text>
+              <text x="439" y="298" text-anchor="middle">11,7 ka</text>
+              <text x="582" y="298" text-anchor="middle">8,5 ka</text>
+              <text x="960" y="298" text-anchor="end">0</text>
+            </g>
+          </svg>
+        </div>
+        <ul class="legend">
+          <li><span class="sw" style="background:#c3d6e3"></span>lód i zastoiska marginalne</li>
+          <li><span class="sw" style="background:#7eb0cd"></span>słodkowodny</li>
+          <li><span class="sw" style="background:#4e87a8"></span>słonawy / przejściowy</li>
+          <li><span class="sw" style="background:#1f5f8b"></span>morski</li>
+          <li><span class="sw" style="background:#2f6b4f"></span>poziom udokumentowany w planie</li>
+          <li><span class="sw" style="background:#a8b2c0"></span>z modelu GIA, nie z literatury</li>
+        </ul>
+        <figcaption class="fig-cap">Linia ciągła biegnie tylko tam, gdzie plan podaje liczbę. Odcinki
+          przerywane to wartości z modelu GIA — <b>nie</b> zmyślona krzywa. Trzy niebieskie punkty
+          to kontrolki testu <code>V-04</code> dla polskiego brzegu.</figcaption>
+      </figure>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3 class="card-t">Osnowa chronologiczna</h3>
+          <p class="card-b"><b>cal yr BP</b>, Present = 1950. Wszystkie daty ¹⁴C ze starszej literatury
+            kalibrowane <b>IntCal20</b> — bez tego daty z Björcka 1995 przesuwają się
+            o <b>~1000–1500 lat</b> w późnym glacjale. W kontrakcie trzymamy obie wartości plus użytą krzywą.</p>
+          <p class="card-b"><b>Andrén i in. 2011</b> jako źródło wiodące. Koniec fazy ancylusowej jest
+            podawany jako 9 800 albo 9 500 cal BP — <b>nie uśredniamy</b>, odstępstwa idą do katalogu.</p>
+        </div>
+        <div class="card">
+          <h3 class="card-t">Oznaczone jako sporne, nie jako fakt</h3>
+          <ul class="flat">
+            <li><span>Czas trwania finalnego drenażu Billingen — <b>„1–2 lata” to jedno oszacowanie</b>, nie konsensus.</span></li>
+            <li><span>Zawleczenie <em>Mya arenaria</em> — muszle z Danii wskazują <b>~1245–1295 n.e.</b> (hipoteza nordycka), nie XVI/XVII w.</span></li>
+            <li><span>Zasolenie littorynowe — <b>12–18 PSU to górna granica</b> publikowanych wartości dla Bałtyku właściwego; wymaga rozbicia na baseny.</span></li>
+            <li><span>Przesmyk karelsko-białomorski — <b>hipoteza historyczna</b>, nie konsensus.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide" id="s6" aria-label="Przegląd epików">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>05 · Podział pracy</div>
+      <h2 class="h-sec">Siedem epików, 45 zadań</h2>
+      <p class="lead">Kliknij epik, żeby przejść do jego zadań. Każde zadanie rozwija się
+        na slajdzie epiku — zakres i Definition of Done.</p>
+      <div class="epics" id="epicNav">
+        <button class="epic-card" data-go="s7" data-tone="block">
+          <span class="epic-top"><span class="epic-k">0</span><span class="epic-c">7</span></span>
+          <span class="epic-n">Fundamenty i blokery</span>
+          <span class="epic-d">Musi być pierwsze. Dwa zadania to decyzje, nie kod.</span>
+        </button>
+        <button class="epic-card" data-go="s8" data-tone="core">
+          <span class="epic-top"><span class="epic-k">C</span><span class="epic-c">12</span></span>
+          <span class="epic-n">Postglacjał 20–0 ka</span>
+          <span class="epic-d">Rdzeń produktu, najlepsze dane. Od końca ku początkowi.</span>
+        </button>
+        <button class="epic-card" data-go="s10">
+          <span class="epic-top"><span class="epic-k">A</span><span class="epic-c">3</span></span>
+          <span class="epic-n">Fanerozoik 541–2,6 Ma</span>
+          <span class="epic-d">W pełni niezależny pipeline. Można prowadzić równolegle.</span>
+        </button>
+        <button class="epic-card" data-go="s11">
+          <span class="epic-top"><span class="epic-k">B</span><span class="epic-c">1</span></span>
+          <span class="epic-n">Czwartorzęd</span>
+          <span class="epic-d">Treść redakcyjna. Jawna luka danych, zero klatek.</span>
+        </button>
+        <button class="epic-card" data-go="s12">
+          <span class="epic-top"><span class="epic-k">D</span><span class="epic-c">6</span></span>
+          <span class="epic-n">Mikroskala 4 wybrzeży</span>
+          <span class="epic-d">Cztery zamknięte porcje. Przerwanie zostawia spójny produkt.</span>
+        </button>
+        <button class="epic-card" data-go="s13" data-tone="val">
+          <span class="epic-top"><span class="epic-k">V</span><span class="epic-c">12</span></span>
+          <span class="epic-n">Walidacja</span>
+          <span class="epic-d">Jedna bramka ilościowa. Resztę da się liczyć wcześnie.</span>
+        </button>
+        <button class="epic-card" data-go="s15">
+          <span class="epic-top"><span class="epic-k">I</span><span class="epic-c">4</span></span>
+          <span class="epic-n">Kontrakt i integracja</span>
+          <span class="epic-d">i18n startuje najwcześniej, nie najpóźniej.</span>
+        </button>
+      </div>
+      <p class="note">Numeracja epików nie jest kolejnością wykonania — to osie odpowiedzialności.
+        Kolejność jest na slajdzie roadmapy, zależności w grafie.</p>
+    </div>
+  </section>
+
+  <!-- 7 · EPIC 0 -->
+  <section class="slide" id="s7" aria-label="Epik 0 — fundamenty">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>Epik 0 · fundamenty i blokery · 7 zadań</div>
+      <h2 class="h-sec">Zanim powstanie pierwsza linia ETL</h2>
+      <div class="tasks">
+        <details class="task" data-block="1">
+          <summary><code class="t-id">0-01</code>
+            <span class="t-title">Initialize design-system submodule and guard it in CI
+              <span class="pl">Inicjalizacja submodułu i zabezpieczenie w CI</span></span>
+            <span class="t-dep block">blokuje wszystko</span></summary>
+          <div class="t-body">
+            <p>Submoduł <code>src/design-system</code> jest niezainicjowany — <code>git submodule status</code>
+              zwraca <code>-5f5a67b</code>, katalog jest pusty. Dopóki tak jest, build nie przejdzie, bo
+              <code>angular.json</code> wskazuje ten katalog w <code>stylePreprocessorOptions.includePaths</code>.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span><code>npm run build</code> zielony na czystym klonie wykonanym wg README</span></li>
+              <li><span>CI nie przechodzi, jeśli submoduł jest pusty</span></li>
+              <li><span>Krok <code>submodules: recursive</code> w <code>deploy.yml</code></span></li></ul>
+            <p class="t-src">plan §6.1 · labels: blocker, ci</p>
+          </div>
+        </details>
+
+        <details class="task" data-block="1">
+          <summary><code class="t-id">0-02</code>
+            <span class="t-title">Confirm ICE-6G_C redistribution terms, pick GIA fallback
+              <span class="pl">Licencja modelu GIA i wybór fallbacku</span></span>
+            <span class="t-dep block">blokuje C-03</span></summary>
+          <div class="t-body">
+            <p>Warunki redystrybucji ICE-6G_C (VM5a) są nieznane. Pochodne tego modelu <b>nie mogą</b>
+              wejść do repo przed potwierdzeniem — a cały reżim C stoi na jego polu <code>Topo</code>.
+              Fallback w kolejności: <b>GLAC-1D</b> → <b>ANU/Lambeck</b> → pochodne <b>SELEN</b>
+              z ESD 16, 585 (2025, CC BY).</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Wpis w <code>SOURCES.md</code>: model, licencja, data ustalenia, osoba</span></li>
+              <li><span>Wybrany model wpisany jako wartość <code>ice.source</code> w kontrakcie</span></li>
+              <li><span>Żadna pochodna GIA nie jest zacommitowana przed tym wpisem</span></li></ul>
+            <p class="t-src">plan §3.3, §8 · labels: blocker, licensing</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">0-03</code>
+            <span class="t-title">Audit licences of all remaining sources, write SOURCES.md
+              <span class="pl">Audyt licencji i źródło prawdy dla atrybucji</span></span>
+            <span class="t-dep">blokuje I-04</span></summary>
+          <div class="t-body">
+            <p>Prawie każdy zbiór w §3 to CC BY, co nakłada wymóg atrybucji — a atrybucja jest warunkiem
+              legalności publikacji. Dwie pozycje mają status nierozstrzygnięty: <b>BSBD/BSHC</b>
+              to CC BY 3.0 <b>z ograniczeniami</b>, <b>PhanDA</b> jest oznaczony „do weryfikacji”.
+              Cztery krajowe DEM-y reżimu D mają osobne reżimy licencyjne.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span><code>SOURCES.md</code> pokrywa 100 % zbiorów z §3</span></li>
+              <li><span>Zero pozycji ze statusem „do weryfikacji”</span></li>
+              <li><span>Każda pozycja ma pełne cytowanie i gotowy tekst atrybucji</span></li></ul>
+            <p class="t-src">plan §3, §5, §9 · labels: licensing, docs</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">0-04</code>
+            <span class="t-title">Scaffold tools/data pipeline and npm run data:build
+              <span class="pl">Szkielet pipeline'u danych</span></span>
+            <span class="t-dep">← 0-01</span></summary>
+          <div class="t-body">
+            <p>Struktura z §6: <code>fetch · phanerozoic · postglacial · regional · curves · calibrate ·
+              validate · emit</code>. <code>data/raw/</code> i <code>data/interim/</code> w
+              <code>.gitignore</code>, assety wyjściowe w gicie. Stack: xarray + rioxarray, rasterio,
+              geopandas, shapely, pyogrio, gplately, scipy.ndimage, pyproj; mapshaper do uproszczenia.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span><code>npm run data:build</code> uruchamia pipeline end-to-end</span></li>
+              <li><span>Pipeline <b>idempotentny</b> — powtórny run nie zmienia wyjścia</span></li>
+              <li><span>Pipeline <b>offline po pierwszym pobraniu</b></span></li>
+              <li><span>Zamrożone wersje zależności</span></li></ul>
+            <p class="t-src">plan §6 · labels: data-pipeline</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">0-05</code>
+            <span class="t-title">fetch.py — DOI-keyed downloads with checksum verification
+              <span class="pl">Pobieranie po DOI z weryfikacją sum kontrolnych</span></span>
+            <span class="t-dep">← 0-04</span></summary>
+          <div class="t-body">
+            <p>Pobieranie po DOI/URL dla każdego zbioru z §3, weryfikacja sum kontrolnych <b>przed</b>
+              użyciem pliku, cache w <code>data/raw/</code>. Sumy trafiają do <code>manifest.json</code>.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Każdy zbiór z §3 pobieralny jednym wywołaniem</span></li>
+              <li><span>Niezgodna suma kontrolna przerywa build z czytelnym komunikatem</span></li>
+              <li><span>Powtórny run nie pobiera ponownie</span></li></ul>
+            <p class="t-src">plan §6 · labels: data-pipeline</p>
+          </div>
+        </details>
+
+        <details class="task" data-block="1">
+          <summary><code class="t-id">0-06</code>
+            <span class="t-title">Define frame and manifest JSON contract with mandatory datum
+              <span class="pl">Kontrakt danych z obowiązkowym polem datum</span></span>
+            <span class="t-dep block">blokuje każdą emisję</span></summary>
+          <div class="t-body">
+            <p>Pole <code>datum</code> jest obowiązkowe w manifeście <b>i w każdej klatce</b>. Powód jest
+              ilościowy: poziomy faz jeziornych jako skalary są poprawne wyłącznie względem geoidy
+              współczesnej danemu <em>t</em>. Rebound jest silnie zróżnicowany przestrzennie —
+              <b>&gt;285 m w Zatoce Botnickiej vs ~0 m na wybrzeżu Polski</b>.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>JSON Schema dla klatki, manifestu, <code>timeline</code>, <code>sills</code>, <code>taxa</code>, <code>curves/*</code></span></li>
+              <li><span><code>validate.py</code> odrzuca klatkę bez <code>datum</code></span></li>
+              <li><span>Enum <code>dataQuality</code> = <code>modelled | interpolated | qualitative</code></span></li></ul>
+            <p class="t-src">plan §0.2, §5 · labels: blocker, contract</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">0-07</code>
+            <span class="t-title">Write methodology and data-catalog docs
+              <span class="pl">Metodyka i katalog danych</span></span>
+            <span class="t-dep">—</span></summary>
+          <div class="t-body">
+            <p><code>paleo-reconstruction-methodology.md</code> <b>musi wskazywać konkretny plik
+              i nazwę zmiennej</b> modelu GIA, nie pojęcie. To nie formalizm: plan wejściowy liczył
+              eustatykę podwójnie <b>właśnie dlatego</b>, że formuła nie nazywała pola, które konsumuje.
+              <code>baltic-data-catalog.md</code> dowozi tabelę korelacji cal yr BP ↔ ¹⁴C BP ↔ BCE/CE.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Formuła z nazwami plików i zmiennych</span></li>
+              <li><span>Jawnie zapisane, dlaczego <b>nie ma</b> osobnego członu eustatycznego</span></li>
+              <li><span>Tabela korelacji kompletna dla 7 faz</span></li>
+              <li><span>Odstępstwa od Andréna i in. 2011 wypisane, nie uśrednione</span></li></ul>
+            <p class="t-src">plan §0.1, §9 · labels: docs</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · EPIC C ① -->
+  <section class="slide" id="s8" aria-label="Epik C część 1">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>Epik C · postglacjał · zadania 1–6 z 12</div>
+      <h2 class="h-sec">Podłoże, paleo-DEM i progi odpływu</h2>
+      <div class="tasks">
+        <details class="task">
+          <summary><code class="t-id">C-01</code>
+            <span class="t-title">Build base topo-bathy mosaic for 9–33°E / 53–67°N
+              <span class="pl">Mozaika batymetrii i topografii bazowej</span></span>
+            <span class="t-dep">← 0-05</span></summary>
+          <div class="t-body">
+            <p>EMODnet Digital Bathymetry <b>DTM 2024</b> (1/16′ ≈ 115 m, 59 kafli) na dno Bałtyku,
+              Cieśnin Duńskich i Kattegatu; Copernicus DEM / GEBCO 2024 na ląd. Przetwarzanie
+              w <b>EPSG:3035</b> (ETRS89-LAEA, konwencja HELCOM), eksport w EPSG:4326.
+              Kontrola wobec BSBD (BSHC) i IOWTOPO2.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Mozaika bez szwów i dziur w całym oknie</span></li>
+              <li><span>Raport pokrycia i rozdzielczości per źródło</span></li>
+              <li><span>Udokumentowana metoda łączenia na linii brzegowej</span></li></ul>
+            <p class="t-src">plan §3.3, §4.3 · labels: data-pipeline, regime-c</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">C-02</code>
+            <span class="t-title">Integrate great-lake bathymetry
+              <span class="pl">Ładoga, Onega, Vänern, Vättern</span></span>
+            <span class="t-dep">← C-01</span></summary>
+          <div class="t-body">
+            <p>Batymetria wielkich jezior nie jest dodatkiem. <b>Vänern i Vättern leżą na trasie
+              Rzeki Svea i korytarza Billingen</b>, Ładoga była częścią basenu w kilku fazach.
+              Bez nich drenaży nie da się zamodelować — pipeline wygeneruje <b>jeziora bez odpływu</b>.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Cztery batymetrie wtopione w mozaikę ze spójnym datum</span></li>
+              <li><span>Progi odpływowe widoczne w profilu wysokościowym</span></li>
+              <li><span>Licencje per jezioro w <code>SOURCES.md</code></span></li></ul>
+            <p class="t-src">plan §3.3 · labels: data-pipeline, regime-c</p>
+          </div>
+        </details>
+
+        <details class="task" data-block="1">
+          <summary><code class="t-id">C-03</code>
+            <span class="t-title">Compute GIA paleo-DEM frames
+              <span class="pl">Paleo-DEM z modelu GIA, 41 klatek co 500 lat</span></span>
+            <span class="t-dep block">← 0-02 · 0-06 · C-02</span></summary>
+          <div class="t-body">
+            <p>Obowiązuje <code>H_paleo = H_now + [Topo(t) − Topo(0)]</code> — <b>bez osobnego członu
+              eustatycznego</b>. Plan wejściowy podawał <code>+ ΔGIA − ΔEustatic</code>, co liczy
+              eustatykę drugi raz, na dziesiątki metrów: paleotopografia ICE-6G_C jest już podana względem
+              współczesnej sobie powierzchni morza. Osobny człon RSL jest uprawniony tylko przy czystym
+              polu odkształcenia sprężystego.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>41 klatek 20–0 ka z <code>datum: "contemporaneous-geoid"</code></span></li>
+              <li><span>Nazwa pliku i zmiennej GIA zapisana w metodyce</span></li>
+              <li><span>Zero wystąpień osobnego członu eustatycznego w kodzie</span></li>
+              <li><span>Udokumentowany resampling 1° → siatka robocza</span></li></ul>
+            <p class="t-src">plan §0.1, §4.3 · labels: blocker, data-pipeline, regime-c</p>
+          </div>
+        </details>
+
+        <details class="task" data-block="1">
+          <summary><code class="t-id">C-04</code>
+            <span class="t-title">Implement connectivity-aware water mask
+              <span class="pl">Maska wody przez flood-fill, nie przez próg</span></span>
+            <span class="t-dep block">← C-03 · C-05</span></summary>
+          <div class="t-body">
+            <p>Prosty próg <code>H &lt; poziom</code> tworzy fałszywe jeziora w każdym zamkniętym obniżeniu.
+              Zbiornik musi być hydrologicznie połączony z progiem odpływu — spójne składowe
+              (<code>scipy.ndimage</code>) z zasiewem w cieśninie aktywnej dla danego <em>t</em>.
+              Trzeba rozstrzygnąć przypadki z wieloma aktywnymi odpływami jednocześnie.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Maska dla wszystkich ~47 przekrojów</span></li>
+              <li><span>Raport: zero zbiorników bez połączenia z odpływem</span></li>
+              <li><span>Test regresyjny na zamkniętym obniżeniu — musi zostać suche</span></li></ul>
+            <p class="t-src">plan §0.3, §4.3 · labels: blocker, data-pipeline, regime-c</p>
+          </div>
+        </details>
+
+        <details class="task" data-block="1">
+          <summary><code class="t-id">C-05</code>
+            <span class="t-title">Build sills.json — sill and strait catalogue
+              <span class="pl">Katalog progów i cieśnin</span></span>
+            <span class="t-dep block">blokuje C-04 · C-06 · V-02</span></summary>
+          <div class="t-body">
+            <p>Współrzędne, rzędne progowe i okresy aktywności: <b>Billingen</b> (58,4°N 13,8°E),
+              <b>Närke</b> (59,1°N 15,0°E), <b>Svea / Degerfors</b>, <b>Dana / Wielki Bełt</b>,
+              <b>Darss</b>, <b>Drogden / Øresund</b>. Przesmyk karelsko-białomorski oznaczony jako
+              <em>hipoteza historyczna, nie konsensus</em>.</p>
+            <p><b>Uwaga do kolejności z §6.</b> Plan umieszcza ten plik w kroku 3 („krzywe i katalogi”),
+              ale <code>C-04</code> potrzebuje zasiewu w aktywnej cieśninie, a <code>C-06</code> rzędnych
+              progowych. Musi powstać <b>razem z C-03</b>, nie po reżimie C.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Każdy próg: współrzędne, rzędna, okresy aktywności, źródło</span></li>
+              <li><span>Stan otwarty / zamknięty per faza dla wszystkich 7 faz</span></li>
+              <li><span>Hipotezy oznaczone flagą, nie podane jako fakt</span></li></ul>
+            <p class="t-src">plan §3.3, §5 · labels: blocker, contract, regime-c</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">C-06</code>
+            <span class="t-title">Derive lake-phase water levels from sill elevations
+              <span class="pl">Poziomy faz jeziornych z rzędnych progów</span></span>
+            <span class="t-dep">← C-05</span></summary>
+          <div class="t-body">
+            <p>Sedno poprawności: w fazach jeziornych powierzchnia wody <b>nie jest</b> globalnym poziomem
+              morza — wyznaczał ją próg odpływu. BIL <b>+25 m</b>, Ancylus <b>+10 m</b>. Dwa drenaże
+              Billingen: pierwszy ~13 000 BP (~10 m), ponowne zatamowanie w młodszym dryasie,
+              finalny <b>11 620–11 700 BP ze spadkiem 25–28 m</b>. Fazy morskie biorą poziom z GIA.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span><code>water.type</code>, <code>water.levelM</code>, <code>water.outlet</code> w każdej klatce</span></li>
+              <li><span>Fazy morskie z GIA, jeziorne z rzędnej progu</span></li>
+              <li><span>Czas trwania finalnego drenażu oznaczony jako <b>sporny</b></span></li></ul>
+            <p class="t-src">plan §2, §4.3 · labels: data-pipeline, regime-c</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 · EPIC C ② -->
+  <section class="slide" id="s9" aria-label="Epik C część 2">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>Epik C · postglacjał · zadania 7–12 z 12</div>
+      <h2 class="h-sec">Lód, chronologia, zasolenie i emisja</h2>
+      <div class="tasks">
+        <details class="task">
+          <summary><code class="t-id">C-07</code>
+            <span class="t-title">Assemble ice-sheet layer with uncertainty band
+              <span class="pl">Lądolód z pasem niepewności</span></span>
+            <span class="t-dep">← 0-05</span></summary>
+          <div class="t-body">
+            <p><b>Stroeven i in. 2016</b> (izochrony deglacjacji 22,0–9,7 ka cal BP) jako <b>geometria
+              wiodąca</b> — gęstsze niż DATED-1 i dokładniejsze w niecce bałtyckiej, więc decyduje
+              o momencie otwarcia Billingen. <b>DATED-1</b> jako pas min. / najbardziej prawdopodobny /
+              maks. przeniesiony <b>do danych</b>, nie do opisu. Grubość: kopuła 2500–3000 m w centrum
+              → 0 m na czole.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Warstwa <code>ice</code> w każdej klatce reżimu C</span></li>
+              <li><span><code>ice.interpolated: true</code> na każdej klatce interpolowanej</span></li>
+              <li><span><code>ice.band: "dated1"</code> z geometrią min. / maks. w danych</span></li>
+              <li><span><code>ice.source</code> zgodne z decyzją z <code>0-02</code></span></li></ul>
+            <p class="t-src">plan §3.3, §4.3 · labels: data-pipeline, regime-c</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">C-08</code>
+            <span class="t-title">Build timeline.json for the seven postglacial phases
+              <span class="pl">Os czasu siedmiu faz</span></span>
+            <span class="t-dep">← 0-06 · C-09</span></summary>
+          <div class="t-body">
+            <p>Siedem faz w <b>cal yr BP</b> (Present = 1950). <b>Andrén i in. 2011 jako źródło wiodące.</b>
+              Granica końca fazy ancylusowej jest podawana jako 9 800 <b>albo</b> 9 500 cal BP w zależności
+              od autora — <b>nie uśredniamy</b>; odstępstwa Björcka 1995/2008, Stroevena i in. 2016
+              i Uścinowicza 2014 zapisujemy w katalogu danych.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span><code>timeline.json</code>, 7 faz, każda granica z cytowaniem</span></li>
+              <li><span>Tabela odstępstw w <code>baltic-data-catalog.md</code></span></li>
+              <li><span>Zero uśrednionych granic</span></li></ul>
+            <p class="t-src">plan §2 · labels: contract, regime-c</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">C-09</code>
+            <span class="t-title">calibrate.py — IntCal20 recalibration of literature dates
+              <span class="pl">Kalibracja dat ¹⁴C do cal yr BP</span></span>
+            <span class="t-dep">← 0-04 · blokuje C-08</span></summary>
+          <div class="t-body">
+            <p>Wszystkie daty ¹⁴C ze starszej literatury muszą przejść kalibrację <b>IntCal20</b> —
+              bez tego daty z Björcka 1995 przesuwają się o <b>~1000–1500 lat</b> w późnym glacjale.
+              Trzymamy <b>obie</b> wartości plus użytą krzywą.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span><code>t14C</code>, <code>tBP</code> i <code>calCurve: "IntCal20"</code> w każdej klatce i karcie</span></li>
+              <li><span>Żadna data z literatury nie trafia do kontraktu bez kalibracji</span></li>
+              <li><span>Test na dacie referencyjnej z Björcka 1995</span></li></ul>
+            <p class="t-src">plan §2 · labels: data-pipeline, regime-c</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">C-10</code>
+            <span class="t-title">Model salinity regimes and sill states
+              <span class="pl">Zasolenie i stan progów per faza</span></span>
+            <span class="t-dep">← C-05</span></summary>
+          <div class="t-body">
+            <p>Klasa reżimu (słodki / słonawy / morski) per faza z <b>IODP Exp. 347, Site M0059</b>
+              (Kotthoff i in. 2022 — okrzemki, palinomorfy, geochemia; przejście do Littoriny
+              w <b>~200 lat około 7,4 ka cal BP</b>), plus stan każdego progu i profil przestrzenny
+              Cieśniny Duńskie → Basen Gotlandzki → Zatoka Botnicka. Podział basenów z HELCOM.</p>
+            <p><b>Dane sporne:</b> „12–18 PSU” dla zasolenia littorynowego to <b>górna granica
+              publikowanych wartości dla Bałtyku właściwego</b>. Wymaga rozbicia na baseny — nie wolno
+              podać jako jednej liczby dla całego morza.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span><code>salinity.class</code> + <code>psuRange</code> per basen per faza</span></li>
+              <li><span><code>psuRange</code> nigdy nie jest skalarem</span></li>
+              <li><span>Stan każdego progu spójny z klasą reżimu</span></li></ul>
+            <p class="t-src">plan §2, §3.3, §4.3 · labels: data-pipeline, regime-c</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">C-11</code>
+            <span class="t-title">Emit 41 postglacial frames and 6 event cross-sections
+              <span class="pl">Emisja 47 klatek reżimu C</span></span>
+            <span class="t-dep">← C-04 · C-06 · C-07 · C-08 · C-10</span></summary>
+          <div class="t-body">
+            <p>Jednolite <b>500 lat dla całego 20–0 ka</b> (41 klatek). Plan wejściowy proponował 1000 lat
+              dla 8–0 ka — odrzucone, bo transgresja littorynowa, formowanie mierzei i jezior
+              przybrzeżnych mieszczą się właśnie tam. Plus przekroje zdarzeniowe: przed i po drenażu
+              Billingen, maksimum ancylusowe, próg regresji ancylusowej, początek ingresji littorynowej,
+              maksimum littorynowe.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>47 klatek w <code>frames/postglacial/</code></span></li>
+              <li><span><code>dataQuality</code> w każdej klatce</span></li>
+              <li><span>Zrealizowane w kolejności dziś → 8 ka, potem fazy jeziorne</span></li></ul>
+            <p class="t-src">plan §1, §2 · labels: data-pipeline, regime-c</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">C-12</code>
+            <span class="t-title">curves.py — RSL, GMST/CO₂, uplift, LR04, basin metrics
+              <span class="pl">Pięć krzywych i metryki bilansowe</span></span>
+            <span class="t-dep">← C-03</span></summary>
+          <div class="t-body">
+            <p><code>rsl-sites</code> (Rosentau i in. 2021 — 1099 wskaźników, format HOLSEA, 3 klastry),
+              <code>gmst-co2</code> (PhanDA — percentyle 5/16/50/84/95), <code>uplift-nkg</code>
+              (NKG2016LU), <code>lr04</code> (Lisiecki &amp; Raymo 2005), <code>basin-metrics</code>.</p>
+            <p><b>Metryki bilansowe</b> per przekrój: powierzchnia (km²), objętość (km³), średnia
+              i maksymalna głębokość, szacowany czas wymiany wód. Niemal darmowe, a dają cztery dodatkowe
+              krzywe i kontrolę sensowności.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Pięć plików w <code>curves/</code></span></li>
+              <li><span><code>metrics</code> wypełnione w każdej klatce reżimów A, C i D</span></li>
+              <li><span>Percentyle PhanDA zachowane, nie spłaszczone do mediany</span></li></ul>
+            <p class="t-src">plan §3, §4.4, §5 · labels: data-pipeline, regime-c</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · EPIC A -->
+  <section class="slide" id="s10" aria-label="Epik A — fanerozoik">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>Epik A · fanerozoik · 3 zadania</div>
+      <h2 class="h-sec">Baltika wędrowała — stałe okno pokazałoby inny fragment Ziemi</h2>
+      <p class="lead">W pełni niezależny pipeline. Można prowadzić równolegle do całego reżimu C,
+        bo jedyną zależnością jest <code>0-05</code>.</p>
+      <div class="tasks">
+        <details class="task">
+          <summary><code class="t-id">A-01</code>
+            <span class="t-title">Reconstruct ROI by plate rotation, not a fixed window
+              <span class="pl">Rekonstrukcja regionu przez rotację płyt</span></span>
+            <span class="t-dep">← 0-05</span></summary>
+          <div class="t-body">
+            <p>Najczęstszy błąd przy głębokim czasie: wycięcie stałego okna lat/lon z globalnej siatki.
+              <b>Baltika wędrowała</b> — w kambrze leżała na półkuli południowej.</p>
+            <p>Kroki: (1) poligon ROI — dzisiejsza misa plus otaczający kraton — z przypisanym
+              <b>plate ID</b> Baltiki; (2) dla każdego kroku 5 Ma odwrotna rotacja ROI do pozycji paleo
+              (pyGPlates / gplately lokalnie, GWS <code>gws.gplates.org</code> jako fallback);
+              (3) rotacje z Merdith i in. 2021 (1000–410 Ma) + Müller i in. 2019.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Trajektoria ROI dla wszystkich ~108 kroków</span></li>
+              <li><span>Udokumentowany plate ID i model rotacji per przedział czasu</span></li>
+              <li><span>Fallback na GWS przetestowany</span></li></ul>
+            <p class="t-src">plan §3.1, §4.1 · labels: data-pipeline, regime-a</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">A-02</code>
+            <span class="t-title">Clip PaleoDEM and PaleoCoastlines per 5 Ma step
+              <span class="pl">108 klatek fanerozoiku z metrykami</span></span>
+            <span class="t-dep">← A-01 · 0-06</span></summary>
+          <div class="t-body">
+            <p>PALEOMAP PaleoDEMs (Scotese &amp; Wright 2018, 117 siatek, netCDF 0,1°) + PaleoCoastlines
+              v7 (Kocsis &amp; Scotese 2020, krawędź szelfu = <b>izobata −1400 m</b>) dla <b>tych samych
+              kroków</b> — spójne, bo liczone z tych samych DEM-ów. Metryki na klatkę: paleoszerokość
+              centroidu, udział powierzchni zalanej, średnia głębokość.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>~108 klatek w <code>frames/phanerozoic/</code></span></li>
+              <li><span><code>tMa</code> zamiast <code>tBP</code>, <code>regime: "phanerozoic"</code></span></li>
+              <li><span>EPSG:4326 i trzy metryki w każdej klatce</span></li></ul>
+            <p class="t-src">plan §3.1, §4.1 · labels: data-pipeline, regime-a</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">A-03</code>
+            <span class="t-title">Author regime-A event cards by hand
+              <span class="pl">Karty zdarzeń kamienistych, opisane ręcznie</span></span>
+            <span class="t-dep">← 0-03</span></summary>
+          <div class="t-body">
+            <p>Zdarzenia opisane ręcznie z cytowaniami, <b>nie generowane</b>: Morze Tornquista i Iapetus,
+              kambryjsko-sylurska pokrywa epikontynentalna, orogeneza kaledońska (~430–400 Ma,
+              Baltika + Laurencja → Laurussia), dewoński Old Red, permski Zechstein, subsydencja
+              i inwersja bruzdy śródpolskiej, kenozoiczne wypiętrzenie Fennoskandii.</p>
+            <p><b>Uczciwość w tym reżimie jest wymogiem, nie ozdobą.</b> Pokazujemy region, nie morze.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Karty w <code>events.json</code> z odsyłaczami do <code>sources.json</code></span></li>
+              <li><span><b>Zero</b> wystąpień „Bałtyk” / „Baltic Sea” w treści reżimu A</span></li>
+              <li><span>Każda karta w EN i PL</span></li></ul>
+            <p class="t-src">plan §3.1, §1 · labels: regime-a, docs</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 · EPIC B -->
+  <section class="slide" id="s11" aria-label="Epik B — czwartorzęd">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>Epik B · czwartorzęd · 1 zadanie</div>
+      <h2 class="h-sec">Luka danych, pokazana jako luka</h2>
+      <div class="tasks">
+        <details class="task" open>
+          <summary><code class="t-id">B-01</code>
+            <span class="t-title">Ship regime B as an explicit data gap, not fake frames
+              <span class="pl">Reżim B jako jawna luka, bez udawanych klatek</span></span>
+            <span class="t-dep">← 0-06 · C-12</span></summary>
+          <div class="t-body">
+            <p>Brak rekonstrukcji GIS w tej rozdzielczości. Bez klatek paleogeograficznych.
+              Produkt: 8–12 kart + krzywa LR04 + 2–3 mapy schematyczne.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span><code>regime: "quaternary"</code> i <code>dataQuality: "qualitative"</code> na każdej karcie</span></li>
+              <li><span><b>Zero</b> klatek paleogeograficznych w tym reżimie</span></li>
+              <li><span>Niedobór danych widoczny w UI, nie tylko w kontrakcie</span></li></ul>
+            <p class="t-src">plan §1, §3.2, §4.2 · labels: regime-b, docs</p>
+          </div>
+        </details>
+      </div>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th>Treść</th><th>Źródło</th><th>Co z tego wynika</th></tr></thead>
+          <tbody>
+            <tr><td><b>Cykle glacjalne δ¹⁸O</b></td><td class="m">stos bentoniczny LR04<br>Lisiecki &amp; Raymo 2005</td>
+              <td>Jedyna gęsta, ciągła krzywa dla tego reżimu — oś, na której wiszą karty.</td></tr>
+            <tr><td><b>Geneza misy bałtyckiej</b></td><td class="m">GFF 2020<br>10.1080/11035897.2020.1781246</td>
+              <td>Erozja ostatniego 1 Ma: ~20 m w podłożu krystalicznym, ~40 m w osadowym.
+                Rynna Landsort <b>459 m</b>, strop skalny <b>518 m</b>.</td></tr>
+            <tr><td><b>Morze Eemskie</b><br>~130–115 ka</td><td class="m">Gibbard i in. 2026, Boreas<br>EGQSJ 73, 217 (2024)</td>
+              <td>Mapy schematyczne, <b>brak gotowych warstw GIS</b> — stąd flaga <code>qualitative</code>.</td></tr>
+            <tr><td><b>System rzeczny Eridanos</b><br>12 Ma → ~1 Ma</td><td class="m">literatura o delcie Eridanos<br>basen Morza Północnego</td>
+              <td><b>Najlepszy pomost narracyjny A→C</b>: rzeka drenująca tarczę przez dzisiejszą misę;
+                zanik ~1 Ma, gdy lądolody wyorały misę.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="callout"><b>Uczciwość w reżimie B jest wymogiem, nie ozdobą.</b> Trzeba oznaczyć niedobór
+        danych flagą <code>dataQuality</code>, inaczej aplikacja sugeruje precyzję, której źródła nie mają.</p>
+    </div>
+  </section>
+
+  <!-- 12 · EPIC D -->
+  <section class="slide" id="s12" aria-label="Epik D — mikroskala">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>Epik D · mikroskala · 6 zadań</div>
+      <h2 class="h-sec">Cztery wybrzeża, cztery układy wysokościowe</h2>
+      <p class="lead">Kolejność <b>PL → DK → SE → EE</b> — malejąca dostępność gotowych rekonstrukcji.
+        Każdy region to zamknięta porcja pracy; przerwanie po dowolnym zostawia spójny produkt.</p>
+      <div class="tasks">
+        <details class="task" data-block="1">
+          <summary><code class="t-id">D-01</code>
+            <span class="t-title">Harmonise four height datums to EVRF2007
+              <span class="pl">Harmonizacja układów wysokościowych</span></span>
+            <span class="t-dep block">blokuje D-02…D-05 · V-10</span></summary>
+          <div class="t-body">
+            <p>Łatwy do przeoczenia blocker. Cztery kraje, cztery układy wysokościowe
+              (<b>PL-EVRF2007-NH, RH 2000, EH2000, DVR90</b>) i cztery CRS
+              (<b>EPSG:2180, 3006, 3301, 25832</b>). Wszystko musi przejść na <b>EVRF2007 / EVRS</b>
+              przed jakimkolwiek porównaniem z wyjściem modelu GIA. Rozbieżności między datami
+              to dziesiątki centymetrów — przy wybrzeżu płaskim, jak polskie, to <b>metry linii brzegowej</b>.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Transformacje <code>pyproj</code> udokumentowane per kraj, z wersją siatki</span></li>
+              <li><span>Test spójności szwów (<code>V-10</code>) przechodzi</span></li>
+              <li><span>~10 klatek na region, nie 41</span></li></ul>
+            <p class="t-src">plan §3.4 · labels: blocker, data-pipeline, regime-d</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">D-02</code>
+            <span class="t-title">Region PL — Polish coast
+              <span class="pl">GUGiK ISOK 1/5 m · EPSG:2180 / PL-EVRF2007-NH</span></span>
+            <span class="t-dep">← D-01 · blokuje V-04</span></summary>
+          <div class="t-body">
+            <p>Paleogeografia i RSL: Uścinowicz 2003, 2006, 2014; Sydor &amp; Uścinowicz 2022
+              (Zalew Szczeciński, Zatoka Pomorska); PIG-PIB. Formy: <b>Ławica Słupska i Odrzańska,
+              Mierzeja Helska i Wiślana, Zalew Szczeciński, Łebsko i Gardno</b>.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>~10 klatek w <code>frames/regional/pl/</code></span></li>
+              <li><span>Wszystkie formy z listy obecne w co najmniej jednej klatce</span></li>
+              <li><span>Krzywa RSL dla polskiego brzegu w <code>curves/rsl-sites</code></span></li></ul>
+            <p class="t-src">plan §3.4 · labels: regime-d</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">D-03</code>
+            <span class="t-title">Region DK — Danish straits
+              <span class="pl">DHM/Terræn 0,4 m · EPSG:25832 / DVR90</span></span>
+            <span class="t-dep">← D-01</span></summary>
+          <div class="t-body">
+            <p>Paleogeografia i RSL: Bennike &amp; Jensen; GEUS. Formy: <b>otwieranie Wielkiego Bełtu
+              i Øresundu</b> — te same progi, które <code>C-05</code> trzyma w katalogu, więc oba
+              zadania muszą podawać te same rzędne.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>~10 klatek w <code>frames/regional/dk/</code></span></li>
+              <li><span>Momenty otwarcia progów spójne z <code>sills.json</code></span></li></ul>
+            <p class="t-src">plan §3.4 · labels: regime-d</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">D-04</code>
+            <span class="t-title">Region SE — Swedish coast and Billingen corridor
+              <span class="pl">Lantmäteriet 2 m · EPSG:3006 / RH 2000</span></span>
+            <span class="t-dep">← D-01</span></summary>
+          <div class="t-body">
+            <p>SGU Strandförskjutningsmodell; Påsse &amp; Andersson. Formy: <b>wynurzanie szkierów,
+              Höga Kusten</b>.</p>
+            <p><b>Ten region zasila reżim C.</b> SGU Strandförskjutningsmodell obejmuje Cieśninę Närke
+              i korytarz Billingen — a luka bazy Rosentaua jest właśnie w Szwecji. Kolejność
+              PL → DK → SE → EE jest słuszna pod kątem dostępności rekonstrukcji, ale jeśli
+              <code>V-02</code> / <code>V-03</code> wykażą problem w fazach jeziornych,
+              <b>SE trzeba podciągnąć do przodu</b>.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>~10 klatek w <code>frames/regional/se/</code></span></li>
+              <li><span>Rzędne progów Närke i Billingen z SGU przeniesione do <code>sills.json</code></span></li></ul>
+            <p class="t-src">plan §3.3, §3.4 · labels: regime-d</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">D-05</code>
+            <span class="t-title">Region EE — Estonian coast
+              <span class="pl">Maa-amet LiDAR 1/5 m · EPSG:3301 / EH2000</span></span>
+            <span class="t-dep">← D-01</span></summary>
+          <div class="t-body">
+            <p>Rekonstrukcje Rosentaua i zespołu z Tartu (SW Estonia, Pärnu).
+              Formy: <b>Zatoka Pärnu, Sõrve</b>.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>~10 klatek w <code>frames/regional/ee/</code></span></li>
+              <li><span>Spójność z punktami RSL Rosentaua dla SW Estonii</span></li></ul>
+            <p class="t-src">plan §3.4 · labels: regime-d</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">D-06</code>
+            <span class="t-title">Submerged relict forests as RSL control points
+              <span class="pl">Zatopione lasy jako punktowe wskaźniki RSL</span></span>
+            <span class="t-dep">← D-02 · blokuje V-05</span></summary>
+          <div class="t-body">
+            <p>Pnie sosen i dębów <b>in situ</b> na 15–30 m w rejonie Czołpina, Rowów, Zatoki Gdańskiej
+              i Puckiej, datowane ¹⁴C na <b>10 500–8 500 cal BP</b>. Pełnią <b>podwójną rolę</b>:
+              są treścią narracyjną i jednocześnie punktowymi wskaźnikami RSL do walidacji paleo-DEM-u.</p>
+            <p>To jedyny element „człowiek i środowisko”, który wchodzi do zakresu — i wchodzi
+              jako dane walidacyjne. Baza SPLASHCOS jako punkt wejścia (projekt SUBLAND —
+              dostępność do weryfikacji).</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Punkty z datowaniem, głębokością i źródłem w <code>curves/rsl-sites</code></span></li>
+              <li><span>Daty skalibrowane IntCal20</span></li>
+              <li><span>Zasila test <code>V-05</code></span></li></ul>
+            <p class="t-src">plan §3.4 · labels: regime-d, validation</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 · EPIC V ① -->
+  <section class="slide" id="s13" aria-label="Epik V część 1">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>Epik V · walidacja · testy 1–6 z 12</div>
+      <h2 class="h-sec">Raport kończący się błędem, nie ostrzeżeniem</h2>
+      <div class="tasks">
+        <details class="task">
+          <summary><code class="t-id">V-01</code>
+            <span class="t-title">validate.py skeleton and CI gate
+              <span class="pl">Szkielet walidatora i bramka w CI</span></span>
+            <span class="t-dep">← 0-04 · 0-06</span></summary>
+          <div class="t-body">
+            <p>Rejestr testów z progami, uruchamiany z <code>npm run data:build</code>.
+              Niezaliczony test o statusie <code>blocking</code> przerywa build.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Raport w czytelnej formie — tabela per test, per reżim</span></li>
+              <li><span>Rozdzielenie statusów <code>blocking</code> / <code>warning</code></span></li></ul>
+            <p class="t-src">plan §7 · labels: validation, ci</p>
+          </div>
+        </details>
+
+        <details class="task" data-block="1">
+          <summary><code class="t-id">V-02</code>
+            <span class="t-title">Sill-check — elevation balance at every sill
+              <span class="pl">Bilans wysokościowy na progach</span></span>
+            <span class="t-dep block">← V-01 · C-05 · C-06</span></summary>
+          <div class="t-body">
+            <p>Dla każdego przekroju sprawdzić, czy rzędna progu zgadza się z kierunkiem przepływu:
+              <b>jezioro zaporowe wymaga progu powyżej</b> ówczesnego poziomu oceanu,
+              <b>połączenie morskie poniżej</b>.</p>
+            <p>Test wewnętrznie spójnościowy — nie wymaga danych zewnętrznych, a wyłapuje <b>ilościowo</b>
+              dokładnie tę klasę błędu, która jest tu najgroźniejsza: podwójne liczenie eustatyki (§0.1)
+              i pomylony datum (§0.2). <b>Najwyższy priorytet w epiku.</b></p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Uruchamiany dla wszystkich progów, wszystkich przekrojów</span></li>
+              <li><span>Status <code>blocking</code></span></li>
+              <li><span>Test negatywny: celowo zepsuta formuła musi go wywalić</span></li></ul>
+            <p class="t-src">plan §7, §0.1, §0.2 · labels: blocker, validation</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">V-03</code>
+            <span class="t-title">RSL versus Rosentau et al. 2021 — RMSE per region per cluster
+              <span class="pl">Jedyna ilościowa walidacja w planie</span></span>
+            <span class="t-dep">← V-01 · C-12</span></summary>
+          <div class="t-body">
+            <p>Policzony poziom w punktach bazy Rosentau i in. 2021 (<b>1099 wskaźników</b>,
+              GFZ 10.5880/GFZ.1.3.2020.003) vs wartości zmierzone. <b>RMSE raportowane per region</b>,
+              osobno dla trzech klastrów bazy: regresja / transgresja / przejściowe.</p>
+            <p><b>To jedyna ilościowa walidacja w całym planie.</b> Bez niej zostaje
+              „zgodność z syntezami”.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>RMSE per region × per klaster w raporcie</span></li>
+              <li><span>Ustalony i uzasadniony próg akceptacji</span></li>
+              <li><span>Rozkład reszt, nie tylko liczba zbiorcza</span></li></ul>
+            <p class="t-src">plan §7 · labels: validation</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">V-04</code>
+            <span class="t-title">Polish coast curve versus Uścinowicz
+              <span class="pl">Trzy wahania i dwa punkty kontrolne</span></span>
+            <span class="t-dep">← V-01 · D-02</span></summary>
+          <div class="t-body">
+            <p>Oczekiwane: <b>trzy wahania o amplitudzie 25–27 m</b> między 13,0 i 8,5 ka BP,
+              poziom <b>~−28 m</b> przy trwałym połączeniu z oceanem w ~8,5 ka BP,
+              <b>~−10 m</b> w 7,0 ka BP.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Trzy wahania odtworzone z amplitudą w tolerancji</span></li>
+              <li><span>Dwa punkty kontrolne zaliczone</span></li></ul>
+            <p class="t-src">plan §7 · labels: validation</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">V-05</code>
+            <span class="t-title">Submerged forests as control points
+              <span class="pl">Pień rosnący pod wodą oznacza błąd modelu</span></span>
+            <span class="t-dep">← V-01 · D-06</span></summary>
+          <div class="t-body">
+            <p>Dla każdego datowanego pnia in situ: paleo-DEM w tym punkcie i czasie musi dawać
+              powierzchnię <b>powyżej</b> poziomu wody. Warunek zero-jedynkowy, nie statystyczny.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Test dla wszystkich punktów z <code>D-06</code></span></li>
+              <li><span>Status <code>blocking</code></span></li></ul>
+            <p class="t-src">plan §7 · labels: validation</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">V-06</code>
+            <span class="t-title">Event checks
+              <span class="pl">Trzy kontrolki zdarzeniowe</span></span>
+            <span class="t-dep">← V-01 · C-06 · C-10</span></summary>
+          <div class="t-body">
+            <ul class="dod">
+              <li><span>Spadek Billingen <b>25–28 m</b></span></li>
+              <li><span>Środkowoholoceński highstand w strefach przejściowych w <b>7,5–6,5 ka BP</b></span></li>
+              <li><span>Przejście do Littoriny w Małym Bełcie <b>~7,4 ka cal BP</b></span></li>
+              <li><span>Odchylenie raportowane liczbowo, nie binarnie</span></li></ul>
+            <p class="t-src">plan §7 · labels: validation</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 14 · EPIC V ② -->
+  <section class="slide" id="s14" aria-label="Epik V część 2">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>Epik V · walidacja · testy 7–12 z 12</div>
+      <h2 class="h-sec">Kontrole niezależne od własnego modelu</h2>
+      <div class="tasks">
+        <details class="task">
+          <summary><code class="t-id">V-07</code>
+            <span class="t-title">Build taxa.json and validate salinity against species tolerances
+              <span class="pl">Gatunki wskaźnikowe jako niezależna kontrola</span></span>
+            <span class="t-dep">← V-01 · C-10 · 0-06</span></summary>
+          <div class="t-body">
+            <p><em>Portlandia (Yoldia) arctica</em>, <em>Ancylus fluviatilis</em>, okrzemki
+              <em>Mastogloia</em>, <em>Littorina littorea</em>, <em>Limnaea (Radix) balthica</em>,
+              <em>Mya arenaria</em>. Rekonstruowane zasolenie w miejscu i czasie wystąpienia gatunku
+              musi mieścić się w jego tolerancji.</p>
+            <p><b>Sporne, do oznaczenia:</b> zawleczenie <em>Mya arenaria</em> — datowania muszli
+              z Danii wskazują <b>~1245–1295 n.e.</b> (hipoteza nordycka), <b>nie</b> XVI/XVII w.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span><code>taxa.json</code>: tolerancja zasolenia i temperatury per gatunek, ze źródłem</span></li>
+              <li><span>Test zgodności dla każdego udokumentowanego wystąpienia</span></li>
+              <li><span><em>Mya arenaria</em> z flagą sporności i oboma datowaniami</span></li></ul>
+            <p class="t-src">plan §3.3, §7, §2 · labels: validation, contract</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">V-08</code>
+            <span class="t-title">Present-day uplift gradient versus NKG2016LU
+              <span class="pl">Współczesne wypiętrzanie jako kontrola GIA</span></span>
+            <span class="t-dep">← V-01 · C-12</span></summary>
+          <div class="t-body">
+            <p>Gradient z modelu GIA vs NKG2016LU: maks. <b>~10,3 mm/rok przy Umeå</b>,
+              <b>linia zerowa na wybrzeżu Niemiec i Polski</b>.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Oba punkty kontrolne zaliczone z tolerancją</span></li>
+              <li><span>Mapa reszt gradientu w raporcie</span></li></ul>
+            <p class="t-src">plan §7 · labels: validation</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">V-09</code>
+            <span class="t-title">Regime A sanity check
+              <span class="pl">Paleoszerokość i spójność linii brzegowej</span></span>
+            <span class="t-dep">← V-01 · A-02</span></summary>
+          <div class="t-body">
+            <ul class="dod">
+              <li><span>Paleoszerokość centroidu ROI vs dane paleomagnetyczne dla Baltiki</span></li>
+              <li><span>Linia brzegowa z PaleoCoastlines spójna z izobatą 0 m z PaleoDEM</span></li>
+              <li><span>Rozbieżność raportowana per krok 5 Ma</span></li></ul>
+            <p class="t-src">plan §7 · labels: validation, regime-a</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">V-10</code>
+            <span class="t-title">Regime D seam consistency
+              <span class="pl">Spójność szwów — diagnostyka datum</span></span>
+            <span class="t-dep">← V-01 · D-01</span></summary>
+          <div class="t-body">
+            <p>Linia brzegowa wstawki krajowej na granicy z reżimem C nie może odbiegać bardziej niż
+              o uzgodnioną tolerancję. <b>Rozjazd oznacza niezharmonizowany datum wysokościowy</b> —
+              ten test jest diagnostyką <code>D-01</code>, nie geometrii.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Test dla każdego z czterech regionów</span></li>
+              <li><span>Tolerancja ustalona i uzasadniona</span></li>
+              <li><span>Komunikat błędu wskazuje na datum, nie na geometrię</span></li></ul>
+            <p class="t-src">plan §7 · labels: validation, regime-d</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">V-11</code>
+            <span class="t-title">Topology, CRS and asset-budget gate
+              <span class="pl">Topologia, CRS i budżet 25 / 4 MB</span></span>
+            <span class="t-dep">← V-01 · I-01</span></summary>
+          <div class="t-body">
+            <p>Geometrie poprawne (brak samoprzecięć), spójny CRS, <b>suma assetów ≤ 25 MB</b>,
+              <b>pierwszy chunk ≤ 4 MB</b>, sumy kontrolne w <code>manifest.json</code> zgodne.
+              Deploy idzie na GitHub Pages, więc rozmiar jest realnym ograniczeniem — pilnowanym w CI,
+              nie w dobrych intencjach.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Bramka w CI, status <code>blocking</code></span></li>
+              <li><span>Raport rozmiaru per chunk per reżim</span></li></ul>
+            <p class="t-src">plan §5, §7 · labels: validation, ci</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">V-12</code>
+            <span class="t-title">Visual overlay control
+              <span class="pl">Nakładki na niezależną implementację</span></span>
+            <span class="t-dep">← V-01 · C-11 · C-08</span></summary>
+          <div class="t-body">
+            <p>Nałożenie klatek na mapy etapów z <b>Björcka 1995 / Andréna i in. 2011</b>
+              dla 11,7 / 11,1 / 10,5 ka BP oraz na paleo-DEM-y z <b>ESD 16, 585 (2025)</b> —
+              niezależną implementację tej samej metody (paleo-DEM-y co 500 lat na GEBCO_2023
+              z korektą ancylusową za Uścinowiczem, CC BY).</p>
+            <p>Skoro ESD 2025 to ta sama metoda liczona niezależnie, <b>rozbieżność linii brzegowej
+              większa niż kilka kilometrów oznacza błąd u nas</b>.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Nakładki dla trzech przekrojów kontrolnych</span></li>
+              <li><span>Rozbieżność zmierzona liczbowo, nie oceniona wzrokowo</span></li>
+              <li><span>Wynik w raporcie, nie tylko jako obrazek</span></li></ul>
+            <p class="t-src">plan §7 · labels: validation</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 15 · EPIC I -->
+  <section class="slide" id="s15" aria-label="Epik I — kontrakt i integracja">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>Epik I · kontrakt i integracja · 4 zadania</div>
+      <h2 class="h-sec">Od klatek do aplikacji</h2>
+      <div class="tasks">
+        <details class="task">
+          <summary><code class="t-id">I-01</code>
+            <span class="t-title">emit.py — TopoJSON, not rasters
+              <span class="pl">Wektor zamiast rastra, bo raster to nie aplikacja webowa</span></span>
+            <span class="t-dep">← C-11</span></summary>
+          <div class="t-body">
+            <p>Plan wejściowy proponował wystawić rastrowe „Paleo-DEM Time Slices / Delta Grids”
+              jako artefakt runtime'owy. W zakresie 9–33°E / 53–67°N przy rozdzielczości EMODnet (~115 m)
+              to siatka rzędu <b>20 000 × 15 000 komórek na przekrój</b> — przy ~47 przekrojach
+              to nie jest aplikacja webowa.</p>
+            <p>Obowiązuje: warstwy <code>land / water / ice / lake / rivers</code> jako kwantyzowany,
+              uproszczony TopoJSON; raster (hipsometria) tylko jako opcjonalny, leniwy chunk
+              w obniżonej rozdzielczości.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Kwantyzacja i uproszczenie z parametrami w <code>manifest.json</code></span></li>
+              <li><span>Brak rastrów w ścieżce krytycznej ładowania</span></li>
+              <li><span>Topologia poprawna po uproszczeniu</span></li></ul>
+            <p class="t-src">plan §5 · labels: data-pipeline, contract</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">I-02</code>
+            <span class="t-title">Wire src/assets/data into the app with lazy per-regime chunks
+              <span class="pl">Leniwe chunki per reżim i region</span></span>
+            <span class="t-dep">← I-01</span></summary>
+          <div class="t-body">
+            <p>Chunki <b>per reżim i per region</b>, ładowane leniwie — nikt nie potrzebuje 108 klatek
+              fanerozoiku ani czterech wybrzeży na starcie. Serwis ładujący reaktywnie (sygnały),
+              z mapą chunków z <code>manifest.json</code> i kontrolą <code>schemaVersion</code>.
+              Układ zgodny z <code>AGENTS.md</code> §2: oś czasu w dolnym docku, przełącznik reżimów
+              w prawym górnym.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Pierwsze wejście ładuje <b>≤ 4 MB</b></span></li>
+              <li><span>Przełączenie reżimu dociąga chunk bez blokowania wizualizacji</span></li>
+              <li><span>Niezgodny <code>schemaVersion</code> daje czytelny błąd, nie pustą scenę</span></li></ul>
+            <p class="t-src">plan §5 · labels: app</p>
+          </div>
+        </details>
+
+        <details class="task" data-block="1">
+          <summary><code class="t-id">I-03</code>
+            <span class="t-title">i18n — ids in data, long-form content in assets/content
+              <span class="pl">Dane noszą identyfikatory, teksty żyją osobno</span></span>
+            <span class="t-dep block">← 0-06 · start najwcześniej</span></summary>
+          <div class="t-body">
+            <p><code>AGENTS.md</code> wymaga <b>zera zahardkodowanych stringów</b> i równoległości EN/PL,
+              ale ~150 kart zdarzeń, progów i taksonów rozsadziłoby <code>en.ts</code> / <code>pl.ts</code>.</p>
+            <p>Obowiązuje: <b>dane noszą wyłącznie identyfikatory</b>. Chrome UI zostaje w <code>Dict</code> —
+              najpierw <code>i18n.types.ts</code>, żeby TypeScript wymusił kompletność, potem
+              <code>en.ts</code> i <code>pl.ts</code> <b>jednocześnie</b>. Długie teksty idą
+              do <code>src/assets/content/{en,pl}/*.json</code>, ładowane reaktywnie na podstawie
+              sygnału <code>lang</code>.</p>
+            <p><b>content/{lang}/ od pierwszego commita, nie na końcu.</b> Dorabianie równoległości EN/PL
+              po napisaniu 150 kart to przepisywanie, nie uzupełnianie.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span><b>Brak tłumaczenia = błąd builda</b> (test pokrycia kluczy EN↔PL)</span></li>
+              <li><span>Zero stringów użytkownika w <code>.ts</code> i <code>.html</code> poza <code>Dict</code></span></li>
+              <li><span>Canvas / WebGL używa <code>i18n.t()</code> i <code>ThemeService.getFontFamily()</code></span></li></ul>
+            <p class="t-src">plan §5, §8 · AGENTS.md §1, §4 · labels: blocker, i18n</p>
+          </div>
+        </details>
+
+        <details class="task">
+          <summary><code class="t-id">I-04</code>
+            <span class="t-title">sources.json and the Sources panel
+              <span class="pl">Panel źródeł — warunek legalności publikacji</span></span>
+            <span class="t-dep">← 0-03</span></summary>
+          <div class="t-body">
+            <p><code>sources.json</code> jest <b>obowiązkowy, nie kosmetyczny</b> — niemal każdy zbiór
+              to CC BY, co nakłada wymóg atrybucji. Ten plik napędza panel „Źródła” i jest
+              <b>warunkiem legalności publikacji</b>. Generowany z <code>SOURCES.md</code>,
+              panel w dolnym docku przez <code>PopupService</code>.</p>
+            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
+              <li><span>Każda pozycja z <code>SOURCES.md</code> obecna w panelu z pełną atrybucją</span></li>
+              <li><span>Każda karta zdarzenia linkuje do co najmniej jednego źródła</span></li>
+              <li><span>Test: żadne <code>sources: []</code> w kontrakcie</span></li></ul>
+            <p class="t-src">plan §5, §9 · labels: app, licensing</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 16 · roadmapa -->
+  <section class="slide" id="s16" aria-label="Roadmapa">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>06 · Roadmapa · §6</div>
+      <h2 class="h-sec">Osiem kamieni milowych, zero dat</h2>
+      <p class="lead">Plan nie zawiera estymacji czasowych, więc roadmapa jest kolejnością i bramkami —
+        nie Ganttem z wymyślonymi tygodniami.</p>
+      <div class="ms">
+        <div class="ms-row ms-head"><span>#</span><span>Kamień</span><span>Zadania</span><span>Bramka wyjścia</span></div>
+        <div class="ms-row"><span class="ms-k">M1</span><span class="ms-n">Pipeline stoi</span>
+          <span class="ms-t">0-01…0-06</span><span class="ms-g"><code>npm run data:build</code> przechodzi na puste wyjście</span></div>
+        <div class="ms-row"><span class="ms-k">M2</span><span class="ms-n">Dziś → 8 ka</span>
+          <span class="ms-t">C-01 · C-02 · C-03 · C-07</span><span class="ms-g">klatki morskie z zapisanym <code>datum</code></span></div>
+        <div class="ms-row" data-star="1"><span class="ms-k">★ M3</span><span class="ms-n">Pierwsza działająca aplikacja</span>
+          <span class="ms-t">C-11 (część) · I-01 · I-02 · I-03</span><span class="ms-g">oś czasu klikalna, ≤ 4 MB przy wejściu</span></div>
+        <div class="ms-row"><span class="ms-k">M4</span><span class="ms-n">Fazy jeziorne</span>
+          <span class="ms-t">C-05 · C-06 · C-04</span><span class="ms-g">BIL i Ancylus z poziomem z progu, nie z eustatyki</span></div>
+        <div class="ms-row"><span class="ms-k">M5</span><span class="ms-n">Walidacja ilościowa</span>
+          <span class="ms-t">V-01 · V-02 · V-03 · V-11</span><span class="ms-g">sill-check zielony, RMSE w progu, budżet trzyma</span></div>
+        <div class="ms-row"><span class="ms-k">M6</span><span class="ms-n">Fanerozoik</span>
+          <span class="ms-t">A-01…A-03 · V-09</span><span class="ms-g">108 klatek, zero „Bałtyku” przed 1 Ma</span></div>
+        <div class="ms-row"><span class="ms-k">M7</span><span class="ms-n">Cztery wybrzeża</span>
+          <span class="ms-t">D-01…D-06 · V-04 · V-05 · V-10</span><span class="ms-g">szwy w tolerancji, lasy nad wodą</span></div>
+        <div class="ms-row"><span class="ms-k">M8</span><span class="ms-n">Domknięcie</span>
+          <span class="ms-t">B-01 · I-04 · V-06…V-08 · V-12</span><span class="ms-g">panel źródeł, nakładki kontrolne</span></div>
+      </div>
+      <p class="callout"><b>M3 jest celem, nie etapem.</b> Kolejność prac z §6 jest dobrana tak,
+        by działająca aplikacja powstała <b>przed</b> ukończeniem całości — reżim C liczony
+        od końca ku początkowi istnieje właśnie po to.</p>
+    </div>
+  </section>
+
+  <!-- 17 · graf -->
+  <section class="slide" id="s17" aria-label="Graf zależności">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>07 · Zależności</div>
+      <h2 class="h-sec">Kręgosłup sekwencyjny i trzy wejścia blokujące</h2>
+      <figure class="figure">
+        <div class="fig-scroll">
+          <svg class="fig-svg" viewBox="0 0 1000 306" role="img"
+            aria-label="Graf zależności: kręgosłup od 0-01 do I-02, z blokerami 0-02 i 0-06 oraz gałęzią progów C-05, C-06 i testem V-02">
+            <defs>
+              <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="#7b8798"/>
+              </marker>
+              <marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="#b3261e"/>
+              </marker>
+            </defs>
+            <!-- spine edges -->
+            <g stroke="#7b8798" stroke-width="1.4" marker-end="url(#ar)" fill="none">
+              <line x1="120" y1="127" x2="138" y2="127"/>
+              <line x1="212" y1="127" x2="230" y2="127"/>
+              <line x1="304" y1="127" x2="322" y2="127"/>
+              <line x1="396" y1="127" x2="414" y2="127"/>
+              <line x1="488" y1="127" x2="506" y2="127"/>
+              <line x1="580" y1="127" x2="598" y2="127"/>
+              <line x1="672" y1="127" x2="690" y2="127"/>
+              <line x1="764" y1="127" x2="782" y2="127"/>
+              <line x1="856" y1="127" x2="874" y2="127"/>
+            </g>
+            <!-- blocker edges -->
+            <g stroke="#b3261e" stroke-width="1.4" marker-end="url(#arb)" fill="none">
+              <path d="M453 72 L520 108"/>
+              <path d="M545 72 L545 108"/>
+            </g>
+            <!-- sill edges -->
+            <g stroke="#7b8798" stroke-width="1.4" marker-end="url(#ar)" fill="none">
+              <line x1="637" y1="182" x2="637" y2="148"/>
+              <line x1="672" y1="199" x2="690" y2="199"/>
+              <path d="M729 182 L660 150"/>
+              <path d="M620 216 L580 244"/>
+              <path d="M712 216 L600 246"/>
+            </g>
+            <!-- spine nodes -->
+            <g>
+              <g font-family="JetBrains Mono, monospace" font-size="12" font-weight="700" text-anchor="middle">
+                <rect x="50"  y="110" width="70" height="34" rx="7" fill="#ffffff" stroke="#b3261e" stroke-width="1.6"/>
+                <text x="85"  y="131" fill="#b3261e">0-01</text>
+                <rect x="142" y="110" width="70" height="34" rx="7" fill="#ffffff" stroke="#d8e0ea"/>
+                <text x="177" y="131" fill="#11161d">0-04</text>
+                <rect x="234" y="110" width="70" height="34" rx="7" fill="#ffffff" stroke="#d8e0ea"/>
+                <text x="269" y="131" fill="#11161d">0-05</text>
+                <rect x="326" y="110" width="70" height="34" rx="7" fill="#ffffff" stroke="#d8e0ea"/>
+                <text x="361" y="131" fill="#11161d">C-01</text>
+                <rect x="418" y="110" width="70" height="34" rx="7" fill="#ffffff" stroke="#d8e0ea"/>
+                <text x="453" y="131" fill="#11161d">C-02</text>
+                <rect x="510" y="110" width="70" height="34" rx="7" fill="#e8f0f6" stroke="#1f5f8b" stroke-width="1.6"/>
+                <text x="545" y="131" fill="#1f5f8b">C-03</text>
+                <rect x="602" y="110" width="70" height="34" rx="7" fill="#e8f0f6" stroke="#1f5f8b" stroke-width="1.6"/>
+                <text x="637" y="131" fill="#1f5f8b">C-04</text>
+                <rect x="694" y="110" width="70" height="34" rx="7" fill="#ffffff" stroke="#d8e0ea"/>
+                <text x="729" y="131" fill="#11161d">C-11</text>
+                <rect x="786" y="110" width="70" height="34" rx="7" fill="#ffffff" stroke="#d8e0ea"/>
+                <text x="821" y="131" fill="#11161d">I-01</text>
+                <rect x="878" y="110" width="70" height="34" rx="7" fill="#ffffff" stroke="#d8e0ea"/>
+                <text x="913" y="131" fill="#11161d">I-02</text>
+              </g>
+            </g>
+            <!-- blocker nodes -->
+            <g font-family="JetBrains Mono, monospace" font-size="12" font-weight="700" text-anchor="middle">
+              <rect x="418" y="38" width="70" height="34" rx="7" fill="#fbeceb" stroke="#b3261e" stroke-width="1.6"/>
+              <text x="453" y="59" fill="#b3261e">0-02</text>
+              <rect x="510" y="38" width="70" height="34" rx="7" fill="#fbeceb" stroke="#b3261e" stroke-width="1.6"/>
+              <text x="545" y="59" fill="#b3261e">0-06</text>
+            </g>
+            <!-- sill nodes -->
+            <g font-family="JetBrains Mono, monospace" font-size="12" font-weight="700" text-anchor="middle">
+              <rect x="602" y="182" width="70" height="34" rx="7" fill="#ffffff" stroke="#b3261e" stroke-width="1.6"/>
+              <text x="637" y="203" fill="#b3261e">C-05</text>
+              <rect x="694" y="182" width="70" height="34" rx="7" fill="#ffffff" stroke="#d8e0ea"/>
+              <text x="729" y="203" fill="#11161d">C-06</text>
+              <rect x="545" y="244" width="70" height="34" rx="7" fill="#fdf3e6" stroke="#d37400" stroke-width="1.6"/>
+              <text x="580" y="265" fill="#d37400">V-02</text>
+            </g>
+            <!-- annotations -->
+            <g font-family="Inter, sans-serif" font-size="10" fill="#7b8798">
+              <text x="50" y="26">blokery wejściowe</text>
+              <text x="792" y="203">gałąź progów odpływu</text>
+              <text x="630" y="292" fill="#d37400">bramka ilościowa na §0.1 / §0.2</text>
+              <text x="50" y="164">kręgosłup: nic tu nie idzie równolegle</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption class="fig-cap">Narysowane są tylko krawędzie sztywne. <code>0-06</code> blokuje
+          w rzeczywistości <b>każdą</b> emisję klatek — rysowanie wszystkich tych strzałek zaciemniłoby
+          obraz, więc stoi tu jedna, do <code>C-03</code>.</figcaption>
+      </figure>
+      <div class="grid-3">
+        <div class="card"><h3 class="card-t"><code>0-01</code> przed czymkolwiek</h3>
+          <p class="card-b">Bez submodułu nie ma builda — każda inna praca jest wtedy niesprawdzalna.</p></div>
+        <div class="card"><h3 class="card-t"><code>0-02</code> przed <code>C-03</code></h3>
+          <p class="card-b">Bez potwierdzonej licencji pochodne GIA nie wchodzą do repo. Odmowa w połowie
+            reżimu C oznacza przepisanie pipeline'u na inny model.</p></div>
+        <div class="card"><h3 class="card-t"><code>0-06</code> przed emisją</h3>
+          <p class="card-b"><code>datum</code> musi być w kontrakcie, nie w komentarzu — inaczej poprawka
+            §0.2 pozostaje deklaracją.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 18 · równolegle -->
+  <section class="slide" id="s18" aria-label="Co można robić równolegle">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>08 · Niezależność</div>
+      <h2 class="h-sec">Sześć torów, które mogą jechać obok siebie</h2>
+      <div class="lanes">
+        <div class="lane"><span class="lane-n">Reżim A</span>
+          <span class="lane-bar"><span class="lane-fill" style="width:100%;background:#c3d6e3"></span></span>
+          <span class="lane-ids">A-01 → A-02 → A-03</span>
+          <span class="lane-gate">wejście: 0-05</span></div>
+        <div class="lane"><span class="lane-n">Reżim C</span>
+          <span class="lane-bar"><span class="lane-fill" style="width:100%;background:#1f5f8b"></span></span>
+          <span class="lane-ids">C-01 → … → C-11</span>
+          <span class="lane-gate">wejście: 0-02 · 0-06</span></div>
+        <div class="lane"><span class="lane-n">Krzywe</span>
+          <span class="lane-bar"><span class="lane-fill" style="width:66%;background:#4e87a8"></span></span>
+          <span class="lane-ids">C-12</span>
+          <span class="lane-gate">wejście: C-03</span></div>
+        <div class="lane"><span class="lane-n">Mikroskala</span>
+          <span class="lane-bar"><span class="lane-fill" style="width:84%;background:#7eb0cd"></span></span>
+          <span class="lane-ids">D-01 → {D-02 ‖ D-03 ‖ D-04 ‖ D-05}</span>
+          <span class="lane-gate">wejście: D-01</span></div>
+        <div class="lane"><span class="lane-n">Dokumentacja</span>
+          <span class="lane-bar"><span class="lane-fill" style="width:100%;background:#d8e0ea"></span></span>
+          <span class="lane-ids">0-03 · 0-07 · A-03</span>
+          <span class="lane-gate">wejście: brak</span></div>
+        <div class="lane"><span class="lane-n">i18n</span>
+          <span class="lane-bar"><span class="lane-fill" style="width:100%;background:#d37400"></span></span>
+          <span class="lane-ids">I-03</span>
+          <span class="lane-gate">wejście: 0-06</span></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3 class="card-t">Jedyne miejsce na bezkarne przerwanie</h3>
+          <p class="card-b">Cztery regiony <code>D-02</code>…<code>D-05</code> są wzajemnie niezależne
+            i każdy jest zamkniętą porcją. Przerwanie po dowolnym zostawia spójny produkt — nigdzie
+            indziej w planie tak nie jest.</p>
+        </div>
+        <div class="card">
+          <h3 class="card-t">Tory tanie i natychmiast weryfikowalne</h3>
+          <p class="card-b"><code>0-03</code>, <code>0-07</code> i <code>A-03</code> nie mają zależności
+            technicznych i można je pisać od pierwszego dnia. <code>C-12</code> w częściach
+            <code>gmst-co2</code>, <code>uplift-nkg</code> i <code>lr04</code> też nie zależy
+            od niczego w reżimie C.</p>
+        </div>
+      </div>
+      <p class="callout"><b><code>I-03</code> musi startować najwcześniej, nie najpóźniej.</b>
+        To jedyne zadanie, którego przesunięcie na koniec zamienia uzupełnianie w przepisywanie —
+        ~150 kart bez równoległości EN/PL od pierwszego commita.</p>
+    </div>
+  </section>
+
+  <!-- 19 · ryzyka -->
+  <section class="slide" id="s19" aria-label="Ryzyka sprzęgnięć">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>09 · Ryzyka sprzęgnięć</div>
+      <h2 class="h-sec">Cztery miejsca, gdzie plan sam w sobie jest naprężony</h2>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th>Sprzęgnięcie</th><th>Dlaczego boli</th><th>Reakcja</th></tr></thead>
+          <tbody>
+            <tr><td class="m">D-04 ↔ C-05 / C-06</td>
+              <td>SGU Strandförskjutningsmodell pokrywa Närke i korytarz Billingen — a <b>luka bazy
+                Rosentaua jest właśnie w Szwecji</b>. Reżim C potrzebuje danych z toru, który w kolejności
+                stoi trzeci.</td>
+              <td>Jeśli <code>V-02</code> / <code>V-03</code> padną na fazach jeziornych,
+                <b>podciągnąć SE przed DK</b>.</td></tr>
+            <tr><td class="m">C-05 vs kolejność §6</td>
+              <td>Plan stawia <code>sills.json</code> w kroku 3, ale <code>C-04</code> potrzebuje
+                zasiewu w aktywnej cieśninie już w kroku 2.</td>
+              <td>Przenieść <code>C-05</code> do pakietu z <code>C-03</code>.</td></tr>
+            <tr><td class="m">I-03 vs cały content</td>
+              <td>~150 kart zdarzeń, progów i taksonów. Dorobienie równoległości EN/PL po fakcie
+                to przepisywanie całości.</td>
+              <td><code>content/{lang}/</code> od pierwszego commita; brak tłumaczenia = błąd builda.</td></tr>
+            <tr><td class="m">0-02 vs start reżimu C</td>
+              <td>Odmowa licencji ICE-6G_C przerywa <code>C-03</code> w połowie i wymusza przepisanie
+                pipeline'u na inny model GIA.</td>
+              <td>Fallback wybrany <b>przed</b> startem C, nie po. Kolejność: GLAC-1D → ANU/Lambeck → SELEN.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Pozostałe ryzyka — podwójne liczenie eustatyki, fałszywe jeziora, pozorna precyzja,
+        downscaling GIA do LiDAR, budżet 25/4 MB — są już zaadresowane w zadaniach i ich Definition of Done,
+        więc nie wracają tu jako osobne pozycje.</p>
+    </div>
+  </section>
+
+  <!-- 20 · domknięcie -->
+  <section class="slide" id="s20" aria-label="Domknięcie">
+    <div class="sheet">
+      <div class="eyebrow"><span class="bar"></span>10 · Co z tego wynika</div>
+      <h2 class="h-sec">Trzy rzeczy do zrobienia w tym tygodniu</h2>
+      <div class="grid-3">
+        <div class="card"><h3 class="card-t"><code>0-01</code> · submoduł</h3>
+          <p class="card-b">Jedna komenda i krok w CI. Dopóki tego nie ma, żadna inna praca
+            nie jest sprawdzalna.</p></div>
+        <div class="card"><h3 class="card-t"><code>0-02</code> · licencja GIA</h3>
+          <p class="card-b">Zapytanie wychodzi dziś, odpowiedź może przyjść za tydzień.
+            To najdłuższy lead time w całym planie, a blokuje rdzeń.</p></div>
+        <div class="card"><h3 class="card-t"><code>0-06</code> · kontrakt</h3>
+          <p class="card-b">JSON Schema z obowiązkowym <code>datum</code>. Bez niego poprawki §0.1
+            i §0.2 są tylko notatką w dokumencie.</p></div>
+      </div>
+      <dl class="kv">
+        <div><dt>Zadań łącznie</dt><dd>45</dd></div>
+        <div><dt>Blokujących</dt><dd>8</dd></div>
+        <div><dt>Bez zależności</dt><dd>4</dd></div>
+        <div><dt>Klatek do wyemitowania</dt><dd>~195</dd></div>
+        <div><dt>Testów walidacyjnych</dt><dd>12</dd></div>
+        <div><dt>Budżet assetów</dt><dd>25 / 4 MB</dd></div>
+      </dl>
+      <p class="callout">Backlog w pełnej rozpisce — zakres, Definition of Done, zależności i etykiety —
+        leży w <code>docs/research/baltic-issues-backlog.md</code> obok samego planu.
+        Ten deck jest jego widokiem, nie zamiennikiem.</p>
+      <p class="note-plan">Źródło: docs/research/baltic-data-plan.md · kmd-labs/baltic · main</p>
+    </div>
+  </section>
+</main>
+
+<footer class="hud hud--dock">
+  <nav class="pill chips" id="chips" aria-label="Skok do epiku">
+    <button class="chip" data-go="s7">0</button>
+    <button class="chip" data-go="s8">C</button>
+    <button class="chip" data-go="s10">A</button>
+    <button class="chip" data-go="s11">B</button>
+    <button class="chip" data-go="s12">D</button>
+    <button class="chip" data-go="s13">V</button>
+    <button class="chip" data-go="s15">I</button>
+  </nav>
+  <div class="pill pager">
+    <button class="nav-btn" id="prev" aria-label="Poprzedni slajd">←</button>
+    <span class="count" id="count">1 / 20</span>
+    <button class="nav-btn" id="next" aria-label="Następny slajd">→</button>
+  </div>
+  <ol class="pill dots" id="dots" aria-hidden="true"></ol>
+</footer>
+
+<script>
+(function(){
+  var track = document.getElementById('track');
+  var slides = Array.prototype.slice.call(track.querySelectorAll('.slide'));
+  var dots = document.getElementById('dots');
+  var count = document.getElementById('count');
+  var jump = document.getElementById('jump');
+  var prev = document.getElementById('prev');
+  var next = document.getElementById('next');
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+  var titles = slides.map(function(s){ return s.getAttribute('aria-label') || s.id; });
+  var current = 0;
+
+  slides.forEach(function(s, i){
+    var li = document.createElement('li');
+    li.setAttribute('aria-current', i === 0 ? 'true' : 'false');
+    dots.appendChild(li);
+    var o = document.createElement('option');
+    o.value = s.id;
+    o.textContent = (i + 1) + ' · ' + titles[i];
+    jump.appendChild(o);
+  });
+  var dotEls = Array.prototype.slice.call(dots.children);
+
+  // epic chip ranges: first slide index of each epic block
+  var chipRange = [[6,6],[7,8],[9,9],[10,10],[11,11],[12,13],[14,14]];
+
+  function paint(i){
+    current = i;
+    count.textContent = (i + 1) + ' / ' + slides.length;
+    dotEls.forEach(function(d, k){ d.setAttribute('aria-current', k === i ? 'true' : 'false'); });
+    jump.value = slides[i].id;
+    prev.disabled = i === 0;
+    next.disabled = i === slides.length - 1;
+    chips.forEach(function(c, k){
+      var r = chipRange[k];
+      c.setAttribute('aria-current', (i >= r[0] && i <= r[1]) ? 'true' : 'false');
+    });
+  }
+
+  function goTo(i){
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    track.scrollTo({ left: slides[i].offsetLeft, behavior: 'smooth' });
+    paint(i);
+  }
+
+  if ('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting && e.intersectionRatio > 0.55){
+          paint(slides.indexOf(e.target));
+        }
+      });
+    }, { root: track, threshold: [0.55] });
+    slides.forEach(function(s){ io.observe(s); });
+  }
+
+  prev.addEventListener('click', function(){ goTo(current - 1); });
+  next.addEventListener('click', function(){ goTo(current + 1); });
+  jump.addEventListener('change', function(){
+    var i = slides.findIndex(function(s){ return s.id === jump.value; });
+    if (i > -1) goTo(i);
+  });
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-go]');
+    if (!btn) return;
+    var i = slides.findIndex(function(s){ return s.id === btn.getAttribute('data-go'); });
+    if (i > -1) goTo(i);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.target.matches('select, input, textarea')) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown'){ e.preventDefault(); goTo(current + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); goTo(current - 1); }
+    else if (e.key === 'Home'){ e.preventDefault(); goTo(0); }
+    else if (e.key === 'End'){ e.preventDefault(); goTo(slides.length - 1); }
+  });
+
+  paint(0);
+})();
+</script>
+</body>
+</html>
