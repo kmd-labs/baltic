@@ -1,7 +1,7 @@
 # Baltic — backlog issues warstwy danych
 
 > Rozpisanie [`baltic-data-plan.md`](./baltic-data-plan.md) na zadania wykonawcze.
-> **7 epików / 45 zadań.** Tytuły po angielsku (spójne z commitami i publicznym repo `kmd-labs/baltic`), treść po polsku.
+> **7 epików / 49 zadań.** Tytuły po angielsku (spójne z commitami i publicznym repo `kmd-labs/baltic`), treść po polsku.
 > Dokument żywy — aktualizowany razem z planem. Odsyłacze `§x.y` wskazują sekcje planu.
 
 ## Jak czytać
@@ -19,11 +19,13 @@
 ## Ścieżka krytyczna
 
 ```
-0-01 ─┬─> 0-04 ──> 0-05 ──┐
-0-02 ─┤                   ├─> C-01 ─> C-02 ─> C-03 ─> C-04 ─> C-11 ─> I-01 ─> I-02
-0-06 ─┘                   │           ▲        ▲
-                 C-05 ─> C-06 ────────┴────────┘
-                   └──> V-02   (ilościowa bramka na §0.1 / §0.2)
+0-01 ──> 0-04 ──> 0-05 ──> C-01 ──> C-02 ──> C-03 ──> C-04 ──> C-11 ──> I-01 ──> I-02     ★ M3 (fazy morskie)
+                                               ▲                 ▲
+0-02 ──────────────────────────────────────────┤                 │
+0-06 ──────────────────────────────────────────┘    C-09 ──> C-08┘
+                                                                         C-14 ──> C-15      M4 (fazy jeziorne)
+                                    C-05 ──> C-06 ──────────────────────────▲
+                                                └──> V-02   (ilościowa bramka na §0.1 / §0.2)
 ```
 
 Trzy rzeczy nieobejściowe: **`0-01`** (bez submodułu nie ma builda), **`0-02`** (bez potwierdzonej licencji ICE-6G_C pochodne nie wchodzą do repo, a to zasila `C-03`), **`0-06`** (bez obowiązkowego `datum` poprawka §0.2 pozostaje deklaracją).
@@ -32,8 +34,8 @@ Trzy rzeczy nieobejściowe: **`0-01`** (bez submodułu nie ma builda), **`0-02`*
 
 | Epik | Nazwa | Zadań | Charakter |
 | :-- | :-- | --: | :-- |
-| **0** | Fundamenty i blokery | 7 | musi być pierwsze; dwa zadania to decyzje, nie kod |
-| **C** | Reżim postglacjalny, 20–0 ka | 12 | rdzeń produktu, najlepsze dane |
+| **0** | Fundamenty i blokery | 8 | musi być pierwsze; dwa zadania to decyzje, nie kod |
+| **C** | Reżim postglacjalny, 20–0 ka | 15 | rdzeń produktu, najlepsze dane; fazy morskie (M3) przed jeziornymi (M4) |
 | **A** | Reżim fanerozoiczny, 541–2,6 Ma | 3 | w pełni niezależny pipeline |
 | **D** | Mikroskala czterech wybrzeży | 6 | 4 zamknięte porcje; przerwanie po dowolnej zostawia spójny produkt |
 | **B** | Reżim czwartorzędowy | 1 | treść redakcyjna, jawna luka danych |
@@ -44,22 +46,23 @@ Trzy rzeczy nieobejściowe: **`0-01`** (bez submodułu nie ma builda), **`0-02`*
 
 # EPIC 0 · Fundamenty i blokery
 
-## `0-01` Initialize design-system submodule and guard it in CI
+## `0-01` Document clean-clone setup and pin design-system in builds
 
-**Epik:** 0 · **Blokuje:** wszystko · **Labels:** `blocker`, `ci`
+**Epik:** 0 · **Blokuje:** `0-04` · **Labels:** `blocker`, `ci`
 
-Submoduł `src/design-system` jest niezainicjowany — `git submodule status` zwraca `-5f5a67b`, katalog jest pusty. Dopóki tak jest, build nie przejdzie, bo `angular.json` wskazuje `src/design-system` w `stylePreprocessorOptions.includePaths`.
+W świeżej kopii roboczej submoduł `src/design-system` jest niezainicjowany (`git submodule status` → `-137744d`, katalog pusty). Dopóki tak jest, build nie przejdzie, bo `angular.json` wskazuje `src/design-system` w `stylePreprocessorOptions.includePaths`. `deploy.yml` ma już `submodules: recursive`, ale w repo **nie ma README**, a deploy buduje z `git submodule update --remote`, czyli z bieżącego `main` design-systemu, a nie z przypiętego SHA — build nie jest odtwarzalny.
 
 **Zakres**
-- `git submodule update --init` w kopii roboczej.
-- Krok `submodules: recursive` w `.github/workflows/deploy.yml`.
+- `README.md`: klon z `--recurse-submodules` / `git submodule update --init`, `npm ci`, `npm start`.
+- `deploy.yml`: budowanie z przypiętego SHA (aktualizacje przychodzą przez PR z `sync-design-system.yml`) albo jawne uzasadnienie `--remote`.
 - Weryfikacja, że `sync-design-system.yml` nadal działa po zmianie.
 
 **DoD**
-- [ ] `npm run build` zielony na czystym klonie wykonanym wg README
-- [ ] CI nie przechodzi, jeśli submoduł jest pusty
+- [ ] `README.md` istnieje; `npm run build` zielony na czystym klonie wykonanym wg README
+- [ ] Deploy buduje z SHA zapisanego w gicie
+- [ ] CI nie przechodzi, jeśli submoduł jest pusty (`0-08`)
 
-**Plan:** §6.1
+**Plan:** §6 (Kolejność prac, p. 1)
 
 ## `0-02` Confirm ICE-6G_C redistribution terms, pick GIA fallback
 
@@ -69,7 +72,8 @@ Warunki redystrybucji ICE-6G_C (VM5a) są nieznane. Pochodne tego modelu **nie m
 
 **Zakres**
 - Ustalić warunki u źródła (`atmosp.physics.utoronto.ca/~peltier/data.php`), w razie potrzeby kontaktem.
-- Jeśli negatywne lub bez odpowiedzi — fallback w kolejności: **GLAC-1D** → **ANU/Lambeck** → pochodne **SELEN** z ESD 16, 585 (2025, CC BY).
+- Jeśli negatywne lub bez odpowiedzi — fallback w kolejności: **GLAC-1D** → **ANU/Lambeck** → pochodne **SELEN** z ESD 16, 585 (2025, CC BY). **GLAC-1D i ANU też nie mają jawnej licencji** — weryfikować tak samo; jedyny fallback o znanej licencji to SELEN/ESD 2025.
+- Ustalić przy okazji źródło **pola współczesnej prędkości wypiętrzania** z wybranego modelu (osobny produkt, nie `Topo`) — potrzebne do `V-08`.
 - Decyzja zapisana z datą i treścią zgody/licencji.
 
 **DoD**
@@ -117,7 +121,7 @@ Prawie każdy zbiór w §3 to CC BY, co nakłada wymóg atrybucji — a atrybucj
 
 ## `0-05` fetch.py — DOI-keyed downloads with checksum verification
 
-**Epik:** 0 · **Zależy od:** `0-04` · **Labels:** `data-pipeline`
+**Epik:** 0 · **Zależy od:** `0-04` · **Blokuje:** `C-01`, `C-07`, `C-12`, `A-01`, `D-01` · **Labels:** `data-pipeline`
 
 **Zakres**
 - Pobieranie po DOI / URL dla każdego zbioru z §3.
@@ -141,13 +145,18 @@ Pole `datum` jest obowiązkowe w manifeście **i w każdej klatce**. Powód jest
 
 **Zakres**
 - JSON Schema dla klatki, manifestu, `timeline.json`, `sills.json`, `taxa.json`, `curves/*`.
-- Walidacja schematu w `validate.py` i w CI.
+- Fixture'y testowe (poprawne i celowo zepsute) obok schematu.
 - `schemaVersion` z polityką wersjonowania.
+- Enum `datum`: `contemporaneous-geoid` (reżim C), `EVRF2007` (reżim D — dzisiejszy układ wysokościowy), wartość dla reżimu A (PaleoDEM względem paleo-poziomu morza). Transformacja między `EVRF2007` a `contemporaneous-geoid` opisana w `0-07` — korzystają z niej `V-03`, `V-04`, `V-10`.
+- `ice` może być `null` (brak lądolodu w klatce, np. 9,5–0 ka).
+
+Egzekwowanie schematu w pipeline'ie to `V-01`, w CI — `0-08`.
 
 **DoD**
-- [ ] `validate.py` odrzuca klatkę bez `datum`
-- [ ] CI wymusza schemat na wszystkich plikach w `src/assets/data/`
+- [ ] Schemat odrzuca fixture klatki bez `datum`
+- [ ] Enum `datum` obejmuje reżimy A, C i D
 - [ ] Enum `dataQuality` = `modelled | interpolated | qualitative`
+- [ ] `ice: null` dopuszczalne, `ice: {}` bez `source` — nie
 
 **Plan:** §0.2, §5
 
@@ -164,14 +173,33 @@ Dwa artefakty z §9. `paleo-reconstruction-methodology.md` to specyfikacja matem
 - [ ] Jawnie zapisane, dlaczego **nie ma** osobnego członu eustatycznego
 - [ ] Tabela korelacji kompletna dla 7 faz
 - [ ] Odstępstwa źródeł od Andréna i in. 2011 wypisane, nie uśrednione
+- [ ] Transformacja `EVRF2007` ↔ `contemporaneous-geoid` zapisana jako formuła z nazwami pól
 
 **Plan:** §0.1, §9
+
+## `0-08` Add PR CI workflow that validates committed data assets
+
+**Epik:** 0 · **Zależy od:** `0-01`, `0-06` · **Blokuje:** `V-11` · **Labels:** `ci`, `blocker`
+
+W repo jest tylko `deploy.yml` (push na `main`) i `sync-design-system.yml` — **nic nie uruchamia się na PR-ach**, a `0-06`, `V-01` i `V-11` zakładają bramki w CI. CI **nie może** uruchamiać `npm run data:build`: surowe dane są poza gitem (`data/raw/`), a pobranie wszystkich zbiorów z §3 w CI jest nierealne. CI waliduje więc **zacommitowane assety** w `src/assets/data/`, nie przelicza pipeline'u.
+
+**Zakres**
+- `.github/workflows/ci.yml` na `pull_request`: checkout z submodułem, `npm ci`, `npm run build`.
+- Walidacja schematu (`0-06`) wszystkich plików w `src/assets/data/`, zgodność sum kontrolnych z `manifest.json`, budżet rozmiaru (`V-11`).
+- Kontrola pustego submodułu (`0-01`).
+
+**DoD**
+- [ ] Workflow uruchamia się na każdym PR do `main`
+- [ ] Plik niezgodny ze schematem lub z sumą w `manifest.json` blokuje merge
+- [ ] Brak kroku pobierającego surowe dane
+
+**Plan:** §5, §7
 
 ---
 
 # EPIC C · Reżim postglacjalny, 20–0 ka
 
-Rdzeń produktu. Kolejność wewnątrz epiku zgodna z §6.2: **od końca ku początkowi** — najpierw dziś → 8 ka (najlepsze dane), potem fazy jeziorne (najtrudniejsze, bo próg zamiast eustatyki).
+Rdzeń produktu. Kolejność wewnątrz epiku zgodna z §6 (Kolejność prac, p. 2): **od końca ku początkowi** — najpierw dziś → 8 ka (najlepsze dane), potem fazy jeziorne (najtrudniejsze, bo próg zamiast eustatyki). Dlatego maska wody i emisja są rozbite na dwa etapy: fazy morskie (`C-04`, `C-11` → M3) i fazy jeziorne (`C-14`, `C-15` → M4).
 
 ## `C-01` Build base topo-bathy mosaic for 9–33°E / 53–67°N
 
@@ -192,7 +220,7 @@ Rdzeń produktu. Kolejność wewnątrz epiku zgodna z §6.2: **od końca ku pocz
 
 ## `C-02` Integrate great-lake bathymetry (Ladoga, Onega, Vänern, Vättern)
 
-**Epik:** C · **Zależy od:** `C-01` · **Blokuje:** `C-03`, `C-04` · **Labels:** `data-pipeline`, `regime-c`
+**Epik:** C · **Zależy od:** `C-01` · **Blokuje:** `C-03` · **Labels:** `data-pipeline`, `regime-c`
 
 Batymetria wielkich jezior nie jest dodatkiem. **Vänern i Vättern leżą na trasie Rzeki Svea i korytarza Billingen**, Ładoga była częścią basenu w kilku fazach. Bez nich drenaży nie da się zamodelować — pipeline wygeneruje jeziora bez odpływu.
 
@@ -209,7 +237,7 @@ Batymetria wielkich jezior nie jest dodatkiem. **Vänern i Vättern leżą na tr
 
 ## `C-03` Compute GIA paleo-DEM frames
 
-**Epik:** C · **Zależy od:** `0-02`, `0-06`, `C-02` · **Blokuje:** `C-04`, `C-12`, `V-02` · **Labels:** `data-pipeline`, `regime-c`, `blocker`
+**Epik:** C · **Zależy od:** `0-02`, `0-06`, `C-02` · **Blokuje:** `C-04`, `V-02`, `V-03`, `V-05`, `V-08` · **Labels:** `data-pipeline`, `regime-c`, `blocker`
 
 Obowiązuje formuła:
 
@@ -223,30 +251,34 @@ H_paleo(x,y,t) = H_now(x,y) + [Topo(t) − Topo(0)]
 - Odczyt `Topo` / `Topo_Diff` z netCDF 1° (122 ka → 0).
 - Resampling 1° → siatka robocza, metoda udokumentowana.
 - 41 klatek 20–0 ka co 500 lat.
+- 6 przekrojów zdarzeniowych (np. 11 650 BP) wypada poza siatkę 500 lat modelu — interpolacja w czasie między sąsiednimi krokami `Topo`.
 
 **DoD**
-- [ ] 41 klatek z `datum: "contemporaneous-geoid"`
+- [ ] 41 klatek + 6 przekrojów zdarzeniowych z `datum: "contemporaneous-geoid"`
+- [ ] Przekroje zdarzeniowe z `dataQuality: "interpolated"`
 - [ ] Nazwa pliku i zmiennej GIA zapisana w `paleo-reconstruction-methodology.md`
 - [ ] Zero wystąpień osobnego członu eustatycznego w kodzie
 
 **Plan:** §0.1, §4.3
 
-## `C-04` Implement connectivity-aware water mask (flood-fill)
+## `C-04` Implement connectivity-aware water mask (flood-fill) for marine phases
 
-**Epik:** C · **Zależy od:** `C-03`, `C-05` · **Blokuje:** `C-11` · **Labels:** `data-pipeline`, `regime-c`, `blocker`
+**Epik:** C · **Zależy od:** `C-03` · **Blokuje:** `C-11`, `C-13`, `C-14` · **Labels:** `data-pipeline`, `regime-c`, `blocker`
 
-Prosty próg `H < poziom` tworzy fałszywe jeziora w każdym zamkniętym obniżeniu terenu. Zbiornik musi być **hydrologicznie połączony z progiem odpływu** — analiza spójnych składowych z zasiewem w cieśninie aktywnej dla danego *t*. Przy ~47 przekrojach × 4 regiony mikroskalowe to krok obowiązkowy, nie optymalizacja.
+Prosty próg `H < poziom` tworzy fałszywe jeziora w każdym zamkniętym obniżeniu terenu. Zbiornik musi być **hydrologicznie połączony z odpływem** — analiza spójnych składowych z zasiewem. Przy ~47 przekrojach × 4 regiony mikroskalowe to krok obowiązkowy, nie optymalizacja.
 
 ```python
 water_mask(t) = flood_fill(paleo_dem(t), level(t), seed=active_outlet(t))
 ```
 
+Ten etap obejmuje **fazy morskie** (Yoldia, Mastogloia, Littorina, post-Littorina, dziś): poziom z GIA, zasiew na otwartym oceanie (brzeg okna w Skagerraku/Kattegacie) — bez potrzeby katalogu progów. Fazy jeziorne to `C-14`.
+
 **Zakres**
-- `scipy.ndimage` — spójne składowe z zasiewem w aktywnym progu.
-- Rozstrzyganie przypadków z wieloma aktywnymi odpływami jednocześnie.
+- `scipy.ndimage` — spójne składowe z zasiewem w komórce oceanicznej.
+- API gotowe na zasiew w progu i wiele odpływów jednocześnie (`C-14`).
 
 **DoD**
-- [ ] Maska dla wszystkich ~47 przekrojów
+- [ ] Maska dla wszystkich przekrojów faz morskich
 - [ ] Raport: zero zbiorników bez połączenia z odpływem
 - [ ] Test regresyjny na zamkniętym obniżeniu (musi zostać suche)
 
@@ -254,11 +286,11 @@ water_mask(t) = flood_fill(paleo_dem(t), level(t), seed=active_outlet(t))
 
 ## `C-05` Build sills.json — sill and strait catalogue
 
-**Epik:** C · **Zależy od:** `0-06` · **Blokuje:** `C-04`, `C-06`, `C-10`, `V-02` · **Labels:** `contract`, `regime-c`, `blocker`
+**Epik:** C · **Zależy od:** `0-06` · **Blokuje:** `C-06`, `C-10`, `C-14`, `D-03`, `D-04`, `V-02` · **Labels:** `contract`, `regime-c`, `blocker`
 
 Katalog progów: współrzędne, rzędne progowe, okresy aktywności. **Billingen** (58,4°N 13,8°E), **Närke** (59,1°N 15,0°E), **Svea / Degerfors**, **Dana / Wielki Bełt**, **Darss**, **Drogden / Øresund**. Przesmyk karelsko-białomorski oznaczony jako *hipoteza historyczna, nie konsensus*.
 
-> **Uwaga do kolejności z §6.** Plan umieszcza `sills.json` w kroku 3 („krzywe i katalogi"), ale `C-04` potrzebuje zasiewu w aktywnej cieśninie, a `C-06` rzędnych progowych. Ten plik musi powstać **razem z `C-03`**, nie po reżimie C.
+> **Uwaga do kolejności z §6.** Plan umieszcza `sills.json` w kroku 3 („krzywe i katalogi"), ale `C-14` potrzebuje zasiewu w aktywnej cieśninie, `C-06` rzędnych progowych, a `C-10` stanów progów (zasolenie w klatkach M3). Ten plik powstaje **razem z `C-03`** (M2), nie po reżimie C.
 
 **DoD**
 - [ ] Każdy próg: współrzędne, rzędna, okresy aktywności, źródło
@@ -269,7 +301,7 @@ Katalog progów: współrzędne, rzędne progowe, okresy aktywności. **Billinge
 
 ## `C-06` Derive lake-phase water levels from sill elevations
 
-**Epik:** C · **Zależy od:** `C-05` · **Blokuje:** `C-04`, `V-02` · **Labels:** `data-pipeline`, `regime-c`
+**Epik:** C · **Zależy od:** `C-05` · **Blokuje:** `C-14`, `V-02`, `V-06` · **Labels:** `data-pipeline`, `regime-c`
 
 Sedno poprawności: w fazach jeziornych powierzchnia wody **nie jest** globalnym poziomem morza — wyznaczał ją próg odpływu.
 
@@ -289,14 +321,16 @@ BIL **+25 m**, Ancylus **+10 m** — poprawne tylko względem geoidy współczes
 
 ## `C-07` Assemble ice-sheet layer with uncertainty band
 
-**Epik:** C · **Zależy od:** `0-05` · **Labels:** `data-pipeline`, `regime-c`
+**Epik:** C · **Zależy od:** `0-05` · **Blokuje:** `C-11` · **Labels:** `data-pipeline`, `regime-c`
 
 **Stroeven i in. 2016** (izochrony deglacjacji 22,0–9,7 ka cal BP) jako **geometria wiodąca** — gęstsze niż DATED-1 i dokładniejsze w niecce bałtyckiej, więc decyduje o momencie otwarcia Billingen. **DATED-1** (Hughes i in. 2016) jako pas min. / najbardziej prawdopodobny / maks. przeniesiony **do danych**, nie do opisu. Grubość z ICE-6G_C lub GLAC-1D: kopuła 2500–3000 m w centrum → 0 m na czole.
 
+Zasięg danych jest ograniczony: Stroeven kończy się na **9,7 ka**, DATED-1 na **10 ka**. Klatki młodsze (~9,5–0 ka) nie mają lądolodu — `ice: null` (`0-06`), nie pusta geometria.
+
 **DoD**
-- [ ] Warstwa `ice` w każdej klatce reżimu C
+- [ ] Warstwa `ice` w każdej klatce reżimu C ≥ 10 ka; `ice: null` w klatkach bez lądolodu
 - [ ] `ice.interpolated: true` na każdej klatce interpolowanej
-- [ ] `ice.band: "dated1"` z geometrią min. / maks. w danych
+- [ ] `ice.band: "dated1"` z geometrią min. / maks. tam, gdzie DATED-1 ma pokrycie (25–10 ka)
 - [ ] `ice.source` zgodne z decyzją z `0-02`
 
 **Plan:** §3.3, §4.3
@@ -309,8 +343,11 @@ Siedem faz: `deglaciation`, `bil`, `yoldia`, `ancylus`, `mastogloia`, `littorina
 
 **Andrén i in. 2011 jako źródło wiodące.** Granica końca fazy ancylusowej jest podawana jako 9 800 **albo** 9 500 cal BP w zależności od autora — **nie uśredniamy**; przyjmujemy Andréna, a odstępstwa Björcka 1995/2008, Stroevena i in. 2016 i Uścinowicza 2014 zapisujemy w `baltic-data-catalog.md`.
 
+Granice faz w `timeline.json` są **basenowe**, a przejścia lokalne są nierównoczesne — np. Littorina w Małym Bełcie ~7,4 ka cal BP (IODP M0059) wobec początku fazy ~8 500 BP. Lokalne onsety trzymamy osobno, inaczej `V-06` będzie fałszywie padał.
+
 **DoD**
 - [ ] `timeline.json` w cal yr BP, 7 faz, każda granica z cytowaniem
+- [ ] Lokalne onsety faz (miejsce, data, źródło) jako osobne pole, nie nadpisują granic basenowych
 - [ ] Tabela odstępstw w katalogu danych
 - [ ] Zero uśrednionych granic
 
@@ -318,7 +355,7 @@ Siedem faz: `deglaciation`, `bil`, `yoldia`, `ancylus`, `mastogloia`, `littorina
 
 ## `C-09` calibrate.py — IntCal20 recalibration of literature dates
 
-**Epik:** C · **Zależy od:** `0-04` · **Blokuje:** `C-08` · **Labels:** `data-pipeline`, `regime-c`
+**Epik:** C · **Zależy od:** `0-04` · **Blokuje:** `C-08`, `D-02`, `D-06` · **Labels:** `data-pipeline`, `regime-c`
 
 Wszystkie daty ¹⁴C ze starszej literatury muszą przejść kalibrację **IntCal20** — bez tego daty z Björcka 1995 przesuwają się o **~1000–1500 lat** w późnym glacjale. Trzymamy **obie** wartości plus użytą krzywą.
 
@@ -331,7 +368,7 @@ Wszystkie daty ¹⁴C ze starszej literatury muszą przejść kalibrację **IntC
 
 ## `C-10` Model salinity regimes and sill states
 
-**Epik:** C · **Zależy od:** `C-05` · **Blokuje:** `V-07` · **Labels:** `data-pipeline`, `regime-c`
+**Epik:** C · **Zależy od:** `C-05` · **Blokuje:** `C-11`, `V-06`, `V-07` · **Labels:** `data-pipeline`, `regime-c`
 
 Klasa reżimu (słodki / słonawy / morski) per faza z **IODP Exp. 347, Site M0059** (Kotthoff i in. 2022 — okrzemki, palinomorfy, geochemia; przejście do Littoriny w ~200 lat około 7,4 ka cal BP), plus **stan każdego progu** i profil przestrzenny Cieśniny Duńskie → Basen Gotlandzki → Zatoka Botnicka. Podział na baseny z HELCOM (ETRS89-LAEA).
 
@@ -344,43 +381,82 @@ Klasa reżimu (słodki / słonawy / morski) per faza z **IODP Exp. 347, Site M00
 
 **Plan:** §2, §3.3, §4.3
 
-## `C-11` Emit 41 postglacial frames and 6 event cross-sections
+## `C-11` Emit marine-phase postglacial frames (today → 8 ka first)
 
-**Epik:** C · **Zależy od:** `C-04`, `C-06`, `C-07`, `C-08`, `C-10` · **Blokuje:** `I-01` · **Labels:** `data-pipeline`, `regime-c`
+**Epik:** C · **Zależy od:** `C-04`, `C-07`, `C-08`, `C-10` · **Blokuje:** `I-01`, `C-15` · **Labels:** `data-pipeline`, `regime-c`
 
 Jednolite **500 lat dla całego 20–0 ka** (41 klatek). Plan wejściowy proponował 1000 lat dla 8–0 ka — odrzucone, bo transgresja littorynowa, formowanie mierzei i jezior przybrzeżnych mieszczą się właśnie w 8–0 ka.
 
-Plus przekroje zdarzeniowe: przed i po drenażu Billingen, maksimum ancylusowe, próg regresji ancylusowej, początek ingresji littorynowej, maksimum littorynowe.
+Ten etap emituje klatki **faz morskich** (Yoldia, Mastogloia, Littorina, post-Littorina) plus przekroje zdarzeniowe littorynowe (początek ingresji, maksimum). To wystarcza do M3 — pierwszej działającej aplikacji. Fazy jeziorne i pozostałe przekroje to `C-15`.
 
 **DoD**
-- [ ] 47 klatek w `frames/postglacial/`
+- [ ] Klatki faz morskich w `frames/postglacial/`, z kompletem pól kontraktu
 - [ ] `dataQuality` w każdej klatce
-- [ ] Zrealizowane w kolejności dziś → 8 ka, potem fazy jeziorne (§6.2)
+- [ ] Zrealizowane w kolejności dziś → 8 ka, potem Yoldia (§6, Kolejność prac, p. 2)
 
 **Plan:** §1, §2
 
-## `C-12` curves.py — RSL, GMST/CO₂, uplift, LR04, basin metrics
+## `C-12` curves.py — RSL sites, GMST/CO₂, NKG uplift, LR04
 
-**Epik:** C · **Zależy od:** `C-03` · **Blokuje:** `V-03`, `V-08` · **Labels:** `data-pipeline`, `regime-c`
+**Epik:** C · **Zależy od:** `0-05` · **Blokuje:** `B-01`, `D-02`, `D-06`, `V-03`, `V-08` · **Labels:** `data-pipeline`, `regime-c`
 
-Pięć plików w `curves/`:
+Cztery pliki w `curves/` pochodzące wprost ze źródeł — **nie zależą od paleo-DEM-u ani od licencji GIA**, więc mogą powstać zaraz po `0-05`:
 
 | Plik | Źródło |
 | :-- | :-- |
-| `rsl-sites` | Rosentau i in. 2021 — 1099 wskaźników RSL, format HOLSEA, 3 klastry (regresja / transgresja / przejściowe) |
+| `rsl-sites` | Rosentau i in. 2021 — 1099 wskaźników RSL, format HOLSEA, 3 klastry (regresja / transgresja / przejściowe); uzupełniany przez `D-02`, `D-06` |
 | `gmst-co2` | PhanDA, Judd i in. 2024 — percentyle 5/16/50/84/95 |
 | `uplift-nkg` | NKG2016LU, Vestøl i in. 2019 |
 | `lr04` | stos bentoniczny LR04, Lisiecki & Raymo 2005 |
-| `basin-metrics` | policzone z paleo-DEM-u |
 
-**Metryki bilansowe** per przekrój: powierzchnia (km²), objętość (km³), średnia i maksymalna głębokość, szacowany czas wymiany wód. Niemal darmowe, a dają cztery dodatkowe krzywe i kontrolę sensowności.
+PhanDA zaczyna się od **485 Ma** — dla 541–485 Ma reżimu A krzywej nie ma i ma to być widoczne w danych, nie zamaskowane.
 
 **DoD**
-- [ ] Pięć plików w `curves/`
-- [ ] `metrics` wypełnione w każdej klatce reżimów A, C i D
+- [ ] Cztery pliki w `curves/`
 - [ ] Percentyle PhanDA zachowane, nie spłaszczone do mediany
+- [ ] Luka 541–485 Ma w `gmst-co2` jawnie oznaczona
 
-**Plan:** §3, §4.4, §5
+**Plan:** §3, §5
+
+## `C-13` Compute basin metrics for every regime-C cross-section
+
+**Epik:** C · **Zależy od:** `C-04`, `C-14` · **Labels:** `data-pipeline`, `regime-c`
+
+**Metryki bilansowe** per przekrój (§4.4): powierzchnia (km²), objętość (km³), średnia i maksymalna głębokość, szacowany czas wymiany wód. Liczone z maski wody (`C-04`, `C-14`), nie z samego paleo-DEM-u. Niemal darmowe, a dają cztery dodatkowe krzywe i kontrolę sensowności.
+
+Metryki reżimu A powstają w `A-02`, reżimu D w `regional.py` (`D-01`).
+
+**DoD**
+- [ ] `curves/basin-metrics`
+- [ ] `metrics` wypełnione w każdej klatce reżimu C
+
+**Plan:** §4.4, §5
+
+## `C-14` Extend water mask to lake phases with sill-seeded outlets
+
+**Epik:** C · **Zależy od:** `C-04`, `C-05`, `C-06` · **Blokuje:** `C-13`, `C-15`, `V-06` · **Labels:** `data-pipeline`, `regime-c`, `blocker`
+
+Fazy jeziorne (BIL, Ancylus) i `deglaciation`: zasiew w **aktywnym progu** z `sills.json`, poziom z rzędnej progu (`C-06`). Rozstrzyganie przypadków z wieloma aktywnymi odpływami jednocześnie (np. Svea → Dana).
+
+**DoD**
+- [ ] Maska dla wszystkich przekrojów faz jeziornych i deglacjacji
+- [ ] Raport: zero zbiorników bez połączenia z odpływem
+- [ ] Test przypadku z dwoma aktywnymi odpływami
+
+**Plan:** §0.3, §4.3
+
+## `C-15` Emit lake-phase frames and remaining event cross-sections
+
+**Epik:** C · **Zależy od:** `C-11`, `C-14` · **Blokuje:** `V-10`, `V-12` · **Labels:** `data-pipeline`, `regime-c`
+
+Klatki faz `deglaciation`, `bil`, `ancylus` oraz przekroje zdarzeniowe: przed i po drenażu Billingen, maksimum ancylusowe, próg regresji ancylusowej. Razem z `C-11` daje komplet 47 klatek.
+
+**DoD**
+- [ ] 47 klatek w `frames/postglacial/` łącznie z `C-11`
+- [ ] `water.type: "lake"` + `water.outlet` w każdej klatce fazy jeziornej
+- [ ] `dataQuality` w każdej klatce
+
+**Plan:** §1, §2
 
 ---
 
@@ -397,11 +473,13 @@ Najczęstszy błąd przy głębokim czasie: wycięcie stałego okna lat/lon z gl
 **Zakres**
 1. Poligon ROI (dzisiejsza misa + otaczający kraton), przypisany **plate ID** Baltiki.
 2. Dla każdego kroku 5 Ma odwrotna rotacja ROI do pozycji paleo — pyGPlates / gplately lokalnie, GWS `gws.gplates.org` jako fallback.
-3. Rotacje: Merdith i in. 2021 (1000–410 Ma) + Müller i in. 2019 (mezozoik–dziś), GPlates 2.5 GeoData bundle.
+3. Rotacje: **model PALEOMAP** (Scotese), GPlates 2.5 GeoData bundle — ten sam, w którego układzie liczone są PaleoDEM-y i PaleoCoastlines (`A-02`). Rotacja ROI innym modelem i wycinanie w układzie PALEOMAP dałoby niespójne położenie.
+4. Merdith i in. 2021 (1000–0 Ma) jako **niezależna kontrola** trajektorii, nie źródło. Pierwotne zestawienie „Merdith 1000–410 + Müller i in. 2019" zostawiało lukę **410–250 Ma** (Müller 2019 obejmuje tylko 250–0 Ma).
 
 **DoD**
-- [ ] Trajektoria ROI dla wszystkich ~108 kroków
-- [ ] Udokumentowany plate ID i model rotacji per przedział czasu
+- [ ] Trajektoria ROI dla wszystkich ~108 kroków w modelu PALEOMAP
+- [ ] Udokumentowany plate ID Baltiki w modelu PALEOMAP
+- [ ] Rozbieżność trajektorii PALEOMAP vs Merdith 2021 raportowana per krok
 - [ ] Fallback na GWS przetestowany
 
 **Plan:** §3.1, §4.1
@@ -471,20 +549,23 @@ Kolejność **PL → DK → SE → EE** (malejąca dostępność gotowych rekons
 
 ## `D-01` regional.py — harmonise four height datums to EVRF2007
 
-**Epik:** D · **Zależy od:** `0-04` · **Blokuje:** `D-02`…`D-05`, `V-10` · **Labels:** `data-pipeline`, `regime-d`, `blocker`
+**Epik:** D · **Zależy od:** `0-04`, `0-05` · **Blokuje:** `D-02`…`D-05`, `V-10` · **Labels:** `data-pipeline`, `regime-d`, `blocker`
 
 Łatwy do przeoczenia blocker. Cztery kraje, cztery układy wysokościowe (**PL-EVRF2007-NH, RH 2000, EH2000, DVR90**) i cztery CRS (**EPSG:2180, 3006, 3301, 25832**). Wszystko musi przejść na **EVRF2007 / EVRS** przed jakimkolwiek porównaniem z wyjściem modelu GIA. Rozbieżności między datami to dziesiątki centymetrów — przy rekonstrukcji wybrzeża płaskiego, jak polskie, to **metry linii brzegowej**.
 
 **DoD**
 - [ ] Transformacje `pyproj` udokumentowane per kraj, z wersją siatki
-- [ ] Test spójności szwów (`V-10`) przechodzi
+- [ ] Klatki regionalne z `datum: "EVRF2007"` (`0-06`)
+- [ ] `regional.py` liczy `metrics` (§4.4) dla każdej klatki regionalnej
 - [ ] ~10 klatek na region, nie 41
+
+Test spójności szwów (`V-10`) jest diagnostyką tego zadania, ale wymaga gotowych regionów — zamyka się w M7.
 
 **Plan:** §3.4
 
 ## `D-02` Region PL — Polish coast
 
-**Epik:** D · **Zależy od:** `D-01` · **Blokuje:** `V-04` · **Labels:** `regime-d`
+**Epik:** D · **Zależy od:** `D-01`, `C-09`, `C-12` · **Blokuje:** `D-06`, `V-04`, `V-10` · **Labels:** `regime-d`
 
 | | |
 | :-- | :-- |
@@ -503,7 +584,7 @@ Kolejność **PL → DK → SE → EE** (malejąca dostępność gotowych rekons
 
 ## `D-03` Region DK — Danish straits
 
-**Epik:** D · **Zależy od:** `D-01` · **Labels:** `regime-d`
+**Epik:** D · **Zależy od:** `D-01`, `C-05` · **Blokuje:** `V-10` · **Labels:** `regime-d`
 
 | | |
 | :-- | :-- |
@@ -521,7 +602,7 @@ Kolejność **PL → DK → SE → EE** (malejąca dostępność gotowych rekons
 
 ## `D-04` Region SE — Swedish coast and Billingen corridor
 
-**Epik:** D · **Zależy od:** `D-01` · **Labels:** `regime-d`
+**Epik:** D · **Zależy od:** `D-01`, `C-05` · **Blokuje:** `V-10` · **Labels:** `regime-d`
 
 | | |
 | :-- | :-- |
@@ -541,7 +622,7 @@ Kolejność **PL → DK → SE → EE** (malejąca dostępność gotowych rekons
 
 ## `D-05` Region EE — Estonian coast
 
-**Epik:** D · **Zależy od:** `D-01` · **Labels:** `regime-d`
+**Epik:** D · **Zależy od:** `D-01` · **Blokuje:** `V-10` · **Labels:** `regime-d`
 
 | | |
 | :-- | :-- |
@@ -559,7 +640,7 @@ Kolejność **PL → DK → SE → EE** (malejąca dostępność gotowych rekons
 
 ## `D-06` Submerged relict forests as RSL control points
 
-**Epik:** D · **Zależy od:** `D-02` · **Blokuje:** `V-05` · **Labels:** `regime-d`, `validation`
+**Epik:** D · **Zależy od:** `D-02`, `C-09`, `C-12` · **Blokuje:** `V-05` · **Labels:** `regime-d`, `validation`
 
 Pnie sosen i dębów **in situ** na 15–30 m w rejonie Czołpina, Rowów, Zatoki Gdańskiej i Puckiej, datowane ¹⁴C na **10 500–8 500 cal BP**. Pełnią **podwójną rolę**: są treścią narracyjną i jednocześnie **punktowymi wskaźnikami RSL** do walidacji paleo-DEM-u.
 
@@ -591,7 +672,7 @@ To jedyny element „człowiek i środowisko", który wchodzi do zakresu — i w
 
 ## `V-02` Sill-check — elevation balance at every sill
 
-**Epik:** V · **Zależy od:** `V-01`, `C-05`, `C-06` · **Labels:** `validation`, `blocker`
+**Epik:** V · **Zależy od:** `V-01`, `C-03`, `C-05`, `C-06` · **Labels:** `validation`, `blocker`
 
 Dla każdego przekroju sprawdzić, czy rzędna progu zgadza się z kierunkiem przepływu: **jezioro zaporowe wymaga progu powyżej** ówczesnego poziomu oceanu, **połączenie morskie poniżej**.
 
@@ -606,9 +687,9 @@ Test wewnętrznie spójnościowy — nie wymaga danych zewnętrznych, a wyłapuj
 
 ## `V-03` RSL versus Rosentau et al. 2021 — RMSE per region per cluster
 
-**Epik:** V · **Zależy od:** `V-01`, `C-12` · **Labels:** `validation`
+**Epik:** V · **Zależy od:** `V-01`, `C-03`, `C-12` · **Labels:** `validation`
 
-Policzony poziom w punktach bazy Rosentau i in. 2021 (1099 wskaźników, GFZ `10.5880/GFZ.1.3.2020.003`) vs wartości zmierzone. **RMSE raportowane per region**, osobno dla trzech klastrów bazy: regresja / transgresja / przejściowe.
+Policzony poziom w punktach bazy Rosentau i in. 2021 (1099 wskaźników, GFZ `10.5880/GFZ.1.3.2020.003`) vs wartości zmierzone. RSL jest wyrażony względem dzisiejszego lokalnego poziomu, a paleo-DEM względem geoidy współczesnej *t* — porównanie wymaga transformacji z `0-07`. **RMSE raportowane per region**, osobno dla trzech klastrów bazy: regresja / transgresja / przejściowe.
 
 > **To jedyna ilościowa walidacja w całym planie.** Bez niej zostaje „zgodność z syntezami".
 
@@ -633,7 +714,7 @@ Oczekiwane: **trzy wahania o amplitudzie 25–27 m** między 13,0 i 8,5 ka BP, p
 
 ## `V-05` Submerged forests as control points
 
-**Epik:** V · **Zależy od:** `V-01`, `D-06` · **Labels:** `validation`
+**Epik:** V · **Zależy od:** `V-01`, `C-03`, `D-06` · **Labels:** `validation`
 
 Dla każdego datowanego pnia in situ: paleo-DEM w tym punkcie i czasie musi dawać powierzchnię **powyżej** poziomu wody. **Pień rosnący pod wodą oznacza błąd modelu.**
 
@@ -645,11 +726,11 @@ Dla każdego datowanego pnia in situ: paleo-DEM w tym punkcie i czasie musi dawa
 
 ## `V-06` Event checks
 
-**Epik:** V · **Zależy od:** `V-01`, `C-06`, `C-10` · **Labels:** `validation`
+**Epik:** V · **Zależy od:** `V-01`, `C-06`, `C-10`, `C-14` · **Labels:** `validation`
 
 - Spadek Billingen **25–28 m**.
 - Środkowoholoceński highstand w strefach przejściowych w **7,5–6,5 ka BP**.
-- Przejście do Littoriny w Małym Bełcie **~7,4 ka cal BP**.
+- Przejście do Littoriny w Małym Bełcie **~7,4 ka cal BP** — porównywane z lokalnym onsetem z `timeline.json` (`C-08`), nie z basenową granicą fazy (~8 500 BP).
 
 **DoD**
 - [ ] Trzy testy z tolerancjami w `validate.py`
@@ -674,7 +755,9 @@ Gatunki wskaźnikowe jako **niezależna kontrola** rekonstrukcji: *Portlandia (Y
 
 ## `V-08` Present-day uplift gradient versus NKG2016LU
 
-**Epik:** V · **Zależy od:** `V-01`, `C-12` · **Labels:** `validation`
+**Epik:** V · **Zależy od:** `V-01`, `C-03`, `C-12` · **Labels:** `validation`
+
+Wymaga **pola współczesnej prędkości wypiętrzania** z modelu GIA — to osobny produkt, nie `Topo`; źródło ustalane w `0-02`.
 
 Gradient z modelu GIA vs NKG2016LU: maks. **~10,3 mm/rok przy Umeå**, **linia zerowa na wybrzeżu Niemiec i Polski**.
 
@@ -699,7 +782,7 @@ Gradient z modelu GIA vs NKG2016LU: maks. **~10,3 mm/rok przy Umeå**, **linia z
 
 ## `V-10` Regime D seam consistency
 
-**Epik:** V · **Zależy od:** `V-01`, `D-01` · **Labels:** `validation`, `regime-d`
+**Epik:** V · **Zależy od:** `V-01`, `D-01`, `D-02`, `D-03`, `D-04`, `D-05`, `C-15` · **Labels:** `validation`, `regime-d`
 
 Linia brzegowa wstawki krajowej na granicy z reżimem C nie może odbiegać bardziej niż o uzgodnioną tolerancję. **Rozjazd oznacza niezharmonizowany datum wysokościowy** — ten test jest diagnostyką `D-01`.
 
@@ -712,7 +795,7 @@ Linia brzegowa wstawki krajowej na granicy z reżimem C nie może odbiegać bard
 
 ## `V-11` Topology, CRS and asset-budget gate
 
-**Epik:** V · **Zależy od:** `V-01`, `I-01` · **Labels:** `validation`, `ci`
+**Epik:** V · **Zależy od:** `V-01`, `I-01`, `0-08` · **Labels:** `validation`, `ci`
 
 - Geometrie poprawne — brak samoprzecięć.
 - Spójny CRS w całym wyjściu.
@@ -729,13 +812,16 @@ Deploy idzie na GitHub Pages (`npm run build:gh-pages`), więc rozmiar jest real
 
 ## `V-12` Visual overlay control
 
-**Epik:** V · **Zależy od:** `V-01`, `C-11`, `C-08` · **Labels:** `validation`
+**Epik:** V · **Zależy od:** `V-01`, `C-08`, `C-15` · **Labels:** `validation`
 
 Nałożenie klatek na mapy etapów z **Björcka 1995 / Andréna i in. 2011** dla 11,7 / 11,1 / 10,5 ka BP oraz na paleo-DEM-y z **ESD 16, 585 (2025)** — niezależną implementację tej samej metody (paleo-DEM-y co 500 lat na GEBCO_2023 z korektą ancylusową za Uścinowiczem, CC BY).
 
 > Skoro ESD 2025 to ta sama metoda liczona niezależnie, **rozbieżność linii brzegowej większa niż kilka kilometrów oznacza błąd u nas.**
 
+**Ukryta praca:** mapy Björcka / Andréna istnieją tylko jako rysunki — pomiar liczbowy wymaga ich **georeferencji i cyfryzacji linii brzegowej** (z udokumentowanym błędem georeferencji).
+
 **DoD**
+- [ ] Zgeoreferowane i zdigitalizowane linie brzegowe Björcka / Andréna dla 11,7 / 11,1 / 10,5 ka
 - [ ] Nakładki dla trzech przekrojów kontrolnych
 - [ ] Rozbieżność zmierzona liczbowo, nie oceniona wzrokowo
 - [ ] Wynik w raporcie `validate.py`, nie tylko jako obrazek
@@ -757,7 +843,7 @@ Obowiązuje: warstwy `land` / `water` / `ice` / `lake` / `rivers` jako **kwantyz
 **DoD**
 - [ ] Kwantyzacja i uproszczenie z parametrami w `manifest.json`
 - [ ] Brak rastrów w ścieżce krytycznej ładowania
-- [ ] Topologia poprawna po uproszczeniu (`V-11`)
+- [ ] `emit.py` sprawdza topologię po uproszczeniu lokalnie (bramka CI to `V-11`, które zależy od tego zadania)
 
 **Plan:** §5
 
@@ -765,7 +851,7 @@ Obowiązuje: warstwy `land` / `water` / `ice` / `lake` / `rivers` jako **kwantyz
 
 **Epik:** I · **Zależy od:** `I-01` · **Labels:** `app`
 
-Katalog `src/assets/data/` jest objęty `assets` w `angular.json:22`. Chunki **per reżim i per region**, ładowane leniwie — nikt nie potrzebuje 108 klatek fanerozoiku ani czterech wybrzeży na starcie.
+Katalog `src/assets/data/` jest objęty `assets` w `angular.json:23`. Chunki **per reżim i per region**, ładowane leniwie — nikt nie potrzebuje 108 klatek fanerozoiku ani czterech wybrzeży na starcie.
 
 **Zakres**
 - Serwis ładujący reaktywnie (sygnały), z mapą chunków z `manifest.json`.
@@ -788,6 +874,8 @@ Katalog `src/assets/data/` jest objęty `assets` w `angular.json:22`. Chunki **p
 Obowiązuje: **dane noszą wyłącznie identyfikatory**. Chrome UI zostaje w `Dict` — najpierw `i18n.types.ts` (żeby TypeScript wymusił kompletność), potem `en.ts` i `pl.ts` **jednocześnie**, rozszerzone o klucze faz i warstw. Długie teksty idą do `src/assets/content/{en,pl}/*.json`, ładowane reaktywnie na podstawie sygnału `lang` z `I18nService`. Litera reguły zachowana, słowniki nie puchną.
 
 > **`content/{lang}/` od pierwszego commita, nie na końcu.** Dorabianie równoległości EN/PL po napisaniu 150 kart to przepisywanie, nie uzupełnianie.
+
+Zakres językowy: `Lang = 'en' | 'pl'` (stan `i18n.types.ts`). `AGENTS.md` dopuszcza dodatkowe locale (np. `es`) — **poza zakresem** tego zadania; mechanizm `content/{lang}/` ma je przyjąć bez zmian w kodzie.
 
 **DoD**
 - [ ] **Brak tłumaczenia = błąd builda** (test pokrycia kluczy EN↔PL)
@@ -823,11 +911,13 @@ Obowiązuje: **dane noszą wyłącznie identyfikatory**. Chrome UI zostaje w `Di
 | Tor | Zadania | Warunek wejścia |
 | :-- | :-- | :-- |
 | **Reżim A** | `A-01` → `A-02` → `A-03` | tylko `0-05`; całkowicie rozłączny z C i D |
-| **Reżim C** | `C-01` → … → `C-11` | `0-02`, `0-06` |
-| **Krzywe** | `C-12` | `C-03`; `gmst-co2`, `uplift-nkg`, `lr04` nie zależą od niczego w C |
+| **Reżim C — fazy morskie** | `C-01` → `C-02` → `C-03` → `C-04` → `C-11` | `0-02`, `0-06` |
+| **Reżim C — fazy jeziorne** | `C-05` → `C-06` → `C-14` → `C-15` → `C-13` | `C-05` startuje razem z `C-03` |
+| **Krzywe** | `C-12` | tylko `0-05`; nie zależy od paleo-DEM-u ani licencji GIA |
 | **Mikroskala** | `D-01` → {`D-02` ‖ `D-03` ‖ `D-04` ‖ `D-05`} | `D-01`; cztery regiony wzajemnie niezależne |
 | **Dokumentacja** | `0-03`, `0-07`, `A-03` | nic — można pisać od pierwszego dnia |
 | **i18n** | `I-03` | `0-06`; **musi startować najwcześniej**, nie najpóźniej |
+| **CI** | `0-08` | `0-01`, `0-06` |
 
 Cztery regiony `D-02`…`D-05` są wzajemnie niezależne i każdy jest zamkniętą porcją — przerwanie po dowolnym zostawia spójny produkt. To jedyne miejsce w planie, gdzie można bezkarnie zatrzymać prace w połowie.
 
@@ -835,16 +925,18 @@ Cztery regiony `D-02`…`D-05` są wzajemnie niezależne i każdy jest zamknięt
 
 ```
 0-01 ──> 0-04 ──> 0-05 ──> C-01 ──> C-02 ──> C-03 ──> C-04 ──> C-11 ──> I-01 ──> I-02
-                                      ▲                 ▲
-0-02 ─────────────────────────────────┘        C-05 ──> C-06
-0-06 ─────────────────────────────────┘          └────> V-02
+                                               ▲        │        ▲
+0-02 ──────────────────────────────────────────┤        │   C-07, C-08, C-10
+0-06 ──────────────────────────────────────────┘        ▼
+                                  C-05 ──> C-06 ──> C-14 ──> C-15
+                                             └────> V-02
 ```
 
 - `0-01` przed czymkolwiek — bez submodułu nie ma builda.
 - `0-02` przed `C-03` — bez licencji pochodne GIA nie wchodzą do repo.
 - `0-06` przed każdą emisją klatek — `datum` jest w kontrakcie, nie w komentarzu.
-- `C-05` przed `C-04` i `C-06` — flood-fill potrzebuje zasiewu, poziom jeziorny potrzebuje rzędnej progu.
-- `C-09` przed `C-08` — granice faz podaje się w cal yr BP, więc kalibracja jest wcześniej niż os czasu.
+- `C-05` przed `C-06`, `C-10` i `C-14` — flood-fill faz jeziornych potrzebuje zasiewu w progu, poziom jeziorny rzędnej progu, zasolenie stanów progów.
+- `C-09` przed `C-08` — granice faz podaje się w cal yr BP, więc kalibracja jest wcześniej niż oś czasu.
 - `V-01` przed resztą epiku V.
 - `I-01` przed `I-02` i `V-11` — budżet 25/4 MB liczy się na wyjściu `emit.py`.
 
@@ -853,7 +945,8 @@ Cztery regiony `D-02`…`D-05` są wzajemnie niezależne i każdy jest zamknięt
 | Sprzęgnięcie | Dlaczego boli | Reakcja |
 | :-- | :-- | :-- |
 | `D-04` (Szwecja) ↔ `C-05`/`C-06` | SGU pokrywa Närke i Billingen, gdzie baza Rosentaua ma lukę | jeśli `V-02`/`V-03` padną na fazach jeziornych, podciągnąć SE przed DK |
-| `C-05` vs kolejność z §6 | plan stawia `sills.json` w kroku 3, ale `C-04` go potrzebuje w kroku 2 | przenieść `C-05` do pakietu z `C-03` |
+| `C-05` vs kolejność z §6 | plan stawia `sills.json` w kroku 3, ale `C-10` i `C-14` go potrzebują w kroku 2 | `C-05` w M2, w pakiecie z `C-03` |
+| `A-01` ↔ `A-02` | rotacje innym modelem niż układ PaleoDEM-ów dają przesunięte położenie | rotacje PALEOMAP; Merdith 2021 tylko jako kontrola |
 | `I-03` vs cały content | 150 kart bez równoległości EN/PL = przepisywanie | `content/{lang}/` od pierwszego commita |
 | `0-02` vs start reżimu C | odmowa licencji przerywa `C-03` w połowie | fallback wybrany **przed** startem C, nie po |
 
@@ -861,13 +954,14 @@ Cztery regiony `D-02`…`D-05` są wzajemnie niezależne i każdy jest zamknięt
 
 | | Kamień | Zadania | Bramka |
 | :-- | :-- | :-- | :-- |
-| **M1** | Pipeline stoi | `0-01`…`0-06` | `npm run data:build` przechodzi na puste wyjście |
-| **M2** | Dziś → 8 ka | `C-01`, `C-02`, `C-03`, `C-07` | klatki morskie z `datum` |
-| **M3** | ★ **Pierwsza działająca aplikacja** | `C-11` (część), `I-01`, `I-02`, `I-03` | oś czasu klikalna, ≤ 4 MB przy wejściu |
-| **M4** | Fazy jeziorne | `C-05`, `C-06`, `C-04` | BIL i Ancylus z poziomem z progu |
-| **M5** | Walidacja ilościowa | `V-01`, `V-02`, `V-03`, `V-11` | sill-check zielony, RMSE w progu |
+| **M1** | Pipeline stoi | `0-01`…`0-08` | `npm run data:build` przechodzi na puste wyjście, CI na PR-ach działa |
+| **M2** | Dziś → 8 ka | `C-01`, `C-02`, `C-03`, `C-05`, `C-07`, `C-08`, `C-09` | paleo-DEM-y z `datum`, oś czasu w cal yr BP |
+| **M3** | ★ **Pierwsza działająca aplikacja** | `C-04`, `C-10`, `C-11`, `I-01`, `I-02`, `I-03` | oś czasu klikalna dla faz morskich, ≤ 4 MB przy wejściu |
+| **M4** | Fazy jeziorne | `C-06`, `C-14`, `C-15`, `C-13` | BIL i Ancylus z poziomem z progu, 47 klatek |
+| **M5** | Walidacja ilościowa | `C-12`, `V-01`, `V-02`, `V-03`, `V-11` | sill-check zielony, RMSE w progu |
 | **M6** | Fanerozoik | `A-01`…`A-03`, `V-09` | 108 klatek, zero „Bałtyku" przed 1 Ma |
 | **M7** | Cztery wybrzeża | `D-01`…`D-06`, `V-04`, `V-05`, `V-10` | szwy w tolerancji, lasy nad wodą |
 | **M8** | Domknięcie | `B-01`, `I-04`, `V-06`…`V-08`, `V-12` | panel źródeł, nakładki kontrolne |
 
-**M3 jest celem, nie etapem.** Kolejność prac z §6 jest dobrana tak, by działająca aplikacja powstała **przed** ukończeniem całości — reżim C od końca ku początkowi istnieje właśnie po to.
+**M3 jest celem, nie etapem.** Kolejność prac z §6 jest dobrana tak, by działająca aplikacja powstała **przed** ukończeniem całości — reżim C od końca ku początkowi istnieje właśnie po to. Dlatego maska wody i emisja są rozbite na etap morski (`C-04`, `C-11`) i jeziorny (`C-14`, `C-15`): M3 nie może zależeć od niczego z M4.
+
