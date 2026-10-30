@@ -43,7 +43,7 @@ Osobny człon RSL jest uprawniony **tylko** przy czystym polu odkształcenia spr
 
 ### 0.2 Datum wyniku musi być zapisany w kontrakcie
 
-Poziomy faz jeziornych (+25 m BIL, +10 m Ancylus) jako skalary są poprawne **wyłącznie** dla paleo-DEM-u wyrażonego względem współczesnej sobie geoidy — powierzchnia jeziora jest wtedy powierzchnią ekwipotencjalną, czyli stałą. Zalanie DEM-u w **dzisiejszym** układzie wysokościowym tą samą liczbą daje wynik jawnie fałszywy, bo rebound jest silnie zróżnicowany przestrzennie (>285 m w Zatoce Botnickiej vs ~0 na wybrzeżu Polski). Pole `datum` jest obowiązkowe w `manifest.json` i w każdej klatce.
+Poziomy faz jeziornych (+25 m BIL, +10 m Ancylus) jako skalary są poprawne **wyłącznie** dla paleo-DEM-u wyrażonego względem współczesnej sobie geoidy — powierzchnia jeziora jest wtedy powierzchnią ekwipotencjalną, czyli stałą. Zalanie DEM-u w **dzisiejszym** układzie wysokościowym tą samą liczbą daje wynik jawnie fałszywy, bo rebound jest silnie zróżnicowany przestrzennie (>285 m w Zatoce Botnickiej vs ~0 na wybrzeżu Polski). Pole `datum` jest obowiązkowe w `manifest.json` i w każdej klatce, z wartościami per reżim: `contemporaneous-geoid` (C), `EVRF2007` (D — dzisiejszy układ wysokościowy), paleo-poziom morza PaleoDEM-u (A). Porównania między reżimami C i D wymagają jawnej transformacji, opisanej w `paleo-reconstruction-methodology.md`.
 
 ### 0.3 Maska wody wymaga flood-fill, nie progu
 
@@ -99,7 +99,7 @@ Osnowa: **cal yr BP** (Present = 1950). Wszystkie daty ¹⁴C ze starszej litera
 | :-- | :-- | :-- | :-- |
 | Paleo-DEM globalny, 0–540 Ma co 5 Ma (117 siatek) | PALEOMAP PaleoDEMs, Scotese & Wright 2018 — `10.5281/zenodo.5460860` | netCDF 0,1°; txt 1° | CC BY 4.0 |
 | Paleolinie brzegowe + krawędź szelfu (izobata −1400 m) | PaleoMAP PaleoCoastlines v7, Kocsis & Scotese 2020 — `10.5281/zenodo.4017820` | Shapefile | CC BY 4.0 |
-| Rotacje płyt → trajektoria Baltiki | GPlates 2.5 GeoData bundle (Zenodo); Merdith i in. 2021 (1000–410 Ma); Müller i in. 2019 (mezozoik–dziś) | `.rot` + `.gpml` | CC BY 4.0 |
+| Rotacje płyt → trajektoria Baltiki | GPlates 2.5 GeoData bundle (Zenodo): **model PALEOMAP** (ten sam układ co PaleoDEM-y i PaleoCoastlines); Merdith i in. 2021 (1000–0 Ma) jako niezależna kontrola trajektorii | `.rot` + `.gpml` | CC BY 4.0 |
 | Rekonstrukcja bez lokalnego GPlates | GPlates Web Service `gws.gplates.org` (`/reconstruct/reconstruct_points/`, `/reconstruct/coastlines/`) | GeoJSON | API |
 | Temperatura i CO₂, 485 Ma → 0 | PhanDA, Judd i in. 2024 — `github.com/EJJudd/PhanDA`, `5_Output/PhanDA_GMSTandCO2_percentiles.csv` | CSV, percentyle 5/16/50/84/95 | do weryfikacji |
 | Stratygrafia basenu (opcjonalnie) | Macrostrat API | JSON | CC BY 4.0 |
@@ -205,7 +205,7 @@ water_mask(t)  = flood_fill(paleo_dem(t), level(t),
 
 Sedno poprawności: w fazach jeziornych powierzchnia wody **nie jest** globalnym poziomem morza — wyznaczał ją próg odpływu. Fazy morskie (Yoldia, Mastogloia, Littorina, współczesna) → poziom z modelu GIA. Fazy jeziorne (BIL, Ancylus) → rzędna progu w ramie `t` + wartości z literatury.
 
-Lądolód: Stroeven jako geometria wiodąca, DATED-1 jako pas min./maks. przeniesiony **do danych**. Każda klatka interpolowana dostaje `ice.interpolated: true` — to najtańszy sposób pokazania, że rekonstrukcja ma margines.
+Lądolód: Stroeven jako geometria wiodąca, DATED-1 jako pas min./maks. przeniesiony **do danych**. Każda klatka interpolowana dostaje `ice.interpolated: true` — to najtańszy sposób pokazania, że rekonstrukcja ma margines. Stroeven kończy się na 9,7 ka, DATED-1 na 10 ka — klatki młodsze mają `ice: null`.
 
 Zasolenie: klasa reżimu (słodki / słonawy / morski) per faza z IODP 347 i okrzemek, plus **stan każdego progu** (otwarty/zamknięty) i profil przestrzenny Cieśniny Duńskie → Basen Gotlandzki → Zatoka Botnicka.
 
@@ -219,7 +219,7 @@ Z paleo-DEM-u policzyć dla każdego przekroju: **powierzchnię** (km²), **obj�
 
 ## 5. Kontrakt danych
 
-Katalog `src/assets/data/` (objęty `assets` w `angular.json:22`), wersjonowany polem `schemaVersion`:
+Katalog `src/assets/data/` (objęty `assets` w `angular.json:23`), wersjonowany polem `schemaVersion`:
 
 ```
 src/assets/data/
@@ -288,7 +288,7 @@ Stack: `xarray` + `rioxarray`, `rasterio`, `geopandas`, `shapely`, `pyogrio`, `g
 
 1. **Sprzątanie startowe** — submoduł `src/design-system` jest niezainicjowany (`git submodule status` → `-5f5a67b`, katalog pusty); `git submodule update --init` przed czymkolwiek, inaczej build nie przejdzie.
 2. **Reżim C od końca ku początkowi** — najpierw dziś → 8 ka (najlepsze dane), potem fazy jeziorne (najtrudniejsze, bo próg zamiast eustatyki). Najszybsza droga do działającej aplikacji.
-3. **Krzywe i katalogi** (`curves/`, `sills.json`, `taxa.json`) — tanie, a natychmiast weryfikowalne wobec literatury; `sills.json` jest warunkiem sill-checku, więc musi powstać przed walidacją reżimu C.
+3. **Krzywe i katalogi** (`curves/`, `sills.json`, `taxa.json`) — tanie, a natychmiast weryfikowalne wobec literatury; `sills.json` jest warunkiem sill-checku, zasolenia i maski faz jeziornych, więc powstaje razem z paleo-DEM-em (M2), nie po reżimie C.
 4. **Reżim A** — osobny, niezależny pipeline.
 5. **Reżim D, region po regionie** — kolejność PL → DK → SE → EE (malejąca dostępność gotowych rekonstrukcji). Każdy region to zamknięta porcja pracy, można przerwać po dowolnym.
 6. **Reżim B** — ostatni, głównie treść redakcyjna.
