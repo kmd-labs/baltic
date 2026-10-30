@@ -1,0 +1,68 @@
+{
+  "dated1": {
+    "DATED-1_TimeSlices_shp.zip": {
+      "sha256": "a916de31ff31b0bb63863b82d61a6be02659ecfe36a7cab0fdf00034b38be1f1",
+      "size": 11545303,
+      "url": "https://store.pangaea.de/Publications/HughesA-etal_2015/DATED-1_TimeSlices_shp.zip"
+    },
+    "DATED-1_readme.pdf": {
+      "sha256": "86a0557366053066e0ca031c3ef5a032841fe83722d2cb2a889f45b2f01f0b97",
+      "size": 234121,
+      "url": "https://store.pangaea.de/Publications/HughesA-etal_2015/DATED-1_readme.pdf"
+    }
+  },
+  "gebco2024": {
+    "GEBCO_Grid_terms_of_use.pdf": {
+      "sha256": "270e22147888c347a15eb03085ee79e92ae77b2b668ed32e130b319d44a1272e",
+      "size": 139067,
+      "url": "https://dap.ceda.ac.uk/bodc/gebco/global/gebco_2024/GEBCO_Grid_terms_of_use.pdf"
+    },
+    "gebco_2024_n90.0_s0.0_w0.0_e90.0.tif": {
+      "sha256": "d285d9e8ec76e5355cb46ee581c17bcc715d55898d0fae69af9aa59d2ea5da80",
+      "size": 933255948,
+      "url": "https://dap.ceda.ac.uk/bodc/gebco/global/gebco_2024/ice_surface_elevation/geotiff/gebco_2024_n90.0_s0.0_w0.0_e90.0.tif"
+    }
+  },
+  "steffen2025_rsl": {
+    "rsl_SK05_skan_f75.nc": {
+      "sha256": "6fdb9fa1872a5b49fe8a1dea8f7021771e4957fec902465087374e8a2e4e1ea1",
+      "size": 254568,
+      "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_f75.nc/content"
+    },
+    "rsl_SK05_skan_g76.nc": {
+      "sha256": "5cd257f25ed714d33b1085181ce9723f44083232e91f07dd26cca86c4f82afe6",
+      "size": 254568,
+      "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_g76.nc/content"
+    },
+    "rsl_SK05_skan_j88.nc": {
+      "sha256": "20b509e0b0d99fe4da6fc34d5c31bbcb1b9148258288ad878f9ec7891837f3ac",
+      "size": 254568,
+      "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_j88.nc/content"
+    },
+    "rsl_SK05_skan_l79.nc": {
+      "sha256": "a54e390784574562b7bda6d619613bbee81581de3019c40ff7d886cb38d64d9a",
+      "size": 254568,
+      "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_l79.nc/content"
+    },
+    "rsl_SK05_skan_p79.nc": {
+      "sha256": "a54380b594aa0b704387c1e308b71d9cf7b8abe65893f5f23c107d46fba370b8",
+      "size": 254568,
+      "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_p79.nc/content"
+    },
+    "rsl_SK05_skan_sk1.nc": {
+      "sha256": "0f8f16f1d9f95491879b161f00cecf693c51f75c1e3758485862e2677a568250",
+      "size": 254568,
+      "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_sk1.nc/content"
+    },
+    "rsl_SK05_skan_sk2.nc": {
+      "sha256": "b108e09ac6ce03e6008617569265bc05c5284bdeb65e9cd7355f4da02249f775",
+      "size": 254568,
+      "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_sk2.nc/content"
+    },
+    "rsl_SK05_skan_sk3.nc": {
+      "sha256": "0e65ad0547be254a803901bd6d121b55d40246bec690906afa3e1abba72a63c8",
+      "size": 254568,
+      "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_sk3.nc/content"
+    }
+  }
+}

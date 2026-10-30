@@ -1,0 +1,8 @@
+# Direct dependencies of the data pipeline. Pinned set: requirements.txt (pip freeze of a fresh .venv).
+numpy
+scipy
+xarray
+netCDF4
+rasterio
+pyproj
+shapely

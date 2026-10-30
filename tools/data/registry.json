@@ -1,0 +1,46 @@
+{
+  "$comment": "Rejestr zbiorów pobieranych przez fetch.py. Każdy wpis musi mieć odpowiadający mu id w SOURCES.md. md5 tylko tam, gdzie źródło je publikuje; sha256 każdego pliku jest przypinany w checksums.lock.json przy pierwszym pobraniu.",
+  "datasets": [
+    {
+      "id": "gebco2024",
+      "tier": 1,
+      "title": "GEBCO_2024 Grid, ice-surface elevation, tile 0–90°N / 0–90°E",
+      "files": [
+        {
+          "name": "gebco_2024_n90.0_s0.0_w0.0_e90.0.tif",
+          "url": "https://dap.ceda.ac.uk/bodc/gebco/global/gebco_2024/ice_surface_elevation/geotiff/gebco_2024_n90.0_s0.0_w0.0_e90.0.tif",
+          "size": 933255948
+        },
+        {
+          "name": "GEBCO_Grid_terms_of_use.pdf",
+          "url": "https://dap.ceda.ac.uk/bodc/gebco/global/gebco_2024/GEBCO_Grid_terms_of_use.pdf",
+          "size": 139067
+        }
+      ]
+    },
+    {
+      "id": "steffen2025_rsl",
+      "tier": 1,
+      "title": "Steffen & Kaufmann 2025 — RSL northern Europe, ANU-ICE (1998), 8 earth models",
+      "files": [
+        { "name": "rsl_SK05_skan_f75.nc", "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_f75.nc/content", "size": 254568, "md5": "f4255fc6a4709dd6c42413719be0cb19" },
+        { "name": "rsl_SK05_skan_g76.nc", "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_g76.nc/content", "size": 254568, "md5": "bd8d0294c3ec3fd545685aaec4e44c3d" },
+        { "name": "rsl_SK05_skan_j88.nc", "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_j88.nc/content", "size": 254568, "md5": "ee9e3dcd3aa914fa8af7b7a1069c585a" },
+        { "name": "rsl_SK05_skan_l79.nc", "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_l79.nc/content", "size": 254568, "md5": "1979af84896101fe853530dfb6e30c23" },
+        { "name": "rsl_SK05_skan_p79.nc", "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_p79.nc/content", "size": 254568, "md5": "922001ada46da053a11b905863994801" },
+        { "name": "rsl_SK05_skan_sk1.nc", "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_sk1.nc/content", "size": 254568, "md5": "fb3f3a50b78101a569934f3a1fb6f3a1" },
+        { "name": "rsl_SK05_skan_sk2.nc", "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_sk2.nc/content", "size": 254568, "md5": "f571c8d3f4716df008e25e9f9a0d7ddc" },
+        { "name": "rsl_SK05_skan_sk3.nc", "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_sk3.nc/content", "size": 254568, "md5": "89b68e902336fe4a9540dd4794a0882c" }
+      ]
+    },
+    {
+      "id": "dated1",
+      "tier": 1,
+      "title": "DATED-1 — Eurasian ice-sheet time slices (min / most-credible / max), shapefiles",
+      "files": [
+        { "name": "DATED-1_TimeSlices_shp.zip", "url": "https://store.pangaea.de/Publications/HughesA-etal_2015/DATED-1_TimeSlices_shp.zip" },
+        { "name": "DATED-1_readme.pdf", "url": "https://store.pangaea.de/Publications/HughesA-etal_2015/DATED-1_readme.pdf" }
+      ]
+    }
+  ]
+}
