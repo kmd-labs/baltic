@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kmd-labs.github.io/baltic/contract/sills.schema.json",
+  "title": "Sill catalogue — sills.json",
+  "description": "Sills and straits (C-05): position, threshold elevation, activity periods and state per phase. Hypotheses carry a flag and are never presented as fact.",
+  "type": "object",
+  "required": ["schemaVersion", "datum", "sills"],
+  "properties": {
+    "schemaVersion": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "datum": { "$ref": "common.schema.json#/$defs/datum" },
+    "sills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "lat", "lon", "elevationM", "activePeriods", "states", "hypothesis", "sources"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "lat": { "type": "number", "minimum": 50, "maximum": 70 },
+          "lon": { "type": "number", "minimum": 0, "maximum": 45 },
+          "elevationM": {
+            "description": "Present-day threshold elevation, m (datum: present-day).",
+            "type": "number"
+          },
+          "activePeriods": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["fromBP", "toBP"],
+              "properties": {
+                "fromBP": { "$ref": "common.schema.json#/$defs/tBP" },
+                "toBP": { "$ref": "common.schema.json#/$defs/tBP" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "states": {
+            "description": "Open / closed for each of the seven phases.",
+            "type": "object",
+            "propertyNames": { "$ref": "common.schema.json#/$defs/stageId" },
+            "additionalProperties": { "enum": ["open", "closed"] },
+            "minProperties": 7
+          },
+          "hypothesis": { "type": "boolean" },
+          "sources": { "$ref": "common.schema.json#/$defs/sources" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "temperature",
+  "quantity": "eustatic-sea-level",
+  "unit": "m",
+  "datum": "present-day",
+  "readMethod": "read off the published figure",
+  "series": [
+    {
+      "id": "global",
+      "points": [
+        {
+          "tBP": 20000,
+          "value": -125
+        },
+        {
+          "tBP": 0,
+          "value": 0
+        }
+      ]
+    }
+  ],
+  "sources": [
+    "lambeck2014"
+  ]
+}

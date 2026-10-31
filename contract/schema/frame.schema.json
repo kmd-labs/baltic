@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kmd-labs.github.io/baltic/contract/frame.schema.json",
+  "title": "Frame — frames/f-<tBP>.json",
+  "description": "One time slice: water level, outlet, sill states, salinity per basin, ice, GIA model and metrics. Geometry lives in the TopoJSON file named by `geometry`.",
+  "type": "object",
+  "required": [
+    "schemaVersion", "id", "tBP", "kind", "datum", "stageId", "water", "salinity", "sills",
+    "ice", "gia", "eslM", "metrics", "dataQuality", "geometry", "sources"
+  ],
+  "properties": {
+    "schemaVersion": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "id": { "type": "string", "pattern": "^f-\\d+$" },
+    "tBP": { "$ref": "common.schema.json#/$defs/tBP" },
+    "kind": {
+      "description": "`regular` = one of the 21 frames every 1000 years; `event` = an event cross-section.",
+      "enum": ["regular", "event"]
+    },
+    "eventId": { "$ref": "common.schema.json#/$defs/id" },
+    "t14C": {
+      "description": "Radiocarbon age the frame is anchored to, when it comes from a 14C date (C-09).",
+      "type": ["integer", "null"]
+    },
+    "calCurve": { "enum": ["IntCal20", null] },
+    "datum": { "$ref": "common.schema.json#/$defs/datum" },
+    "stageId": { "$ref": "common.schema.json#/$defs/stageId" },
+    "water": {
+      "type": "object",
+      "required": ["type", "levelM", "outlet"],
+      "properties": {
+        "type": { "enum": ["sea", "lake"] },
+        "levelM": {
+          "description": "Water surface relative to the contemporaneous ocean (sea phases: 0; lake phases: sill elevation).",
+          "type": "number"
+        },
+        "literatureLevelM": {
+          "description": "Level reported in the literature, shown next to the modelled one in the phase card (sill-check).",
+          "type": ["number", "null"]
+        },
+        "outlet": {
+          "description": "Active outlet: a sill id from sills.json, or null for an open ocean connection.",
+          "oneOf": [{ "$ref": "common.schema.json#/$defs/id" }, { "type": "null" }]
+        }
+      },
+      "additionalProperties": false
+    },
+    "salinity": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["basin", "class", "psuRange"],
+        "properties": {
+          "basin": { "$ref": "common.schema.json#/$defs/id" },
+          "class": { "$ref": "common.schema.json#/$defs/salinityClass" },
+          "psuRange": { "$ref": "common.schema.json#/$defs/range" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "sills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "state"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "state": { "enum": ["open", "closed"] },
+          "heightM": {
+            "description": "Sill elevation relative to the contemporaneous ocean in this frame.",
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "ice": {
+      "description": "null when there is no ice sheet in the frame (< 10 ka). An object must name its source.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["source", "interpolated", "band", "thickness"],
+          "properties": {
+            "source": { "const": "dated1" },
+            "interpolated": {
+              "description": "false for frames on a DATED-1 slice (every 1 ka); true for event cross-sections.",
+              "type": "boolean"
+            },
+            "band": { "description": "min / max uncertainty band present in the geometry.", "type": "boolean" },
+            "thickness": { "const": "plastic-profile" },
+            "thicknessGrid": { "$ref": "common.schema.json#/$defs/assetPath" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "gia": { "$ref": "common.schema.json#/$defs/gia" },
+    "eslM": {
+      "description": "Global eustatic sea level (curves/esl). Display only — never added to the paleo-DEM.",
+      "type": ["number", "null"]
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "areaKm2": { "type": "number", "minimum": 0 },
+        "volumeKm3": { "type": "number", "minimum": 0 },
+        "meanDepthM": { "type": "number", "minimum": 0 },
+        "maxDepthM": { "type": "number", "minimum": 0 },
+        "residenceTimeYr": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "dataQuality": { "$ref": "common.schema.json#/$defs/dataQuality" },
+    "disputed": {
+      "description": "Content ids of statements flagged as disputed in the phase card.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/id" },
+      "uniqueItems": true
+    },
+    "geometry": {
+      "description": "TopoJSON with water / lake / ice (mc, min, max) / coast.",
+      "$ref": "common.schema.json#/$defs/assetPath"
+    },
+    "sources": { "$ref": "common.schema.json#/$defs/sources" }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "event" } } },
+      "then": { "required": ["eventId"] }
+    },
+    {
+      "if": { "properties": { "t14C": { "type": "integer" } }, "required": ["t14C"] },
+      "then": { "required": ["calCurve"], "properties": { "calCurve": { "const": "IntCal20" } } }
+    },
+    {
+      "if": { "properties": { "water": { "properties": { "type": { "const": "lake" } } } } },
+      "then": { "properties": { "water": { "properties": { "outlet": { "$ref": "common.schema.json#/$defs/id" } } } } }
+    }
+  ]
+}

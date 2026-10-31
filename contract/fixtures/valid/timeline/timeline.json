@@ -1,0 +1,131 @@
+{
+  "schemaVersion": "1.0.0",
+  "phases": [
+    {
+      "id": "deglaciation",
+      "start": {
+        "tBP": 20000,
+        "sources": [
+          "andren2011"
+        ]
+      },
+      "end": {
+        "tBP": 16000,
+        "sources": [
+          "andren2011"
+        ]
+      }
+    },
+    {
+      "id": "bil",
+      "start": {
+        "tBP": 16000,
+        "sources": [
+          "andren2011"
+        ]
+      },
+      "end": {
+        "tBP": 11700,
+        "sources": [
+          "andren2011"
+        ]
+      }
+    },
+    {
+      "id": "yoldia",
+      "start": {
+        "tBP": 11700,
+        "sources": [
+          "andren2011"
+        ]
+      },
+      "end": {
+        "tBP": 10700,
+        "sources": [
+          "andren2011"
+        ]
+      }
+    },
+    {
+      "id": "ancylus",
+      "start": {
+        "tBP": 10700,
+        "sources": [
+          "andren2011"
+        ]
+      },
+      "end": {
+        "tBP": 9800,
+        "sources": [
+          "andren2011"
+        ]
+      }
+    },
+    {
+      "id": "mastogloia",
+      "start": {
+        "tBP": 9800,
+        "sources": [
+          "andren2011"
+        ]
+      },
+      "end": {
+        "tBP": 8500,
+        "sources": [
+          "andren2011"
+        ]
+      }
+    },
+    {
+      "id": "littorina",
+      "start": {
+        "tBP": 8500,
+        "sources": [
+          "andren2011"
+        ]
+      },
+      "end": {
+        "tBP": 4000,
+        "sources": [
+          "andren2011"
+        ]
+      },
+      "localOnsets": [
+        {
+          "place": "little-belt-m0059",
+          "lat": 55.0,
+          "lon": 10.1,
+          "tBP": 7400,
+          "sources": [
+            "kotthoff2022"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "post-littorina",
+      "start": {
+        "tBP": 4000,
+        "sources": [
+          "andren2011"
+        ]
+      },
+      "end": {
+        "tBP": 0,
+        "sources": [
+          "andren2011"
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "id": "billingen-final-drainage",
+      "tBP": 11650,
+      "stageId": "bil",
+      "sources": [
+        "andren2011"
+      ]
+    }
+  ]
+}

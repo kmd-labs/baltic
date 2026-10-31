@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "f-13000",
+  "tBP": 13000,
+  "kind": "regular",
+  "t14C": 11100,
+  "calCurve": "IntCal20",
+  "datum": "contemporaneous-geoid",
+  "stageId": "bil",
+  "water": {
+    "type": "lake",
+    "levelM": 25,
+    "literatureLevelM": 25,
+    "outlet": "oresund"
+  },
+  "salinity": [
+    {
+      "basin": "baltic-proper",
+      "class": "fresh",
+      "psuRange": [
+        0,
+        0.5
+      ]
+    }
+  ],
+  "sills": [
+    {
+      "id": "oresund",
+      "state": "open",
+      "heightM": 25
+    },
+    {
+      "id": "billingen",
+      "state": "closed"
+    }
+  ],
+  "ice": {
+    "source": "dated1",
+    "interpolated": false,
+    "band": true,
+    "thickness": "plastic-profile",
+    "thicknessGrid": "grid/ice-h-13000.bin.gz"
+  },
+  "gia": {
+    "source": "steffen2025_rsl",
+    "earthModel": "sk1"
+  },
+  "eslM": -80,
+  "metrics": {},
+  "dataQuality": "interpolated",
+  "disputed": [
+    "bil-first-drainage"
+  ],
+  "geometry": "frames/f-13000.topo.json",
+  "sources": [
+    "andren2011",
+    "dated1",
+    "steffen2025_rsl",
+    "lambeck2014"
+  ]
+}

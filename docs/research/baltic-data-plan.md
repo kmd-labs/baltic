@@ -175,7 +175,7 @@ src/assets/data/
   grid/
     dem-baltic.bin.gz    # H_now, okno Bałtyku, ~0,04° (~600 × 350, int16) — rzeźba, przekrój, tooltip
     dem-europe.bin.gz    # H_now, domena RSL, ~0,1° — tło paleo na globie
-    rsl.bin.gz           # RSL wiodącego modelu, 1°, 19 kroków źródłowych (float16) — app interpoluje
+    rsl.bin.gz           # RSL wiodącego modelu, 1°, 19 kroków źródłowych (int16 × 0,01 m, KMDG/1) — app interpoluje
   curves/                # rsl-sites (Rosentau), esl (eustatyka), basin-metrics, uplift
   frames/
     f-<tBP>.json         # poziom, odpływ, stany progów, zasolenie per basen, metryki, dataQuality

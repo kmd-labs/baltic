@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kmd-labs.github.io/baltic/contract/timeline.schema.json",
+  "title": "Timeline — timeline.json",
+  "description": "Seven postglacial phases in cal yr BP (C-08). Basin-wide boundaries follow Andrén et al. 2011; local onsets are kept separately and never overwrite them.",
+  "type": "object",
+  "required": ["schemaVersion", "phases", "events"],
+  "properties": {
+    "schemaVersion": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "phases": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "required": ["id", "start", "end"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/stageId" },
+          "start": { "$ref": "#/$defs/boundary" },
+          "end": { "$ref": "#/$defs/boundary" },
+          "localOnsets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["place", "lat", "lon", "tBP", "sources"],
+              "properties": {
+                "place": { "$ref": "common.schema.json#/$defs/id" },
+                "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+                "lon": { "type": "number", "minimum": -180, "maximum": 180 },
+                "tBP": { "$ref": "common.schema.json#/$defs/tBP" },
+                "sources": { "$ref": "common.schema.json#/$defs/sources" }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "tBP", "sources"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "tBP": { "$ref": "common.schema.json#/$defs/tBP" },
+          "stageId": { "$ref": "common.schema.json#/$defs/stageId" },
+          "sources": { "$ref": "common.schema.json#/$defs/sources" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "boundary": {
+      "type": "object",
+      "required": ["tBP", "sources"],
+      "properties": {
+        "tBP": { "$ref": "common.schema.json#/$defs/tBP" },
+        "t14C": { "type": ["integer", "null"] },
+        "calCurve": { "enum": ["IntCal20", null] },
+        "sources": { "$ref": "common.schema.json#/$defs/sources" }
+      },
+      "additionalProperties": false,
+      "if": { "properties": { "t14C": { "type": "integer" } }, "required": ["t14C"] },
+      "then": { "required": ["calCurve"], "properties": { "calCurve": { "const": "IntCal20" } } }
+    }
+  }
+}
