@@ -237,10 +237,10 @@ export class AppComponent implements OnDestroy {
   }
 }
 
-/** `?t=11650` (cal BP) or `?ka=11` opens a given frame; defaults to 11 650 cal BP. */
+/** `?t=11650` (cal BP) or `?ka=11` opens a given frame; defaults to the start of the timeline (20 000 cal BP). */
 function initialTime(): number {
-  if (typeof location === 'undefined') return 11650;
+  if (typeof location === 'undefined') return 20000;
   const q = new URLSearchParams(location.search);
   const t = q.has('t') ? Number(q.get('t')) : q.has('ka') ? Number(q.get('ka')) * 1000 : NaN;
-  return Number.isFinite(t) && t >= 0 && t <= 20000 ? nearestFrame(t) : 11650;
+  return Number.isFinite(t) && t >= 0 && t <= 20000 ? nearestFrame(t) : 20000;
 }

@@ -8,7 +8,7 @@ export const WATER_DRY = 0;
 export const WATER_OCEAN = 1;
 export const WATER_LAKE = 2;
 
-/** Ocean seeds: Skagerrak cells on the west edge of the Baltic window. */
+/** Ocean seeds in the Skagerrak (the window edges are seeded too, see fillWater). */
 export const OCEAN_SEEDS: readonly [number, number][] = [[9.2, 57.6], [9.2, 58.0], [9.6, 57.9], [10.2, 58.5]];
 /** Basin seeds: the deeps of the Baltic. */
 export const BASIN_SEEDS: readonly [number, number][] = [
@@ -24,9 +24,13 @@ export interface FrameStats {
   connected: boolean;
 }
 
-/** West of the Danish straits counts as ocean, not basin, in the metrics. */
+/**
+ * Open ocean inside the Baltic window, not basin: west of the Danish straits (North Sea,
+ * Skagerrak, Kattegat) and the Norwegian Sea strip in the north-west corner. Used by the
+ * metrics and, identically, by the shader for the water colour.
+ */
 export function oceanSide(lon: number, lat: number): boolean {
-  return lon < 10.3 || (lat > 56.95 && lon < 12.4);
+  return lon < 10.3 || (lat > 56.95 && lon < 12.4) || (lat > 62 && lon < 16.5);
 }
 
 export function inside(g: GridGeometry, lon: number, lat: number): boolean {
@@ -62,13 +66,21 @@ export function fillWater(g: GridGeometry, hp: Float32Array, ice: Uint8Array | n
   };
 
   let tail = 0;
-  for (const [lon, lat] of OCEAN_SEEDS) {
-    const i = cellIndex(g, lon, lat);
+  const seed = (i: number) => {
     if (i >= 0 && !water[i] && hp[i] < 0 && !ice?.[i]) {
       water[i] = WATER_OCEAN;
       queue[tail++] = i;
     }
-  }
+  };
+  for (const [lon, lat] of OCEAN_SEEDS) seed(cellIndex(g, lon, lat));
+  // The west edge and the north-west corner of the window open onto the North Sea and the
+  // Norwegian Sea: any sea cell there is connected to the ocean outside the window. The rest
+  // of the north edge (Lapland), the south and the east edges are land — seeding them would
+  // connect the Gulf of Bothnia to a "sea" in flooded valleys and erase the lake phases.
+  const [west, , east] = g.bbox;
+  const lastNorwegianCol = Math.floor(((16.5 - west) / (east - west)) * nx);
+  for (let r = 0; r < ny; r++) seed(r * nx);
+  for (let c = 0; c <= lastNorwegianCol; c++) seed(c);
   for (let head = 0; head < tail; head++) {
     neighbours(queue[head], j => {
       if (water[j] || hp[j] >= 0 || ice?.[j]) return;

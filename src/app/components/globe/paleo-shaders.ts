@@ -93,8 +93,9 @@ export const PATCH_FRAGMENT = /* glsl */ `
   uniform float uFeather;
   varying vec2 vLL;
 
+  // Same rule as oceanSide() in water.ts.
   bool oceanSide(vec2 ll) {
-    return ll.x < 10.3 || (ll.y > 56.95 && ll.x < 12.4);
+    return ll.x < 10.3 || (ll.y > 56.95 && ll.x < 12.4) || (ll.y > 62.0 && ll.x < 16.5);
   }
 
   float contourLine(float v, float width) {
@@ -117,7 +118,10 @@ export const PATCH_FRAGMENT = /* glsl */ `
       float level = lake ? uLake : 0.0;
       float depth = level - hp;
       float k = smoothstep(0.0, 220.0, depth);
-      if (ocean && oceanSide(ll)) {
+      // Basin colour (fresh / brackish / marine) only for the Baltic basin itself; every other
+      // water body — North Sea, Norwegian and Barents Sea, White Sea — is open ocean.
+      bool basin = inBox(uBoxB, ll, 0.05) && !oceanSide(ll);
+      if (ocean && !basin) {
         // Open ocean: a long, soft ramp so the deep Atlantic does not dominate the cap.
         col = mix(cOcean, cOceanDeep, smoothstep(0.0, 1500.0, depth));
       } else {
