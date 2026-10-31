@@ -1,4 +1,4 @@
-@let t = i18n.t();
+@let tr = i18n.t();
 
 <main class="viewport">
   <app-splash (revealed)="splash.finish()"></app-splash>
@@ -6,72 +6,150 @@
   <!-- Top HUD: Left Logotype + Language, Right View Switcher -->
   <header class="header" [class.header--popup-open]="isPopupOpen()">
     <div class="header__left">
-      <div class="header__brand glass-panel">
+      <div class="header__brand glass-panel" data-tour="about">
         <button
           type="button"
           class="header__brand-btn"
           aria-label="KMD Labs – About us"
           (click)="about.open({ lang: i18n.lang() })">
-          <img
-            class="header__logo-img"
-            src="assets/design-system/logo/kmd-black-orange.svg"
-            alt="KMD" />
+          <img class="header__logo-img" src="assets/design-system/logo/kmd-black-orange.svg" alt="KMD" />
           <span class="header__divider" aria-hidden="true"></span>
           <h1 class="header__app-name">Baltic</h1>
+          <span class="header__badge">{{ tr.prototype }}</span>
         </button>
       </div>
 
-      <div class="header__settings glass-panel" role="group" [attr.aria-label]="t.changeLanguage">
+      <div class="header__settings glass-panel" role="group" [attr.aria-label]="tr.changeLanguage">
         <app-dropdown
           variant="ghost"
-          [icon]="bp.mobile() ? null : globeIcon"
+          [icon]="bp.mobile() ? null : icons.Globe"
           [options]="langOptions()"
           [value]="i18n.lang()"
-          [ariaLabel]="t.changeLanguage"
+          [ariaLabel]="tr.changeLanguage"
           (valueChange)="i18n.setLang($event)">
         </app-dropdown>
       </div>
     </div>
 
     <div class="header__right">
-      <div class="header__view glass-panel">
-        <app-dropdown
-          variant="ghost"
-          align="right"
-          [fullWidth]="true"
-          [options]="viewOptions()"
-          [value]="currentView()"
-          [icon]="currentViewIcon()"
-          [ariaLabel]="t.chooseView"
-          (valueChange)="currentView.set($event)">
-        </app-dropdown>
+      <div class="header__view glass-panel" data-tour="layers">
+        <app-layers-menu [items]="layerItems()" (toggle)="toggleLayer($any($event))"></app-layers-menu>
       </div>
+      <button type="button" class="header__tour glass-panel" (click)="startTour()">
+        <lucide-icon [img]="icons.GraduationCap" [size]="15"></lucide-icon>
+        <span>{{ tr.tour }}</span>
+      </button>
     </div>
   </header>
 
   <!-- Fullscreen Visualization Stage -->
-  <section class="stage" [attr.aria-label]="t.stageAriaLabel"></section>
+  <section class="stage">
+    <app-globe
+      [t]="t()"
+      [layers]="layers()"
+      [labels]="labels()"
+      (hover)="pointer.set($event)">
+    </app-globe>
+  </section>
 
-  <!-- Bottom Dock: Sliders & Glossaries -->
+  <div class="zoom glass-panel" role="group">
+    <button type="button" [attr.aria-label]="tr.zoomIn" [title]="tr.zoomIn" (click)="globe?.zoomBy(0.8)">
+      <lucide-icon [img]="icons.Plus" [size]="14"></lucide-icon>
+    </button>
+    <button type="button" [attr.aria-label]="tr.zoomOut" [title]="tr.zoomOut" (click)="globe?.zoomBy(1.25)">
+      <lucide-icon [img]="icons.Minus" [size]="14"></lucide-icon>
+    </button>
+    <button type="button" [attr.aria-label]="tr.zoomFit" [title]="tr.zoomFit" (click)="globe?.fit()">
+      <lucide-icon [img]="icons.Maximize2" [size]="14"></lucide-icon>
+    </button>
+  </div>
+
+  @if (tooltip(); as tip) {
+    <div class="tip" [style.left.px]="tip.x + 14" [style.top.px]="tip.y + 14" role="status">
+      <div class="tip__mono">{{ tip.coords }}</div>
+      <div class="tip__row"><b>{{ tip.what }}</b><span>{{ tip.seabed }}</span></div>
+      <div class="tip__row"><span>{{ tr.tipRelOcean }}</span><span>{{ tip.rel }}</span></div>
+      <div class="tip__row"><span>{{ tr.tipToday }}</span><span>{{ tip.today }}</span></div>
+      <div class="tip__row"><span>{{ tr.tipRsl }}</span><span>{{ tip.rsl }}</span></div>
+    </div>
+  }
+
+  <!-- Bottom Dock -->
   <footer class="dock-wrap">
-    <div class="dock glass-panel">
-      <div class="dock__slider">
-        <app-timeline-slider
-          [min]="-100"
-          [max]="100"
-          [step]="1"
-          [value]="sliderValue()"
-          [ariaLabel]="t.timelineLabel"
-          (valueChange)="sliderValue.set($event)">
-        </app-timeline-slider>
+    <div class="dock" [class.dock--collapsed]="collapsed()">
+      <div class="toolbar">
+        <div class="actions glass-panel">
+          <app-button variant="ghost" data-tour="glossary" (btnClick)="openInfo('glossary')" [ariaLabel]="tr.glossary">
+            <lucide-icon [img]="icons.BookOpen" [size]="15"></lucide-icon>
+            @if (!bp.mobile()) { <span>{{ tr.glossary }}</span> }
+          </app-button>
+          <app-button variant="ghost" data-tour="sources" (btnClick)="openInfo('sources')" [ariaLabel]="tr.sources">
+            <lucide-icon [img]="icons.Library" [size]="15"></lucide-icon>
+            @if (!bp.mobile()) { <span>{{ tr.sources }}</span> }
+          </app-button>
+          <app-button variant="ghost" (btnClick)="openInfo('about')" [ariaLabel]="tr.about">
+            <lucide-icon [img]="icons.Info" [size]="15"></lucide-icon>
+          </app-button>
+        </div>
       </div>
-      <app-button variant="ghost" (btnClick)="openGlossary()">
-        <lucide-icon [img]="bookOpenIcon" [size]="15"></lucide-icon>
-        <span>{{ t.glossary }}</span>
-      </app-button>
+
+      <div class="timeline glass-panel">
+        <app-button variant="play" data-tour="play" [iconOnly]="true" [ariaLabel]="playing() ? tr.pause : tr.play" (btnClick)="togglePlay()">
+          <lucide-icon [img]="playing() ? icons.Pause : icons.Play" [size]="15"></lucide-icon>
+        </app-button>
+        <div class="readout" aria-live="polite">
+          <div class="readout__t">{{ readout() }}</div>
+          <div class="readout__sub">{{ calendar() }}</div>
+        </div>
+        <div class="tl">
+          <app-phase-bands [t]="t()"></app-phase-bands>
+          <app-timeline-slider
+            [min]="-20000"
+            [max]="0"
+            [step]="50"
+            [value]="-t()"
+            [ariaLabel]="tr.timelineLabel"
+            (valueChange)="setT(-$event)">
+          </app-timeline-slider>
+          <app-phase-bands part="ticks" [t]="t()"></app-phase-bands>
+        </div>
+        <div class="steppers">
+          <app-button variant="ghost" [iconOnly]="true" [ariaLabel]="tr.prevFrame" (btnClick)="step(-1)">
+            <lucide-icon [img]="icons.ChevronLeft" [size]="15"></lucide-icon>
+          </app-button>
+          <app-button variant="ghost" [iconOnly]="true" [ariaLabel]="tr.nextFrame" (btnClick)="step(1)">
+            <lucide-icon [img]="icons.ChevronRight" [size]="15"></lucide-icon>
+          </app-button>
+          <app-button
+            variant="ghost"
+            [iconOnly]="true"
+            [ariaLabel]="collapsed() ? tr.expandPanels : tr.collapsePanels"
+            (btnClick)="collapsed.set(!collapsed())">
+            <lucide-icon class="collapse-ico" [class.collapse-ico--up]="collapsed()" [img]="icons.ChevronDown" [size]="15"></lucide-icon>
+          </app-button>
+        </div>
+        @if (data.state() === 'loading') {
+          <span class="status">{{ tr.dataLoading }}</span>
+        } @else if (data.state() === 'error') {
+          <span class="status status--error" role="alert">{{ tr.dataError }}</span>
+        }
+      </div>
+
+      @if (!collapsed()) {
+        <div class="tabbar glass-panel" role="tablist" [attr.aria-label]="tr.panelsLabel">
+          <button type="button" class="chip" role="tab" [attr.aria-selected]="tab() === 'phase'" (click)="tab.set('phase')">{{ tr.tabPhase }}</button>
+          <button type="button" class="chip" role="tab" [attr.aria-selected]="tab() === 'transect'" (click)="tab.set('transect')">{{ tr.tabTransect }}</button>
+        </div>
+        <div class="panels">
+          <app-phase-card data-tour="phase" class="panel panel--phase glass-panel" [class.is-tab]="tab() === 'phase'" [t]="t()" (pickTime)="t.set($event)"></app-phase-card>
+          <app-transect-panel data-tour="transect" class="panel panel--transect glass-panel" [class.is-tab]="tab() === 'transect'" [t]="t()"></app-transect-panel>
+        </div>
+      }
     </div>
   </footer>
 
-  <app-popup [closeAriaLabel]="t.close"></app-popup>
+  <app-tour [steps]="tourSteps" (stepShown)="onTourStep($event)"></app-tour>
+
+  <app-popup [closeAriaLabel]="tr.close"></app-popup>
   <app-tooltip></app-tooltip>
 </main>

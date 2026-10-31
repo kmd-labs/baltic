@@ -1,0 +1,197 @@
+{
+ "phases": {
+  "deglaciation": {
+   "name": "Ice-sheet retreat",
+   "short": "Retreat",
+   "water": "ice and ice-dammed lakes",
+   "psu": "—",
+   "desc": "The Scandinavian ice sheet retreats from Pomerania. The Baltic basin still lies under the ice; the first ice-dammed lakes form at its front.",
+   "species": null
+  },
+  "bil": {
+   "name": "Baltic Ice Lake",
+   "short": "Ice Lake",
+   "water": "freshwater, ice-dammed",
+   "psu": "0–0.5",
+   "desc": "A lake dammed by the ice and the Øresund sill about 25 m above the ocean of the time. When the ice uncovers Mount Billingen the level drops by 25–28 m.",
+   "species": null
+  },
+  "yoldia": {
+   "name": "Yoldia Sea",
+   "short": "Yoldia",
+   "water": "briefly brackish, then fresh",
+   "psu": "0–12",
+   "desc": "Connected to the ocean across central Sweden: first through the Billingen corridor, then the Närke strait. Salt water reaches the basin only around 11,700–11,100 cal BP.",
+   "species": "Portlandia (Yoldia) arctica"
+  },
+  "ancylus": {
+   "name": "Ancylus Lake",
+   "short": "Ancylus",
+   "water": "freshwater",
+   "psu": "0–0.5",
+   "desc": "Uplift closes the Swedish straits. The lake drains through the Svea River, later the Dana River through the Danish straits; the southern coast is drowned.",
+   "species": "Ancylus fluviatilis"
+  },
+  "mastogloia": {
+   "name": "Mastogloia Sea",
+   "short": "Mastogloia",
+   "water": "transitional, brackish",
+   "psu": "0.5–5",
+   "desc": "The ocean rises faster than the Danish sills. Salt water advances slowly.",
+   "species": "Mastogloia diatoms"
+  },
+  "littorina": {
+   "name": "Littorina Sea",
+   "short": "Littorina",
+   "water": "marine",
+   "psu": "3–18",
+   "desc": "Maximum transgression. Salinity clearly higher than today; the sea floods the southern lowlands while the Gulf of Bothnia emerges.",
+   "species": "Littorina littorea"
+  },
+  "post-littorina": {
+   "name": "Limnaea and Mya Sea",
+   "short": "Limnaea · Mya",
+   "water": "brackish",
+   "psu": "2–20",
+   "desc": "Shallowing of the Danish straits limits inflows. Salinity falls to the present level: about 7 PSU in the Baltic Proper.",
+   "species": "Limnaea (Radix) balthica, Mya arenaria"
+  }
+ },
+ "events": {
+  "billingen-before": {
+   "label": "Before the Billingen drainage",
+   "note": "Ice still blocks the Billingen corridor. The lake drains through the Øresund."
+  },
+  "billingen-after": {
+   "label": "After the Billingen drainage",
+   "note": "The duration of the drainage is disputed: “1–2 years” is one estimate, not a consensus."
+  },
+  "ancylus-max": {
+   "label": "Ancylus maximum",
+   "note": "Literature: level about +10 m above the ocean of the time."
+  },
+  "ancylus-regression": {
+   "label": "Ancylus regression threshold",
+   "note": "The outlet shifts from the Svea River to the Dana River."
+  },
+  "littorina-onset": {
+   "label": "Onset of the Littorina transgression",
+   "note": "The ocean spills over the Darss sill."
+  },
+  "littorina-max": {
+   "label": "Littorina maximum",
+   "note": "Mid-Holocene highstand in the transition zones: 7.5–6.5 ka BP."
+  }
+ },
+ "sills": {
+  "billingen": "Billingen",
+  "narke": "Närke strait",
+  "svea": "Svea (Degerfors)",
+  "darss": "Darss sill",
+  "oresund": "Drogden · Øresund",
+  "storebaelt": "Great Belt"
+ },
+ "places": {
+  "stockholm": "Stockholm",
+  "helsinki": "Helsinki",
+  "tallinn": "Tallinn",
+  "riga": "Riga",
+  "gdansk": "Gdańsk",
+  "copenhagen": "Copenhagen",
+  "umea": "Umeå",
+  "oulu": "Oulu",
+  "szczecin": "Szczecin",
+  "gotland": "Gotland"
+ },
+ "glossary": [
+  [
+   "cal BP",
+   "Calibrated years before 1950 (Present = 1950). Radiocarbon dates from the literature are converted with IntCal20; without it late-glacial dates shift by 1,000–1,500 years."
+  ],
+  [
+   "Glacial isostatic adjustment (GIA)",
+   "Land pressed down by the ice sheet slowly returns to equilibrium. Near Umeå it still rises about 10 mm a year; on the Polish coast hardly at all."
+  ],
+  [
+   "Eustasy",
+   "Global change of ocean level due to the water locked in ice sheets. 20,000 years ago the ocean stood about 120 m lower."
+  ],
+  [
+   "RSL",
+   "Relative sea level: where the water surface stood relative to the present land at a place. It combines isostasy and eustasy — hence H_paleo = H_now − RSL(t) with no separate eustatic term."
+  ],
+  [
+   "Sill",
+   "The lowest point between a basin and the ocean. In lake phases the sill, not the ocean, sets the Baltic water level."
+  ],
+  [
+   "PSU",
+   "Practical salinity unit, roughly grams of salt per kilogram of water. Ocean about 35, the Baltic Proper today about 7."
+  ],
+  [
+   "Datum: contemporaneous geoid",
+   "Heights measured against the sea surface of the time, not the present one. Only in this frame is a lake level (e.g. +25 m) one number for the whole basin."
+  ],
+  [
+   "Uncertainty band",
+   "Minimum and maximum ice extent (DATED-1) shown with the most credible outline."
+  ]
+ ],
+ "sources": [
+  {
+   "name": "GEBCO_2024 Grid — present-day relief and sea floor",
+   "use": "Present-day height (H_now) across Europe: a 1/20° grid (dem-europe) and 1/40° in the Baltic window (dem-baltic); source of today's coastline, the shading and the paleo-DEM.",
+   "origin": "GEBCO Compilation Group (2024), GEBCO 2024 Grid, doi:10.5285/1c44ce99-0a0d-5f4f-e063-7086abc0ea0f. Two GeoTIFF tiles (0–90°N / 90°W–0 and 0–90°N / 0–90°E, ice-surface variant) from the CEDA archive (dap.ceda.ac.uk/bodc/gebco).",
+   "licence": "Public domain with attribution required (Terms of Use of the GEBCO Grid). Copying, processing and publishing are allowed, including commercially.",
+   "note": "Processing: block average of 12 × 12 and 6 × 6 cells of 15″, mosaic of the tiles. Lakes (Vänern, Vättern, Ladoga, Onega) only have their water surface in GEBCO, no bottom."
+  },
+  {
+   "name": "Steffen & Kaufmann 2025 — relative sea level (RSL)",
+   "use": "GIA model: the RSL(t) field at 19 steps 21.4 → 0 ka, earth model sk1. The app computes H_paleo = H_now − RSL(t) (no separate eustatic term) and the transect.",
+   "origin": "Steffen, H., Kaufmann, G. (2025), data on Zenodo, doi:10.5281/zenodo.15481755 — files rsl_SK05_skan_<model>.nc, variable RSL, 1° grid, 10°W–70°E / 45–85°N. Ice model in the data: ANU-ICE (1998).",
+   "licence": "CC BY 4.0 — attribution and an indication of changes required.",
+   "note": "Changes: one of 8 earth models selected (sk1), stored as int16 with 1 cm resolution, linear interpolation in time and bilinear in space."
+  },
+  {
+   "name": "DATED-1 — Eurasian ice-sheet extent",
+   "use": "Ice in the frames 20 → 10 ka: the most credible outline (mc) as the extent and as a wall in the water model, the min / max outlines as the uncertainty band.",
+   "origin": "Hughes, A. L. C. et al. (2016), Boreas 45, 1–45, doi:10.1111/bor.12142; data on PANGAEA, doi:10.1594/PANGAEA.848117 (DATED-1_TimeSlices_shp.zip, slices TS10–TS20).",
+   "licence": "CC BY 3.0 — attribution and an indication of changes required.",
+   "note": "Changes: reprojected from polar LAEA to WGS84, geometry simplified (0.02° tolerance). Event sections take the nearest DATED-1 slice (Billingen: 12 and 11 ka), no interpolation."
+  },
+  {
+   "name": "Chronology and phase descriptions",
+   "use": "Boundaries of the seven phases (cal BP), names, descriptions in the phase card, water type, indicative salinity ranges (PSU), indicator species, event sections.",
+   "origin": "Andrén, T. et al. (2011), The Development of the Baltic Sea Basin During the Last 130 ka, in: Harff et al. (eds.), The Baltic Sea Basin, Springer, doi:10.1007/978-3-642-17220-5_4; additions from Björck (1995) and Kotthoff et al. (2022, IODP M0059).",
+   "licence": "Scientific facts cited from publications (dates, names, ranges). The texts in the app are our own summary, not a reprint.",
+   "note": "PSU ranges are phase-wide literature values; salinity per basin will come from the model (C-10). Dates are not yet recalibrated with IntCal20 (C-09)."
+  },
+  {
+   "name": "Lake levels from the literature (sill-check)",
+   "use": "The “Level: literature” row of the phase card: Baltic Ice Lake +25 m, Billingen drainage 25–28 m, Ancylus Lake up to +10 m above the ocean of the time.",
+   "origin": "Values compiled in the data plan (docs/research/baltic-data-plan.md §2) from Björck (1995) and Andrén et al. (2011).",
+   "licence": "Scientific facts with citation.",
+   "note": "“Level: model” is computed by the app (lowest outlet sill, priority-flood); the comparison with the literature is a prototype of test V-02."
+  },
+  {
+   "name": "Sills and places",
+   "use": "Positions of the sills (Billingen, Närke, Svea, Darss, Drogden, Great Belt), the cities on the globe and the points of the Umeå → Gdańsk transect.",
+   "origin": "Geographic coordinates from the data plan (§3.2) and public gazetteers; sill elevations and states will come from catalogue C-05.",
+   "licence": "Geographic facts — no licence restrictions.",
+   "note": "Only the position for now; open / closed state and threshold elevation are not shown."
+  },
+  {
+   "name": "Software",
+   "use": "Globe rendering, geometry and the interface.",
+   "origin": "three.js (MIT), d3-geo (ISC), Angular (MIT), lucide (ISC), Inter typeface (SIL OFL 1.1), KMD design system.",
+   "licence": "Open-source licences listed with each library.",
+   "note": "Application code: repository kmd-labs/baltic."
+  }
+ ],
+ "about": [
+  "This is a prototype, not a scientific result. Heights are real (GEBCO 2024 and the Steffen & Kaufmann 2025 RSL fields), but the pipeline does not have all its steps yet.",
+  "H_paleo = H_now − RSL(t) is computed in the browser, linear in time and bilinear in space — the same as the pipeline (agreement < 5 cm).",
+  "Water in the Baltic window is filled from the Skagerrak. When the basin has no connection to the ocean it fills up to its lowest outlet sill (priority-flood, ice acts as a wall) — the phase card compares that level with the literature, like the sill-check test (V-02).",
+  "Not yet included: the sill catalogue with elevations and states (C-05), salinity per basin (C-10), the eustatic curve (C-12), ice thickness (C-07) and data west of 0°E."
+ ]
+}

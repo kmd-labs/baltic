@@ -1,2 +1,18 @@
 @use "variables" as *;
 @use "base";
+
+// Baltic globe & paleo layer tokens — read at runtime by ThemeService.getTokenColor().
+:root {
+  --color-globe-ocean: #{palette("info-100")};
+  --color-paleo-water-shallow: #{palette("info-200")};
+  --color-paleo-water-deep: #{palette("info-300")};
+  --color-paleo-ice: #{rgba(palette("neutral-0"), 0.92)};
+  --color-paleo-ice-band: #{rgba(palette("neutral-0"), 0.45)};
+  --color-paleo-ice-edge: #{palette("info-300")};
+  --color-paleo-fresh: #a6d8c7;
+  --color-paleo-brackish: #8dbcdc;
+  --color-paleo-marine: #3d6aa3;
+  --color-paleo-seabed: #e4dccb;
+  --color-paleo-earth: #d6cfb9;
+  --color-paleo-earth-line: #8c8369;
+}

@@ -17,10 +17,29 @@ Backlog: **36 zadań w 4 epikach** (0, C, V, I), kamienie M1–M6. Wszystkie opi
 
 | Gałąź | Stan | Zawartość |
 | :-- | :-- | :-- |
-| `docs/postglacial-scope` | PR #57 **scalony** (na `8f9c1a0`) | zawężenie zakresu; ostatni commit `a256a8a` dopchnięty po scaleniu i nie trafił do `main` |
-| `docs/housekeeping-globe` | PR do `main` | `a256a8a` (licencje, 1 ka, glob) + wymagania globu + poprawki z weryfikacji danych |
+| `docs/housekeeping-globe` | PR #59 **scalony** | decyzje z 2026-10-31 w `main`, wymagania globu, poprawki z weryfikacji danych; #8 zamknięte |
+| `feat/contract-0-06` | **PR #60** do `main` | kontrakt `0-06`: schematy JSON, 33 fixture'y, format siatek KMDG/1 (Python + TS), `npm run test:data` / `test:contract`; zamyka #12 |
+| `feat/globe-prototype` | PR do `main` (na bazie #60) | prototyp `C-01`/`C-03`/`C-07` + glob `I-05`: `tools/data/postglacial.py`, `src/app/components/globe/`, suwak 20 → 0 ka, `?ka=` w URL |
 
-PR #2 (submoduł v1.14.1) do zamknięcia jako zbędny — `main` przypina już `137744d` = v1.14.1.
+PR #2 zamknięty jako zbędny. Opisy #58, #17, #21, #16 zsynchronizowane z backlogiem; #58 przemianowane na „…centred on the Baltic”.
+
+## Prototyp na globie — stan
+
+- **Wersja 5 (2026-10-31, noc), po pytaniach do użytkownika:** warstwy przeniesione do pastylki z listą w prawym górnym rogu — **zastępuje przełącznik widoku** (miał jedną opcję). To świadome odstępstwo od `AGENTS.md` §2 (prawy górny róg = przełącznik widoków, warstwy w docku), decyzja użytkownika. Pod nią pastylka „Samouczek”: 7 kroków (play, warstwy, słowniczek, źródła, faza, przekrój, KMD) z podświetleniem i wyszarzeniem reszty, uruchamiany **tylko na żądanie** (zgodnie z `AGENTS.md` §1 — nic nie blokuje wizualizacji przy starcie); Esc / × zamykają, strzałki przewijają kroki. Panele Faza i Przekrój o połowę niższe (165 px), karta fazy się przewija.
+
+- **Wersja 4 (2026-10-31, noc), po pytaniach do użytkownika:** linia „brzeg −1000 lat” liczona w shaderze z tej samej reguły co raster wody klatki t+1000 (pokrywa się co do piksela; działa w całej Europie i na przekrojach zdarzeniowych; wygaszona przy granicy okna Bałtyku). Bez pinów zdarzeń na osi — zdarzenia są przyciskami w karcie fazy. Panel krzywych RSL i suwak przewyższenia usunięte; rzeźba płaska (×1). Dock: Faza 2/5 (bez przewijania) i przekrój 3/5. „Źródła” opisują każdy zbiór: użycie, pochodzenie z DOI, licencja, zmiany (DOI Andrén 2011 i Hughes 2016 sprawdzone w Crossref).
+
+- **Wersja 3 (2026-10-31, noc):** po pytaniach do użytkownika — tylko wycinek kuli z domeną RSL (10°W–70°E / 45–85°N), siatka Europy 1/20° z mozaiki dwóch kafli GEBCO (kafel 90°W–0 pobrany), Bałtyk 1/40°, woda modelowana tylko w Bałtyku. Tło globu (ETOPO2, Natural Earth, world-atlas) usunięte; pierwsze wejście ok. 2,8 MB. Wydajność: liczenie wody w Web Workerze (krok osi czasu 4–13 ms), render tylko przy zmianach.
+
+- Uruchomienie: `npm start`, potem `http://localhost:4200/?t=11650` (cal BP, 0–20 000; działa też `?ka=11`).
+- **Wersja 2 (wieczór 2026-10-31):** region paleo liczony per piksel na GPU (ostra linia brzegowa przy zbliżeniu), siatka Bałtyku 1/40°, woda: wypełnienie od Skagerraku + *priority-flood* basenu do najniższego progu (lód = ściana). Model sam daje BIL ok. +31…+39 m (literatura +25), drenaż Billingen, Ancylus +22 m (lit. +10), dziś 390 tys. km² / 21,4 tys. km³ (rzeczywiście ok. 377 tys. / 21,7 tys.). Panele z makiety w docku; treści w `src/assets/content/{en,pl}` (`I-03`).
+- Test interakcji przez DevTools (`chromium` headless, CDP): przeciągnięcie przechyla do ~16°, po puszczeniu kamera wraca nad Bałtyk.
+- Dane: `python -m tools.data.postglacial` (sk1) → `src/assets/data/grid/` i `prototype/`. Deterministyczne.
+- Aplikacja liczy `H_now − RSL(t)` i zgadza się z pipeline'em < 5 cm (`tests/contract/paleo.test.ts`).
+- Pierwsze wejście na desktopie ~3,8 MB (limit 4 MB) — relief 4k z El Niño to 1,7 MB; przy dokładaniu klatek trzeba to obciąć.
+- **Znane ograniczenia:** domena DEM 0–50°E (szew na 0° w Morzu Północnym do czasu kafla GEBCO z tury 2); brak flood-fill (`C-04`) — zamknięte obniżenia i poldery wyglądają jak woda; fazy jeziorne na poziomie oceanu (`C-06`); lód bez grubości; ocean poza domeną bez batymetrii, więc głęboka woda w domenie jest ciemniejsza niż reszta oceanu.
+- **Niezweryfikowane na prawdziwym sprzęcie:** płynność na słabszych telefonach (łatka ma 140 tys. wierzchołków; headless bez GPU daje ~2,6 kl./s) — układ mobilny 390 px sprawdzony w emulacji DevTools.
+- Licencje tła globu (ETOPO2, Natural Earth, world-atlas) sprawdzone u źródła i oznaczone ✅ w `SOURCES.md`.
 
 ## Makieta
 
@@ -36,11 +55,11 @@ Kryterium: zależności spełnione, dane leżą lokalnie albo są ✅ bez zapyta
 
 | Kolejność | Issue | Dlaczego dziś |
 | :-: | :-- | :-- |
-| 1 | #12 `0-06` kontrakt hybrydowy | bez zależności; odblokowuje emisję (`C-03`…`I-01`) i glob (`I-05`) |
-| 2 | #15 `C-01` → #17 `C-03` → #18 `C-04` | ścieżka krytyczna; GEBCO i RSL już w `data/raw/`; prototyp można liczyć równolegle z `0-06` |
-| 3 | #21 `C-07` lądolód | DATED-1 już pobrany, niezależne od reszty |
-| 4 | #11 `0-05` tura 2 | Rosentau, Kotthoff, RSL S-Bałtyku, ESD 2025, kafel GEBCO 90°W–0 — wszystko ✅; odblokowuje `C-12` i `V-03` |
-| 5 | #7 `0-01` README i przypięty submoduł | małe, bez zależności; potrzebne do `I-05` i CI |
+| ✅ | #12 `0-06` kontrakt hybrydowy | PR #60 |
+| 1 | #15 `C-01` → #17 `C-03` → #18 `C-04` | prototyp `C-01`/`C-03` gotowy na globie; dalej: kafel GEBCO 90°W–0, flood-fill `C-04`, wybór modelu Ziemi |
+| 2 | #21 `C-07` lądolód | DATED-1 już pobrany, niezależne od reszty |
+| 3 | #11 `0-05` tura 2 | Rosentau, Kotthoff, RSL S-Bałtyku, ESD 2025, kafel GEBCO 90°W–0 — wszystko ✅; odblokowuje `C-12` i `V-03` |
+| 4 | #7 `0-01` README i przypięty submoduł | małe, bez zależności; potrzebne do `I-05` i CI |
 | równolegle | #9 `0-03`, #16 `C-02` (research), #13 `0-07`, #19 `C-05` (literatura) | tylko research i dokumenty, bez kodu |
 
 Formalnie `0-04` zależy od `0-01`, ale skrypty Pythona nie potrzebują builda Angulara — prototyp `postglacial.py` może iść od razu.
@@ -74,7 +93,7 @@ Wszystkie liczby z planu i backlogu sprawdzone na plikach z `data/raw/` (12/12 s
 
 ## Otwarte pytania
 
-- **Dropdown w prawym górnym rogu** (`AGENTS.md` §2): co przełącza? Propozycja: Paleogeografia / Zasolenie / Lądolód.
+- ~~Dropdown w prawym górnym rogu~~ — rozstrzygnięte 2026-10-31: lista warstw (odstępstwo od `AGENTS.md` §2).
 - **Tryb 2D z makiety** — zostaje obok globu czy wypada?
 - Licencje ❓ do sprawdzenia na stronach: EMODnet, NKG2016LU, SGU, GLOBathy, HELCOM, ETOPO2, Natural Earth.
 

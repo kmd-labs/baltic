@@ -23,6 +23,7 @@ Nowy zbiór: wpis w `SOURCES.md` → wpis w `registry.json` (z `md5`, jeśli źr
 | Tura | Zbiory | Cel |
 | :-: | :-- | :-- |
 | 1 | `gebco2024`, `steffen2025_rsl`, `dated1` | minimum do pierwszego paleo-DEM-u i maski wody faz morskich (M3) — wszystkie z licencją ✅ |
+| 2 (część) | `gebco2024` — kafel 0–90°N / 90°W–0 | domena RSL od 10°W (Wyspy Brytyjskie, Morze Północne); pobrany 2026-10-31 |
 
 ## Przetwarzanie
 
@@ -34,6 +35,17 @@ python -m venv .venv
 ```
 
 `requirements.in` zawiera bezpośrednie zależności, a `requirements.txt` zamrożony zestaw wersji.
+
+## Prototyp paleo-DEM-u (`C-01`, `C-03`, `C-07`)
+
+```powershell
+python -m tools.data.postglacial              # model sk1
+python -m tools.data.postglacial --model j88
+```
+
+Zapisuje do `src/assets/data/`: `grid/dem-europe.bin.gz` (GEBCO, 0–50°E / 48–75°N, 0,05°), `grid/rsl.bin.gz` (RSL wybranego modelu, 19 warstw), `prototype/ice-dated1.json` (zarysy DATED-1 20 → 10 ka) i `prototype/checkpoints.json` (`H_paleo` w 6 miejscach × 10 chwil). Aplikacja liczy `H_paleo = H_now − RSL(t)` sama; `npm run test:contract` sprawdza, że wynik aplikacji zgadza się z pipeline'em (≤ 1 m, dziś < 5 cm). Przebieg jest deterministyczny — powtórny run daje identyczne pliki.
+
+Ograniczenia prototypu: brak kafla GEBCO na zachód od 0° (tura 2), brak flood-fill (`C-04` — zamknięte obniżenia wyglądają jak woda), fazy jeziorne pokazane na poziomie oceanu (`C-06`), lód bez grubości (`C-07`).
 
 ## Kontrakt (`0-06`)
 

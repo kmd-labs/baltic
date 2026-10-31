@@ -7,3 +7,4 @@ rasterio
 pyproj
 shapely
 jsonschema
+pyogrio
