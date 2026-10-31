@@ -17,10 +17,21 @@ Backlog: **36 zadań w 4 epikach** (0, C, V, I), kamienie M1–M6. Wszystkie opi
 
 | Gałąź | Stan | Zawartość |
 | :-- | :-- | :-- |
-| `docs/postglacial-scope` | PR #57 **scalony** (na `8f9c1a0`) | zawężenie zakresu; ostatni commit `a256a8a` dopchnięty po scaleniu i nie trafił do `main` |
-| `docs/housekeeping-globe` | PR do `main` | `a256a8a` (licencje, 1 ka, glob) + wymagania globu + poprawki z weryfikacji danych |
+| `docs/housekeeping-globe` | PR #59 **scalony** | decyzje z 2026-10-31 w `main`, wymagania globu, poprawki z weryfikacji danych; #8 zamknięte |
+| `feat/contract-0-06` | **PR #60** do `main` | kontrakt `0-06`: schematy JSON, 33 fixture'y, format siatek KMDG/1 (Python + TS), `npm run test:data` / `test:contract`; zamyka #12 |
+| `feat/globe-prototype` | PR do `main` (na bazie #60) | prototyp `C-01`/`C-03`/`C-07` + glob `I-05`: `tools/data/postglacial.py`, `src/app/components/globe/`, suwak 20 → 0 ka, `?ka=` w URL |
 
-PR #2 (submoduł v1.14.1) do zamknięcia jako zbędny — `main` przypina już `137744d` = v1.14.1.
+PR #2 zamknięty jako zbędny. Opisy #58, #17, #21, #16 zsynchronizowane z backlogiem; #58 przemianowane na „…centred on the Baltic”.
+
+## Prototyp na globie — stan
+
+- Uruchomienie: `npm start`, potem `http://localhost:4200/?ka=11` (0–20).
+- Dane: `python -m tools.data.postglacial` (sk1) → `src/assets/data/grid/` i `prototype/`. Deterministyczne.
+- Aplikacja liczy `H_now − RSL(t)` i zgadza się z pipeline'em < 5 cm (`tests/contract/paleo.test.ts`).
+- Pierwsze wejście na desktopie ~3,8 MB (limit 4 MB) — relief 4k z El Niño to 1,7 MB; przy dokładaniu klatek trzeba to obciąć.
+- **Znane ograniczenia:** domena DEM 0–50°E (szew na 0° w Morzu Północnym do czasu kafla GEBCO z tury 2); brak flood-fill (`C-04`) — zamknięte obniżenia i poldery wyglądają jak woda; fazy jeziorne na poziomie oceanu (`C-06`); lód bez grubości; ocean poza domeną bez batymetrii, więc głęboka woda w domenie jest ciemniejsza niż reszta oceanu.
+- **Niezweryfikowane:** sprężynowy powrót kamery i zachowanie na telefonie — rozszerzenie Chrome nie było połączone, zrzuty robione headless Chromium (bez interakcji; minimalna szerokość okna ~500 px).
+- Licencje tła globu (ETOPO2, Natural Earth, world-atlas) sprawdzone u źródła i oznaczone ✅ w `SOURCES.md`.
 
 ## Makieta
 
@@ -36,11 +47,11 @@ Kryterium: zależności spełnione, dane leżą lokalnie albo są ✅ bez zapyta
 
 | Kolejność | Issue | Dlaczego dziś |
 | :-: | :-- | :-- |
-| 1 | #12 `0-06` kontrakt hybrydowy | bez zależności; odblokowuje emisję (`C-03`…`I-01`) i glob (`I-05`) |
-| 2 | #15 `C-01` → #17 `C-03` → #18 `C-04` | ścieżka krytyczna; GEBCO i RSL już w `data/raw/`; prototyp można liczyć równolegle z `0-06` |
-| 3 | #21 `C-07` lądolód | DATED-1 już pobrany, niezależne od reszty |
-| 4 | #11 `0-05` tura 2 | Rosentau, Kotthoff, RSL S-Bałtyku, ESD 2025, kafel GEBCO 90°W–0 — wszystko ✅; odblokowuje `C-12` i `V-03` |
-| 5 | #7 `0-01` README i przypięty submoduł | małe, bez zależności; potrzebne do `I-05` i CI |
+| ✅ | #12 `0-06` kontrakt hybrydowy | PR #60 |
+| 1 | #15 `C-01` → #17 `C-03` → #18 `C-04` | prototyp `C-01`/`C-03` gotowy na globie; dalej: kafel GEBCO 90°W–0, flood-fill `C-04`, wybór modelu Ziemi |
+| 2 | #21 `C-07` lądolód | DATED-1 już pobrany, niezależne od reszty |
+| 3 | #11 `0-05` tura 2 | Rosentau, Kotthoff, RSL S-Bałtyku, ESD 2025, kafel GEBCO 90°W–0 — wszystko ✅; odblokowuje `C-12` i `V-03` |
+| 4 | #7 `0-01` README i przypięty submoduł | małe, bez zależności; potrzebne do `I-05` i CI |
 | równolegle | #9 `0-03`, #16 `C-02` (research), #13 `0-07`, #19 `C-05` (literatura) | tylko research i dokumenty, bez kodu |
 
 Formalnie `0-04` zależy od `0-01`, ale skrypty Pythona nie potrzebują builda Angulara — prototyp `postglacial.py` może iść od razu.

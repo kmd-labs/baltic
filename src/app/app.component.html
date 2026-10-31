@@ -41,7 +41,7 @@
           [fullWidth]="true"
           [options]="viewOptions()"
           [value]="currentView()"
-          [icon]="currentViewIcon()"
+          [icon]="viewOptions()[0].icon"
           [ariaLabel]="t.chooseView"
           (valueChange)="currentView.set($event)">
         </app-dropdown>
@@ -50,25 +50,56 @@
   </header>
 
   <!-- Fullscreen Visualization Stage -->
-  <section class="stage" [attr.aria-label]="t.stageAriaLabel"></section>
+  <section class="stage">
+    <app-globe [ka]="ka()"></app-globe>
+  </section>
 
-  <!-- Bottom Dock: Sliders & Glossaries -->
+  <!-- Bottom Dock: time, phase, legend -->
   <footer class="dock-wrap">
     <div class="dock glass-panel">
-      <div class="dock__slider">
-        <app-timeline-slider
-          [min]="-100"
-          [max]="100"
-          [step]="1"
-          [value]="sliderValue()"
-          [ariaLabel]="t.timelineLabel"
-          (valueChange)="sliderValue.set($event)">
-        </app-timeline-slider>
+      <div class="dock__readout">
+        <span class="dock__ka">{{ t.kaBp(ka()) }}</span>
+        <span class="dock__phase">{{ t.phases[phase().id] }}</span>
+        @if (data.state() === 'loading') {
+          <span class="dock__status">{{ t.dataLoading }}</span>
+        } @else if (data.state() === 'error') {
+          <span class="dock__status dock__status--error" role="alert">{{ t.dataError }}</span>
+        }
       </div>
-      <app-button variant="ghost" (btnClick)="openGlossary()">
-        <lucide-icon [img]="bookOpenIcon" [size]="15"></lucide-icon>
-        <span>{{ t.glossary }}</span>
-      </app-button>
+
+      <div class="dock__row">
+        <div class="dock__slider">
+          <app-timeline-slider
+            [min]="-20"
+            [max]="0"
+            [step]="1"
+            [value]="-ka()"
+            [ariaLabel]="t.timelineLabel"
+            (valueChange)="setFromSlider($event)">
+          </app-timeline-slider>
+        </div>
+        <app-button variant="ghost" (btnClick)="openGlossary()">
+          <lucide-icon [img]="bookOpenIcon" [size]="15"></lucide-icon>
+          @if (!bp.mobile()) {
+            <span>{{ t.glossary }}</span>
+          }
+        </app-button>
+      </div>
+
+      <ul class="dock__legend">
+        <li><span class="swatch swatch--water" aria-hidden="true"></span>{{ t.legendWater }}</li>
+        <li><span class="swatch swatch--land" aria-hidden="true"></span>{{ t.legendLand }}</li>
+        <li><span class="swatch swatch--ice" aria-hidden="true"></span>{{ t.legendIce }}</li>
+        <li><span class="swatch swatch--ice-band" aria-hidden="true"></span>{{ t.legendIceBand }}</li>
+        <li><span class="swatch swatch--coast" aria-hidden="true"></span>{{ t.legendCoast }}</li>
+      </ul>
+
+      <p class="dock__note">
+        {{ t.prototypeNote }}
+        @if (phase().lake) {
+          <br />{{ t.lakePhaseNote }}
+        }
+      </p>
     </div>
   </footer>
 

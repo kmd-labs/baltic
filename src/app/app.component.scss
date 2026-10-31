@@ -148,12 +148,112 @@
 .dock {
   pointer-events: auto;
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  width: min(720px, 100%);
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 16px 8px;
+  width: min(760px, 100%);
+
+  &__readout {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  &__ka {
+    font-family: var(--font-family-mono);
+    font-size: font-size("md");
+    font-weight: font-weight("semibold");
+    color: color("text-bright");
+  }
+
+  &__phase {
+    font-size: font-size("sm");
+    color: color("text-main");
+  }
+
+  &__status {
+    margin-left: auto;
+    font-size: font-size("xs");
+    color: color("text-dim");
+
+    &--error {
+      color: color("error");
+    }
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
 
   &__slider {
     flex: 1;
+    min-width: 0;
+  }
+
+  &__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: font-size("xs");
+    color: color("text-desc");
+
+    li {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+
+  &__note {
+    margin: 0;
+    font-size: font-size("xs");
+    line-height: 1.35;
+    color: color("text-dim");
+  }
+
+  @include respond-to("mobile") {
+    padding: 8px 10px 6px;
+
+    &__note {
+      display: none;
+    }
+  }
+}
+
+.swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid color("line");
+
+  &--water {
+    background: linear-gradient(90deg, var(--color-paleo-water-shallow), var(--color-paleo-water-deep));
+  }
+
+  &--land {
+    background: color("globe-land-fill");
+  }
+
+  &--ice {
+    background: var(--color-paleo-ice);
+    border-color: var(--color-paleo-ice-edge);
+  }
+
+  &--ice-band {
+    background: var(--color-paleo-ice-band);
+    border: 1px dashed var(--color-paleo-ice-edge);
+  }
+
+  &--coast {
+    height: 0;
+    border: 0;
+    border-top: 1.5px solid color("globe-land-stroke");
   }
 }

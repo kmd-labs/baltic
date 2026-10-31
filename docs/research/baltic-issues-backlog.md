@@ -727,6 +727,8 @@ Decyzja z 2026-10-31: scena to **glob z `kmd-labs/el-nino` — tylko glob i reli
 
 **DoD**
 - [ ] Glob działa na danych dziś (klatka 0) zanim powstaną klatki paleo
+> **Prototyp (2026-10-31, `feat/globe-prototype`):** `src/app/components/globe/` — glob i relief z El Niño, nakładka `H_now − RSL(t)` z lodem DATED-1, suwak 20 → 0 ka, `?ka=` w URL. Assety tła w `src/assets/data/globe/` (ETOPO2, Natural Earth, world-atlas — licencje ✅ w `SOURCES.md`).
+
 - [ ] Start zbliżony na Bałtyk; nie da się obrócić globu poza Europę — próba daje przechylenie, a po puszczeniu kamera wraca i centruje się na Bałtyku
 - [ ] Z El Niño przeniesione tylko glob i relief — żadnych warstw SST, pogody, wpływów ani bokehu
 - [ ] Zmiana klatki podmienia teksturę i przemieszczenie bez przeładowania sceny
