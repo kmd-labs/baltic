@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxa": [
+    {
+      "id": "littorina-littorea",
+      "scientificName": "Littorina littorea",
+      "psuTolerance": 12,
+      "stages": [
+        "littorina"
+      ],
+      "sources": [
+        "andren2011"
+      ]
+    }
+  ]
+}

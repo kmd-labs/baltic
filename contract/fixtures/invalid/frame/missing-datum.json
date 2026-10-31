@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "f-0",
+  "tBP": 0,
+  "kind": "regular",
+  "stageId": "post-littorina",
+  "water": {
+    "type": "sea",
+    "levelM": 0,
+    "outlet": null
+  },
+  "salinity": [
+    {
+      "basin": "bothnian-bay",
+      "class": "brackish",
+      "psuRange": [
+        2,
+        4
+      ]
+    },
+    {
+      "basin": "gotland",
+      "class": "brackish",
+      "psuRange": [
+        6,
+        8
+      ]
+    }
+  ],
+  "sills": [
+    {
+      "id": "drogden",
+      "state": "open",
+      "heightM": -8
+    }
+  ],
+  "ice": null,
+  "gia": {
+    "source": "steffen2025_rsl",
+    "earthModel": "sk1"
+  },
+  "eslM": 0,
+  "metrics": {
+    "areaKm2": 377000,
+    "volumeKm3": 21700
+  },
+  "dataQuality": "modelled",
+  "geometry": "frames/f-0.topo.json",
+  "sources": [
+    "gebco2024",
+    "steffen2025_rsl"
+  ]
+}

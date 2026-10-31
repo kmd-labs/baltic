@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.0.0",
+  "datum": "contemporaneous-geoid",
+  "gia": {
+    "source": "steffen2025_rsl",
+    "earthModel": "sk1",
+    "uncertaintyModels": [
+      "f75",
+      "j88"
+    ],
+    "spatialInterpolation": "bilinear",
+    "timeInterpolation": "linear"
+  },
+  "ice": {
+    "source": "dated1",
+    "tau0Pa": 100000
+  },
+  "budgets": {
+    "totalBytes": 26214400,
+    "firstLoadBytes": 5000000
+  },
+  "grids": {
+    "dem-baltic": {
+      "path": "grid/dem-baltic.bin.gz",
+      "format": "kmdg/1",
+      "quantity": "elevation",
+      "unit": "m",
+      "datum": "present-day",
+      "firstLoad": true
+    },
+    "rsl": {
+      "path": "grid/rsl.bin.gz",
+      "format": "kmdg/1",
+      "quantity": "rsl",
+      "unit": "m",
+      "datum": "present-day",
+      "firstLoad": true
+    }
+  },
+  "frames": [
+    {
+      "id": "f-0",
+      "tBP": 0,
+      "kind": "regular",
+      "path": "frames/f-0.json"
+    },
+    {
+      "id": "f-11650",
+      "tBP": 11650,
+      "kind": "event",
+      "path": "frames/f-11650.json"
+    }
+  ],
+  "files": [
+    {
+      "path": "grid/dem-baltic.bin.gz",
+      "bytes": 312000,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "simplification": {
+    "quantization": 100000,
+    "simplifyTolerance": 0.002
+  },
+  "sources": [
+    "gebco2024",
+    "steffen2025_rsl",
+    "dated1"
+  ]
+}

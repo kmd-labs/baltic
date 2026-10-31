@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kmd-labs.github.io/baltic/contract/manifest.schema.json",
+  "title": "Manifest — manifest.json",
+  "description": "Entry point of src/assets/data/. Lists every published file with its checksum (checked in CI, 0-08), the grids, the frames and the pipeline parameters. No timestamps: a rerun of the pipeline must produce a byte-identical manifest.",
+  "type": "object",
+  "required": ["schemaVersion", "datum", "gia", "ice", "budgets", "grids", "frames", "files", "sources"],
+  "properties": {
+    "schemaVersion": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "datum": { "$ref": "common.schema.json#/$defs/datum" },
+    "gia": {
+      "type": "object",
+      "required": ["source", "earthModel", "spatialInterpolation", "timeInterpolation"],
+      "properties": {
+        "source": { "const": "steffen2025_rsl" },
+        "earthModel": { "$ref": "common.schema.json#/$defs/earthModel" },
+        "uncertaintyModels": {
+          "description": "Other earth models used for the water-level uncertainty band.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/earthModel" },
+          "uniqueItems": true
+        },
+        "spatialInterpolation": {
+          "description": "Must be the same in the pipeline and in the app (I-01: H_paleo within 1 m).",
+          "enum": ["bilinear", "nearest"]
+        },
+        "timeInterpolation": { "const": "linear" }
+      },
+      "additionalProperties": false
+    },
+    "ice": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["source", "tau0Pa"],
+          "properties": {
+            "source": { "const": "dated1" },
+            "tau0Pa": { "description": "Basal shear stress of the plastic thickness profile (C-07).", "type": "number", "exclusiveMinimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "budgets": {
+      "type": "object",
+      "required": ["totalBytes", "firstLoadBytes"],
+      "properties": {
+        "totalBytes": { "type": "integer", "maximum": 26214400 },
+        "firstLoadBytes": { "type": "integer", "maximum": 4194304 }
+      },
+      "additionalProperties": false
+    },
+    "grids": {
+      "description": "Binary grids in the KMDG format (contract/README.md).",
+      "type": "object",
+      "propertyNames": { "$ref": "common.schema.json#/$defs/id" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["path", "format", "quantity", "unit", "datum"],
+        "properties": {
+          "path": { "$ref": "common.schema.json#/$defs/assetPath" },
+          "format": { "const": "kmdg/1" },
+          "quantity": { "enum": ["elevation", "rsl", "ice-thickness"] },
+          "unit": { "const": "m" },
+          "datum": { "$ref": "common.schema.json#/$defs/datum" },
+          "firstLoad": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "frames": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "tBP", "kind", "path"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^f-\\d+$" },
+          "tBP": { "$ref": "common.schema.json#/$defs/tBP" },
+          "kind": { "enum": ["regular", "event"] },
+          "path": { "$ref": "common.schema.json#/$defs/assetPath" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "files": {
+      "description": "Every published file except manifest.json itself.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "bytes", "sha256"],
+        "properties": {
+          "path": { "$ref": "common.schema.json#/$defs/assetPath" },
+          "bytes": { "type": "integer", "minimum": 0 },
+          "sha256": { "$ref": "common.schema.json#/$defs/sha256" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "simplification": {
+      "description": "TopoJSON quantisation and simplification parameters (I-01).",
+      "type": "object",
+      "properties": {
+        "quantization": { "type": "integer", "minimum": 1 },
+        "simplifyTolerance": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "sources": { "$ref": "common.schema.json#/$defs/sources" }
+  },
+  "additionalProperties": false
+}

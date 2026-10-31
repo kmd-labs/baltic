@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kmd-labs.github.io/baltic/contract/taxa.schema.json",
+  "title": "Indicator taxa — taxa.json",
+  "description": "Indicator species and their salinity tolerance, used by V-07 against the salinity classes of each frame.",
+  "type": "object",
+  "required": ["schemaVersion", "taxa"],
+  "properties": {
+    "schemaVersion": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "taxa": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "scientificName", "psuTolerance", "stages", "sources"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "scientificName": { "type": "string", "minLength": 3 },
+          "psuTolerance": { "$ref": "common.schema.json#/$defs/range" },
+          "stages": {
+            "description": "Phases the taxon is named after or indicative of.",
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/$defs/stageId" },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "sources": { "$ref": "common.schema.json#/$defs/sources" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -168,11 +168,13 @@ Pole `datum` jest obowiązkowe w manifeście **i w każdej klatce**: poziomy faz
 Egzekwowanie schematu w pipeline'ie to `V-01`, w CI — `0-08`.
 
 **DoD**
-- [ ] Schemat odrzuca fixture klatki bez `datum`
-- [ ] Enum `dataQuality` = `modelled | interpolated | qualitative`
-- [ ] `ice: null` dopuszczalne, `ice: {}` bez `source` — nie
-- [ ] `gia.source` + `gia.earthModel` obowiązkowe
-- [ ] Format `grid/*.bin.gz` opisany i z fixture'em czytanym w teście TypeScript
+- [x] Schemat odrzuca fixture klatki bez `datum`
+- [x] Enum `dataQuality` = `modelled | interpolated | qualitative`
+- [x] `ice: null` dopuszczalne, `ice: {}` bez `source` — nie
+- [x] `gia.source` + `gia.earthModel` obowiązkowe
+- [x] Format `grid/*.bin.gz` opisany i z fixture'em czytanym w teście TypeScript
+
+Realizacja: [`contract/`](../../contract/README.md) — schematy, fixture'y, format KMDG/1; testy `npm run test:data` i `npm run test:contract`.
 
 **Plan:** §0.2, §5
 
@@ -636,7 +638,7 @@ Nałożenie klatek na mapy etapów z **Björcka 1995 / Andréna i in. 2011** dla
 | :-- | :-- | :-- |
 | `grid/dem-baltic.bin.gz` | H_now, okno Bałtyku, ~0,04°, int16 | ~200–400 KB |
 | `grid/dem-europe.bin.gz` | H_now, domena RSL, ~0,1°, int16 | ~400–600 KB |
-| `grid/rsl.bin.gz` | RSL wiodącego modelu, 1°, 19 kroków, float16 | ~30 KB |
+| `grid/rsl.bin.gz` | RSL wiodącego modelu, 1°, 19 kroków, int16 × 0,01 m (KMDG/1) | ~30 KB |
 | `grid/ice-h-<tBP>.bin.gz` | grubość lodu z profilu plastycznego (≥ 10 ka) | małe, tylko klatki z lodem |
 | `frames/f-<tBP>.topo.json` | `water` / `lake` / `ice` (mc, min, max) / `coast`, kwantyzowany TopoJSON | ~100–200 KB / klatkę |
 | `frames/f-<tBP>.json` | poziom, odpływ, stany progów, zasolenie per basen, metryki | < 5 KB |

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0.0",
+  "datum": "present-day",
+  "sills": [
+    {
+      "id": "billingen",
+      "lat": 58.4,
+      "lon": 13.8,
+      "elevationM": 120,
+      "activePeriods": [
+        {
+          "fromBP": 13000,
+          "toBP": 11650
+        }
+      ],
+      "states": {
+        "bil": "open"
+      },
+      "hypothesis": false,
+      "sources": [
+        "andren2011"
+      ]
+    }
+  ]
+}

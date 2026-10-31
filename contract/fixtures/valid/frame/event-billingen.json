@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "f-11650",
+  "tBP": 11650,
+  "kind": "event",
+  "t14C": null,
+  "calCurve": null,
+  "datum": "contemporaneous-geoid",
+  "stageId": "yoldia",
+  "water": {
+    "type": "sea",
+    "levelM": 0,
+    "outlet": "narke"
+  },
+  "salinity": [
+    {
+      "basin": "baltic-proper",
+      "class": "fresh",
+      "psuRange": [
+        0,
+        0.5
+      ]
+    }
+  ],
+  "sills": [
+    {
+      "id": "oresund",
+      "state": "open",
+      "heightM": 25
+    },
+    {
+      "id": "billingen",
+      "state": "closed"
+    }
+  ],
+  "ice": {
+    "source": "dated1",
+    "interpolated": true,
+    "band": true,
+    "thickness": "plastic-profile"
+  },
+  "gia": {
+    "source": "steffen2025_rsl",
+    "earthModel": "sk1"
+  },
+  "eslM": -80,
+  "metrics": {},
+  "dataQuality": "interpolated",
+  "disputed": [
+    "billingen-drainage-duration"
+  ],
+  "geometry": "frames/f-11650.topo.json",
+  "sources": [
+    "andren2011",
+    "dated1",
+    "steffen2025_rsl",
+    "lambeck2014"
+  ],
+  "eventId": "billingen-final-drainage"
+}

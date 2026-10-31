@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kmd-labs.github.io/baltic/contract/common.schema.json",
+  "title": "Shared definitions of the Baltic data contract",
+  "$defs": {
+    "schemaVersion": {
+      "description": "Semantic version of the contract. The app refuses a file whose major differs from its own.",
+      "type": "string",
+      "pattern": "^1\\.\\d+\\.\\d+$"
+    },
+    "id": {
+      "description": "Stable machine id. Data carries ids only; user-facing text lives in src/assets/content/{lang}/ (I-03).",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "sourceId": {
+      "description": "Key of an entry in SOURCES.md / sources.json.",
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "sources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sourceId" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "datum": {
+      "description": "Vertical reference. Lake-phase levels (+25 m BIL, +10 m Ancylus) are only valid against the contemporaneous geoid (plan §0.2).",
+      "enum": ["contemporaneous-geoid", "present-day"]
+    },
+    "tBP": {
+      "description": "Calendar years before present (1950).",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 25000
+    },
+    "stageId": {
+      "enum": ["deglaciation", "bil", "yoldia", "ancylus", "mastogloia", "littorina", "post-littorina"]
+    },
+    "earthModel": {
+      "description": "Earth model of Steffen & Kaufmann 2025 (file rsl_SK05_skan_<model>.nc).",
+      "enum": ["f75", "g76", "j88", "l79", "p79", "sk1", "sk2", "sk3"]
+    },
+    "gia": {
+      "type": "object",
+      "required": ["source", "earthModel"],
+      "properties": {
+        "source": { "const": "steffen2025_rsl" },
+        "earthModel": { "$ref": "#/$defs/earthModel" }
+      },
+      "additionalProperties": false
+    },
+    "dataQuality": {
+      "enum": ["modelled", "interpolated", "qualitative"]
+    },
+    "salinityClass": {
+      "enum": ["fresh", "brackish", "marine"]
+    },
+    "range": {
+      "description": "Closed interval [min, max]. Never a scalar.",
+      "type": "array",
+      "prefixItems": [{ "type": "number" }, { "type": "number" }],
+      "items": false,
+      "minItems": 2
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "assetPath": {
+      "description": "Path relative to src/assets/data/.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9./_-]*$"
+    }
+  }
+}

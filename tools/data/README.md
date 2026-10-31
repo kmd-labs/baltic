@@ -35,6 +35,10 @@ python -m venv .venv
 
 `requirements.in` zawiera bezpośrednie zależności, a `requirements.txt` zamrożony zestaw wersji.
 
+## Kontrakt (`0-06`)
+
+`contract.py` waliduje pliki JSON schematami z [`contract/schema/`](../../contract/README.md), a `kmdg.py` zapisuje i czyta siatki KMDG/1. Testy: `npm run test:data` (Python) i `npm run test:contract` (czytnik TypeScript).
+
 ## Ustalenia z tury 1
 
 - **RSL Steffena i Kaufmanna:** zmienna `RSL(time, lat, lon)`, metry względem 1950, dodatnie = morze wyżej niż dziś. Paleo-DEM: `H_paleo = H_now − RSL(t)`. Oś czasu w ka BP ma **nierówne** kroki (21,4; 20,2; 19,1; … 0,9; 0), więc klatki co 500 lat wymagają interpolacji w czasie.

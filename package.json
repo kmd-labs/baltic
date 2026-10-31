@@ -8,7 +8,10 @@
     "build:gh-pages": "ng build --base-href /baltic/",
     "watch": "ng build --watch --configuration development",
     "setup:github": "node scripts/setup-github.mjs",
-    "data:fetch": "python tools/data/fetch.py"
+    "data:fetch": "python tools/data/fetch.py",
+    "test:contract": "node --test --experimental-strip-types --no-warnings \"tests/contract/*.test.ts\" && tsc -p tsconfig.contract.json",
+    "test:data": "python -m unittest discover -s tools/data/tests -t .",
+    "contract:validate": "python tools/data/contract.py"
   },
   "private": true,
   "dependencies": {
