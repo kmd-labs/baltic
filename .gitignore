@@ -3,3 +3,9 @@ node_modules/
 .angular/
 .DS_Store
 *.log
+
+# data pipeline (tools/data) — raw and intermediate data stay out of git
+data/raw/
+data/interim/
+.venv/
+__pycache__/

@@ -7,7 +7,8 @@
     "build": "ng build",
     "build:gh-pages": "ng build --base-href /baltic/",
     "watch": "ng build --watch --configuration development",
-    "setup:github": "node scripts/setup-github.mjs"
+    "setup:github": "node scripts/setup-github.mjs",
+    "data:fetch": "python tools/data/fetch.py"
   },
   "private": true,
   "dependencies": {
