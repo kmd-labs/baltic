@@ -20,7 +20,8 @@ import type { Feature, FeatureCollection } from 'geojson';
 import { ThemeService } from '@kmd/design-system/services/theme.service';
 import { isAtMost, isMobileLandscape } from '@kmd/design-system/utils/breakpoints';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { PaleoDataService, PaleoFrame, TRANSECT, Water } from '../../core/data/paleo-data.service';
+import { PaleoDataService, PaleoFrame, TRANSECT } from '../../core/data/paleo-data.service';
+import { WATER_LAKE, WATER_OCEAN } from '../../core/data/water';
 import { phaseAt, WaterClass } from '../../core/data/timeline';
 import { SILLS } from '../../core/data/geo';
 import { PATCH_FRAGMENT, PATCH_VERTEX } from './paleo-shaders';
@@ -133,13 +134,16 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
 
   private patchMat?: THREE.ShaderMaterial;
   private rslTex?: THREE.DataTexture;
-  private rslPrevTex?: THREE.DataTexture;
   private waterTex?: THREE.DataTexture;
   private overlayCanvas?: HTMLCanvasElement;
   private overlayTex?: THREE.CanvasTexture;
   private overlayBCanvas?: HTMLCanvasElement;
   private overlayBTex?: THREE.CanvasTexture;
   private frame: PaleoFrame | null = null;
+  private shownT = -1;
+  private prevShoreShown: Float32Array | null = null;
+  /** Render only when something changed (camera, data, layers, size). */
+  private needsRender = true;
 
   private readonly target = new THREE.Spherical();
   private readonly tmpSph = new THREE.Spherical();
@@ -159,8 +163,14 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   constructor() {
     effect(() => {
       const t = this.t();
+      this.data.version();
       if (this.data.state() !== 'ready' || !this.patchMat) return;
       this.zone.runOutsideAngular(() => this.showFrame(t));
+    });
+    effect(() => {
+      this.labels();
+      this.i18n.lang();
+      this.needsRender = true;
     });
     effect(() => {
       const L = this.layers();
@@ -170,6 +180,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
       this.patchMat.uniforms['uShowPrev'].value = L.prev ? 1 : 0;
       this.patchMat.uniforms['uExag'].value = ex;
       this.zone.runOutsideAngular(() => this.drawOverlay());
+      this.needsRender = true;
     });
   }
 
@@ -207,10 +218,12 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   zoomBy(factor: number): void {
     const d = THREE.MathUtils.clamp(this.camera.position.length() * factor, this.controls.minDistance, this.controls.maxDistance);
     this.camera.position.setLength(d);
+    this.needsRender = true;
   }
 
   fit(): void {
     this.camera.position.setLength(this.defaultDistance);
+    this.needsRender = true;
   }
 
   showLabel(l: GlobeLabel): boolean {
@@ -237,7 +250,8 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   private initThree(): void {
     const canvas = this.canvasRef.nativeElement;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    // 1.5 is visually close to 2 on HiDPI screens at ~56% of the fragment cost.
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(this.theme.getTokenColor('globe-bg', '#f5f7fb'));
@@ -262,6 +276,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     this.controls.maxPolarAngle = this.target.phi + this.TILT_POLAR;
     this.controls.addEventListener('start', () => (this.dragging = true));
     this.controls.addEventListener('end', () => (this.dragging = false));
+    this.controls.addEventListener('change', () => (this.needsRender = true));
 
     const compact = isAtMost('mobile') && !isMobileLandscape();
     this.controls.minDistance = this.R * 1.12;
@@ -316,7 +331,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     this.landMat.color.setHex(0x000000);
     this.landMat.emissive.setHex(0xffffff);
     this.landMat.emissiveMap = this.landTex;
-    const seg = isAtMost('mobile') ? 256 : 384;
+    const seg = isAtMost('mobile') ? 192 : 256;
     this.scene.add(new THREE.Mesh(new THREE.SphereGeometry(this.R * 1.003, seg, seg / 2), this.landMat));
     this.drawLand();
 
@@ -342,6 +357,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
         this.landMat.displacementMap = tex;
         this.landMat.displacementScale = this.R * (this.ELEV_CEILING_M / this.EARTH_RADIUS_M) * this.ELEV_EXAGGERATION;
         this.landMat.needsUpdate = true;
+        this.needsRender = true;
       },
       undefined,
       () => console.warn('Could not load elevation data')
@@ -407,6 +423,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     ctx.lineWidth = W / 2400;
     ctx.stroke();
     this.landTex.needsUpdate = true;
+    this.needsRender = true;
   }
 
   private reliefLayer(fill: string): HTMLCanvasElement | null {
@@ -447,14 +464,14 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
       for (let i = 0; i < values.length; i++) out[i] = THREE.DataUtils.toHalfFloat(Number.isNaN(values[i]) ? 0 : values[i]);
       return this.dataTex(out, nx, ny, THREE.RedFormat, THREE.HalfFloatType);
     };
-    const demE = half(this.data.hNowEurope!, E.nx, E.ny);
-    const demB = half(this.data.hNowBaltic!, B.nx, B.ny);
+    const demE = this.demTexture(this.data.hNowEurope!, E);
+    const demB = this.demTexture(this.data.hNowBaltic!, B);
     this.rslTex = half(new Float32Array(Rg.nx * Rg.ny), Rg.nx, Rg.ny);
-    this.rslPrevTex = half(new Float32Array(Rg.nx * Rg.ny), Rg.nx, Rg.ny);
     this.waterTex = this.dataTex(new Uint8Array(B.nx * B.ny * 2), B.nx, B.ny, THREE.RGFormat, THREE.UnsignedByteType);
 
     this.overlayCanvas = document.createElement('canvas');
-    this.overlayCanvas.width = mobile ? 2048 : 4096;
+    // Ice outlines only: 2048 px over Europe is enough, and uploads stay small.
+    this.overlayCanvas.width = 2048;
     this.overlayCanvas.height = Math.round((this.overlayCanvas.width * (n - s)) / (e - w));
     this.overlayTex = new THREE.CanvasTexture(this.overlayCanvas);
     this.overlayTex.colorSpace = THREE.SRGBColorSpace;
@@ -480,15 +497,12 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
         uDemE: { value: demE },
         uDemB: { value: demB },
         uRsl: { value: this.rslTex },
-        uRslPrev: { value: this.rslPrevTex },
         uWater: { value: this.waterTex },
         uOverlay: { value: this.overlayTex },
         uOverlayB: { value: this.overlayBTex },
         uBoxE: { value: new THREE.Vector4(...E.bbox) },
         uBoxB: { value: new THREE.Vector4(...B.bbox) },
         uBoxR: { value: new THREE.Vector4(...Rg.bbox) },
-        uTexelE: { value: new THREE.Vector2((e - w) / E.nx, (n - s) / E.ny) },
-        uTexelB: { value: new THREE.Vector2((B.bbox[2] - B.bbox[0]) / B.nx, (B.bbox[3] - B.bbox[1]) / B.ny) },
         uLake: { value: 0 },
         uExag: { value: this.exaggeration() },
         uR: { value: this.R },
@@ -506,8 +520,8 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     });
     const geo = new THREE.SphereGeometry(
       this.R * 1.0035,
-      mobile ? 300 : 500,
-      mobile ? 170 : 280,
+      mobile ? 240 : 360,
+      mobile ? 130 : 200,
       (w + 180) * this.DEG,
       (e - w) * this.DEG,
       (90 - n) * this.DEG,
@@ -536,29 +550,72 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     return tex;
   }
 
+  /**
+   * RSL updates immediately (the shader computes H_paleo itself); the water mask follows when
+   * the worker delivers the frame — usually already cached by the background precomputation.
+   */
   private showFrame(t: number): void {
     if (!this.patchMat) return;
-    const f = this.data.frame(t);
-    this.frame = f;
-    const setHalf = (tex: THREE.DataTexture, v: Float32Array) => {
-      const d = tex.image.data as Uint16Array;
-      for (let i = 0; i < v.length; i++) d[i] = THREE.DataUtils.toHalfFloat(v[i]);
-      tex.needsUpdate = true;
-    };
-    setHalf(this.rslTex!, f.rsl);
-    setHalf(this.rslPrevTex!, f.rslPrev);
-    const wd = this.waterTex!.image.data as Uint8Array;
-    for (let i = 0; i < f.water.length; i++) {
-      wd[i * 2] = f.water[i] === Water.Ocean ? 255 : 0;
-      wd[i * 2 + 1] = f.water[i] === Water.Lake ? 255 : 0;
-    }
-    this.waterTex!.needsUpdate = true;
     const u = this.patchMat.uniforms;
-    u['uLake'].value = f.lakeLevelM;
-    const cls: WaterClass = phaseAt(t).cls;
-    const token = cls === 'marine' ? 'paleo-marine' : cls === 'brackish' ? 'paleo-brackish' : 'paleo-fresh';
-    (u['cBasin'].value as THREE.Color).set(this.theme.getTokenColor(token, '#8dbcdc'));
-    this.drawOverlay();
+    if (t !== this.shownT) {
+      this.shownT = t;
+      const d = this.rslTex!.image.data as Uint16Array;
+      const v = this.data.rsl(t);
+      for (let i = 0; i < v.length; i++) d[i] = THREE.DataUtils.toHalfFloat(v[i]);
+      this.rslTex!.needsUpdate = true;
+      const cls: WaterClass = phaseAt(t).cls;
+      const token = cls === 'marine' ? 'paleo-marine' : cls === 'brackish' ? 'paleo-brackish' : 'paleo-fresh';
+      (u['cBasin'].value as THREE.Color).set(this.theme.getTokenColor(token, '#8dbcdc'));
+      this.drawOverlay();
+    }
+    const f = this.data.frame(t);
+    if (f && f !== this.frame) {
+      this.frame = f;
+      const wd = this.waterTex!.image.data as Uint8Array;
+      for (let i = 0; i < f.water.length; i++) {
+        wd[i * 2] = f.water[i] === WATER_OCEAN ? 255 : 0;
+        wd[i * 2 + 1] = f.water[i] === WATER_LAKE ? 255 : 0;
+      }
+      this.waterTex!.needsUpdate = true;
+      u['uLake'].value = f.lakeLevelM;
+    }
+    const prev = this.data.peek(t + 1000)?.shore ?? null;
+    if (prev !== this.prevShoreShown) this.drawOverlayBaltic();
+    this.needsRender = true;
+  }
+
+  /** Present-day heights (r) with a hillshade factor baked once (g), as RG half floats. */
+  private demTexture(h: Float32Array, g: { nx: number; ny: number; bbox: readonly [number, number, number, number] }): THREE.DataTexture {
+    const { nx, ny } = g;
+    const [west, south, east, north] = g.bbox;
+    const dLon = (east - west) / nx;
+    const dLat = (north - south) / ny;
+    const z = (i: number) => (Number.isNaN(h[i]) ? 0 : h[i]);
+    const out = new Uint16Array(nx * ny * 2);
+    const lx = -0.6;
+    const ly = 0.6;
+    const lz = 0.9;
+    const ln = Math.hypot(lx, ly, lz);
+    for (let r = 0; r < ny; r++) {
+      const lat = north - (r + 0.5) * dLat;
+      const mx = 111320 * Math.cos(lat * this.DEG) * dLon * 2;
+      const my = 110570 * dLat * 2;
+      const r0 = Math.max(0, r - 1);
+      const r1 = Math.min(ny - 1, r + 1);
+      for (let c = 0; c < nx; c++) {
+        const i = r * nx + c;
+        const c0 = Math.max(0, c - 1);
+        const c1 = Math.min(nx - 1, c + 1);
+        const gx = (-(z(r * nx + c1) - z(r * nx + c0)) / mx) * 14;
+        const gy = (-(z(r0 * nx + c) - z(r1 * nx + c)) / my) * 14;
+        const nl = Math.hypot(gx, gy, 1);
+        const dot = (gx * lx + gy * ly + lz) / (nl * ln);
+        const shade = clamp(1 + 0.9 * (dot - lz / ln), 0.55, 1.35);
+        out[i * 2] = THREE.DataUtils.toHalfFloat(z(i));
+        out[i * 2 + 1] = THREE.DataUtils.toHalfFloat(shade);
+      }
+    }
+    return this.dataTex(out, nx, ny, THREE.RGFormat, THREE.HalfFloatType);
   }
 
   /** Ice (mc + min/max band), sills and the transect line, in the patch's lon/lat frame. */
@@ -580,7 +637,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     });
     const path = d3Geo.geoPath(proj, ctx);
     const L = this.layers();
-    const ice = this.frame?.ice;
+    const ice = this.shownT >= 0 ? this.data.iceFor(this.shownT) : null;
     const edge = this.theme.getTokenColor('paleo-ice-edge', '#7dd3fc');
     if (ice) {
       if (L.band && ice.features.max) {
@@ -626,8 +683,9 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     const sy = H / (n - s);
     const L = this.layers();
     // Coast 1000 years earlier: the shoreline of the frame t + 1000 (Baltic window).
-    if (L.prev && this.frame && this.frame.t + 1000 <= 20000) {
-      const segs = this.data.shoreline(this.frame.t + 1000);
+    const segs = this.shownT >= 0 ? (this.data.peek(this.shownT + 1000)?.shore ?? null) : null;
+    this.prevShoreShown = segs;
+    if (L.prev && segs) {
       ctx.beginPath();
       for (let i = 0; i < segs.length; i += 4) {
         ctx.moveTo((segs[i] - w) * sx, (n - segs[i + 1]) * sy);
@@ -674,6 +732,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
       }
     }
     if (this.overlayBTex) this.overlayBTex.needsUpdate = true;
+    this.needsRender = true;
   }
 
   // ─── pointer ────────────────────────────────────────────────────────────
@@ -724,6 +783,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     const lift = dock ? Math.min(dock.offsetHeight, h * 0.55) / 2 : 0;
     this.camera.setViewOffset(w, h, 0, lift, w, h);
     this.camera.updateProjectionMatrix();
+    this.needsRender = true;
   }
 
   private placeLabels(): void {
@@ -759,10 +819,13 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
         this.tmpSph.phi += dPhi * k;
         this.camera.position.setFromSpherical(this.tmpSph);
         this.camera.lookAt(0, 0, 0);
+        this.needsRender = true;
       }
     }
-    this.controls.update();
+    if (this.controls.update()) this.needsRender = true;
     this.flushHover();
+    if (!this.needsRender) return;
+    this.needsRender = false;
     this.placeLabels();
     this.renderer.render(this.scene, this.camera);
   };

@@ -23,8 +23,12 @@ const COMMON = /* glsl */ `
   bool inBox(vec4 box, vec2 ll, float margin) {
     return ll.x > box.x + margin && ll.x < box.z - margin && ll.y > box.y + margin && ll.y < box.w - margin;
   }
+  // r: present-day height (m), g: hillshade factor baked on the CPU.
+  vec2 demAt(vec2 ll) {
+    return inBox(uBoxB, ll, 0.05) ? texture2D(uDemB, boxUv(uBoxB, ll)).rg : texture2D(uDemE, boxUv(uBoxE, ll)).rg;
+  }
   float hNowAt(vec2 ll) {
-    return inBox(uBoxB, ll, 0.05) ? texture2D(uDemB, boxUv(uBoxB, ll)).r : texture2D(uDemE, boxUv(uBoxE, ll)).r;
+    return demAt(ll).r;
   }
   float rslAt(sampler2D s, vec2 ll) {
     return texture2D(s, boxUv(uBoxR, ll)).r;
@@ -61,8 +65,6 @@ export const PATCH_FRAGMENT = /* glsl */ `
   ${COMMON}
   uniform sampler2D uOverlay;
   uniform sampler2D uOverlayB;
-  uniform vec2 uTexelE;
-  uniform vec2 uTexelB;
   uniform vec3 cLand;
   uniform vec3 cSeabed;
   uniform vec3 cBasin;
@@ -86,23 +88,13 @@ export const PATCH_FRAGMENT = /* glsl */ `
 
   void main() {
     vec2 ll = vLL;
-    float hn = hNowAt(ll);
+    vec2 dem = demAt(ll);
+    float hn = dem.r;
+    float shade = dem.g;
     float hp = hn - rslAt(uRsl, ll);
     vec2 wm = waterMask(ll, hp);
     bool ocean = wm.x > 0.5 && hp < 0.0;
     bool lake = !ocean && wm.y > 0.5 && hp < uLake;
-
-    // Hillshade from the present-day grid (slopes barely change with RSL).
-    vec2 tx = inBox(uBoxB, ll, 0.05) ? uTexelB : uTexelE;
-    float hl = hNowAt(ll - vec2(tx.x, 0.0));
-    float hr = hNowAt(ll + vec2(tx.x, 0.0));
-    float hd = hNowAt(ll - vec2(0.0, tx.y));
-    float hu = hNowAt(ll + vec2(0.0, tx.y));
-    float mx = 111320.0 * cos(radians(ll.y)) * tx.x * 2.0;
-    float my = 110570.0 * tx.y * 2.0;
-    vec3 n = normalize(vec3(-(hr - hl) / mx * 14.0, -(hu - hd) / my * 14.0, 1.0));
-    vec3 L = normalize(vec3(-0.6, 0.6, 0.9));
-    float shade = clamp(1.0 + 0.9 * (dot(n, L) - L.z), 0.55, 1.35);
 
     vec3 col;
     if (ocean || lake) {

@@ -6,6 +6,7 @@
   },
   "files": [
     "src/app/core/data/kmdg.ts",
-    "src/app/core/data/paleo.ts"
+    "src/app/core/data/paleo.ts",
+    "src/app/core/data/water.ts"
   ]
 }

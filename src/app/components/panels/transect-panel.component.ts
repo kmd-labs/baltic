@@ -33,8 +33,10 @@ export class TransectPanelComponent extends CanvasPanel {
   private readonly data = inject(PaleoDataService);
 
   readonly meta = computed(() => {
+    this.data.version();
     if (this.data.state() !== 'ready') return '';
     const f = this.data.frame(this.t());
+    if (!f) return '';
     const tr = this.i18n.t();
     return f.lakeLevelM > 0 ? tr.transectMetaLake('+' + Math.round(f.lakeLevelM)) : tr.transectMetaOcean;
   });
@@ -44,6 +46,7 @@ export class TransectPanelComponent extends CanvasPanel {
     effect(() => {
       this.t();
       this.data.state();
+      this.data.version();
       this.content.content();
       this.redraw();
     });
@@ -53,6 +56,7 @@ export class TransectPanelComponent extends CanvasPanel {
     if (this.data.state() !== 'ready') return;
     const t = this.t();
     const f = this.data.frame(t);
+    if (!f) return;
     const { total, points } = this.data.transect(f);
     const tok = (k: string, fb: string) => this.theme.getTokenColor(k, fb);
     const font = this.theme.getFontFamily();

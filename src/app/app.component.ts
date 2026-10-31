@@ -118,8 +118,10 @@ export class AppComponent implements OnDestroy {
 
   readonly tooltip = computed(() => {
     const p = this.pointer();
+    this.data.version();
     if (!p || this.data.state() !== 'ready') return null;
     const frame = this.data.frame(this.t());
+    if (!frame) return null;
     const info = this.data.pointInfo(frame, p.lon, p.lat);
     if (!info) return null;
     const tr = this.i18n.t();

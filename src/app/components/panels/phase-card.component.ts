@@ -86,7 +86,10 @@ export class PhaseCardComponent {
 
   readonly phase = computed(() => phaseAt(this.t()));
   readonly event = computed(() => eventAt(this.t()));
-  readonly frame = computed(() => (this.data.state() === 'ready' ? this.data.frame(this.t()) : null));
+  readonly frame = computed(() => {
+    this.data.version();
+    return this.data.state() === 'ready' ? this.data.frame(this.t()) : null;
+  });
   readonly stats = computed(() => this.frame()?.stats ?? null);
   readonly lakeLevel = computed(() => this.frame()?.lakeLevelM ?? 0);
   readonly litLevel = computed(() => this.frame()?.literatureLevelM ?? 0);
