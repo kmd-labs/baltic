@@ -234,22 +234,6 @@
   }
 }
 
-.exag {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  height: 36px;
-  border-radius: 999px;
-  flex: none;
-
-  &__label { font-size: 12px; color: color("text-desc"); white-space: nowrap; }
-  &__slider { width: 110px; }
-  &__val { font-family: var(--font-family-mono); font-size: 11.5px; min-width: 30px; color: color("text-bright"); }
-
-  @include respond-to("tablet") { display: none; }
-}
-
 .actions {
   display: flex;
   gap: 2px;
@@ -345,29 +329,30 @@
 
 .panels {
   display: grid;
-  grid-template-columns: 1fr 1.2fr 1.2fr;
+  grid-template-columns: 2fr 3fr;
   gap: 8px;
+  align-items: stretch;
 }
 
 .panel {
-  height: 220px;
   padding: 12px 14px;
   border-radius: 14px;
   overflow: hidden;
 
-  &--scroll { overflow-y: auto; }
+  // The phase card sizes to its content (no scrolling); the transect fills the row height.
+  &--phase { height: auto; }
+  &--transect { min-height: 230px; }
 }
 
 @include respond-to("tablet") {
   .tabbar { display: flex; }
   .panels { grid-template-columns: 1fr; }
   .panel:not(.is-tab) { display: none; }
-  .panel { height: 200px; }
   .readout { min-width: 120px; }
 }
 
 @include respond-to("mobile") {
-  .panel { height: 180px; }
+  .panel--transect { min-height: 200px; }
 }
 
 .zoom {

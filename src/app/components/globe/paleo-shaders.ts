@@ -12,6 +12,9 @@ const COMMON = /* glsl */ `
   uniform sampler2D uRsl;
   uniform sampler2D uRslPrev;
   uniform sampler2D uWater;
+  uniform sampler2D uWaterPrev;
+  uniform float uLakePrev;
+  uniform float uPrevReady;
   uniform vec4 uBoxE;   // west, south, east, north
   uniform vec4 uBoxB;
   uniform vec4 uBoxR;
@@ -74,6 +77,19 @@ export const PATCH_FRAGMENT = /* glsl */ `
   uniform vec3 cPrev;
   uniform float uShowToday;
   uniform float uShowPrev;
+
+  // Signed water field of the frame 1000 years earlier, by the same rule as the raster:
+  // > 0 where that frame shows water. Its zero contour is the coast 1000 years earlier.
+  float prevWaterField(vec2 ll, float hn) {
+    float hp = hn - rslAt(uRslPrev, ll);
+    if (inBox(uBoxB, ll, 0.05)) {
+      vec2 m = texture2D(uWaterPrev, boxUv(uBoxB, ll)).rg;
+      float ocean = min(-hp, (m.x - 0.5) * 2000.0);
+      float lake = min(uLakePrev - hp, (m.y - 0.5) * 2000.0);
+      return max(ocean, lake);
+    }
+    return -hp;
+  }
   uniform float uFeather;
   varying vec2 vLL;
 
@@ -117,6 +133,13 @@ export const PATCH_FRAGMENT = /* glsl */ `
 
     // Present-day coastline and the coast 1000 years earlier.
     col = mix(col, cCoast, contourLine(hn, 1.2) * uShowToday * 0.85);
+    float prevReady = inBox(uBoxB, ll, 0.05) ? uPrevReady : 1.0;
+    // The water rule changes at the edge of the Baltic window (fill inside, threshold outside),
+    // which would draw a false contour along it: fade the line out in a 0.25° band there.
+    vec4 bd = vec4(ll.x - uBoxB.x, uBoxB.z - ll.x, ll.y - uBoxB.y, uBoxB.w - ll.y);
+    float edgeDist = abs(min(min(bd.x, bd.y), min(bd.z, bd.w)));
+    float seam = inBox(uBoxB, ll, -0.3) ? smoothstep(0.05, 0.25, edgeDist) : 1.0;
+    col = mix(col, cPrev, contourLine(prevWaterField(ll, hn), 1.1) * uShowPrev * prevReady * seam * 0.8);
 
     // Ice, sills, transect: painted on the overlay canvas.
     vec4 ov = texture2D(uOverlay, vec2((ll.x - uBoxE.x) / (uBoxE.z - uBoxE.x), (ll.y - uBoxE.y) / (uBoxE.w - uBoxE.y)));

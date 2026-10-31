@@ -11,7 +11,8 @@ export interface PostglacialContent {
   sills: Record<SillId, string>;
   places: Record<PlaceId, string>;
   glossary: [string, string][];
-  sources: [string, string][];
+  /** What each dataset is used for, where it comes from, its licence and what we changed. */
+  sources: { name: string; use: string; origin: string; licence: string; note: string }[];
   about: string[];
 }
 

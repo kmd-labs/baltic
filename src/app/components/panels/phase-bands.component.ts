@@ -1,11 +1,11 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ContentService } from '../../core/content/content.service';
-import { EVENTS, PHASES } from '../../core/data/timeline';
+import { PHASES } from '../../core/data/timeline';
 
 /**
- * Phase bands and event-section diamonds drawn over the same 20 → 0 ka range as the
- * design-system timeline slider below it.
+ * Phase bands drawn over the same 20 → 0 ka range as the design-system timeline slider below
+ * it. Event sections are listed in the phase card, not pinned here.
  */
 @Component({
   selector: 'app-phase-bands',
@@ -22,18 +22,8 @@ import { EVENTS, PHASES } from '../../core/data/timeline';
           [style.left.%]="pos(p.from)"
           [style.width.%]="pos(p.to) - pos(p.from)"
           [title]="c?.phases?.[p.id]?.name ?? p.id">
-          {{ c?.phases?.[p.id]?.short ?? '' }}
+          <span class="band__label">{{ c?.phases?.[p.id]?.short ?? '' }}</span>
         </div>
-      }
-      @for (e of events; track e.id) {
-        <button
-          type="button"
-          class="mark"
-          [class.mark--active]="e.t === t()"
-          [style.left.%]="pos(e.t)"
-          [title]="c?.events?.[e.id]?.label ?? e.id"
-          [attr.aria-label]="c?.events?.[e.id]?.label ?? e.id"
-          (click)="pick.emit(e.t)"></button>
       }
     </div>
     } @else {
@@ -49,11 +39,9 @@ import { EVENTS, PHASES } from '../../core/data/timeline';
 export class PhaseBandsComponent {
   readonly t = input.required<number>();
   readonly part = input<'bands' | 'ticks'>('bands');
-  readonly pick = output<number>();
   readonly i18n = inject(I18nService);
   readonly content = inject(ContentService);
   readonly phases = PHASES;
-  readonly events = EVENTS;
   readonly ticks = [20000, 16000, 12000, 8000, 4000, 0];
 
   pos(t: number): number {

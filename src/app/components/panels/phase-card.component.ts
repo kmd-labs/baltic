@@ -1,10 +1,14 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ContentService } from '../../core/content/content.service';
 import { PaleoDataService } from '../../core/data/paleo-data.service';
-import { eventAt, phaseAt } from '../../core/data/timeline';
+import { EVENTS, eventAt, phaseAt } from '../../core/data/timeline';
 
-/** Phase card from the mockup: name, badges, event note, description, level check, metrics. */
+/**
+ * Phase card from the mockup, laid out to fit without scrolling: name and badges, the event
+ * note, description, indicator species, model-vs-literature level check and metrics, and the
+ * event sections of the phase as buttons (they replace the pins on the timeline).
+ */
 @Component({
   selector: 'app-phase-card',
   standalone: true,
@@ -30,62 +34,80 @@ import { eventAt, phaseAt } from '../../core/data/timeline';
           <span class="badge badge--warn">{{ tr.badgeDisputed }}</span>
         }
       </div>
-      @if (event(); as ev) {
-        <p class="phase-desc"><b>{{ c.events[ev.id].label }}.</b> {{ c.events[ev.id].note }}</p>
-      }
-      <p class="phase-desc">{{ c.phases[ph.id].desc }}</p>
-      @if (c.phases[ph.id].species; as sp) {
-        <div class="phase-species">{{ tr.indicatorSpecies }}: <i>{{ sp }}</i></div>
-      }
+      <p class="phase-desc">
+        @if (event(); as ev) {
+          <b>{{ c.events[ev.id].label }}.</b> {{ c.events[ev.id].note }}
+        }
+        {{ c.phases[ph.id].desc }}
+        @if (c.phases[ph.id].species; as sp) {
+          <span class="dim">{{ tr.indicatorSpecies }}: <i>{{ sp }}</i>.</span>
+        }
+      </p>
     }
     @if (stats(); as s) {
-      <dl class="kv">
+      <dl class="kv kv--3">
         @if (lakeLevel() > 0 || litLevel() > 0) {
-          <dt>{{ tr.kvLevelModel }}</dt>
-          <dd>{{ lakeLevel() > 0 ? tr.levelLake(signedM(lakeLevel())) + ' · ' + tr.levelSill : tr.levelOcean }}</dd>
-          <dt>{{ tr.kvLevelLit }}</dt>
-          <dd>
-            {{ signedM(litLevel()) }}
-            <span class="badge" [class.badge--ok]="levelOk()" [class.badge--warn]="!levelOk()">
-              {{ levelOk() ? tr.levelMatch : tr.levelMismatch(fmt(levelDiff(), 0)) }}
-            </span>
-          </dd>
+          <div>
+            <dt>{{ tr.kvLevelModel }}</dt>
+            <dd>{{ lakeLevel() > 0 ? signedM(lakeLevel()) + ' m · ' + tr.levelSill : tr.levelOcean }}</dd>
+          </div>
+          <div>
+            <dt>{{ tr.kvLevelLit }}</dt>
+            <dd>
+              {{ signedM(litLevel()) }} m
+              <span class="badge" [class.badge--ok]="levelOk()" [class.badge--warn]="!levelOk()">
+                {{ levelOk() ? tr.levelMatch : tr.levelMismatch(fmt(levelDiff(), 0)) }}
+              </span>
+            </dd>
+          </div>
         } @else {
-          <dt>{{ tr.kvLevel }}</dt>
-          <dd>
-            {{ tr.levelOcean }}
-            <span class="badge" [class.badge--ok]="s.connected" [class.badge--warn]="!s.connected">
-              {{ s.connected ? tr.levelConnected : tr.levelIsolated }}
-            </span>
-          </dd>
+          <div>
+            <dt>{{ tr.kvLevel }}</dt>
+            <dd>
+              {{ tr.levelOcean }}
+              <span class="badge" [class.badge--ok]="s.connected" [class.badge--warn]="!s.connected">
+                {{ s.connected ? tr.levelConnected : tr.levelIsolated }}
+              </span>
+            </dd>
+          </div>
         }
-        <dt>{{ tr.kvOutlet }}</dt>
-        <dd class="dim">{{ tr.outletPending }}</dd>
-        <dt>{{ tr.kvArea }}</dt>
-        <dd>{{ s.areaKm2 > 1000 ? tr.areaValue(fmt(s.areaKm2 / 1000, 0)) : '—' }}</dd>
-        <dt>{{ tr.kvVolume }}</dt>
-        <dd>{{ s.volumeKm3 > 100 ? tr.volumeValue(fmt(s.volumeKm3 / 1000, 1)) : '—' }}</dd>
-        <dt>{{ tr.kvMaxDepth }}</dt>
-        <dd>{{ s.maxDepthM > 1 ? fmt(s.maxDepthM, 0) + ' m' : '—' }}</dd>
-        <dt>{{ tr.kvOcean }}</dt>
-        <dd class="dim">{{ tr.oceanPending }}</dd>
+        <div>
+          <dt>{{ tr.kvArea }}</dt>
+          <dd>{{ s.areaKm2 > 1000 ? tr.areaValue(fmt(s.areaKm2 / 1000, 0)) : '—' }}</dd>
+        </div>
+        <div>
+          <dt>{{ tr.kvVolume }}</dt>
+          <dd>{{ s.volumeKm3 > 100 ? tr.volumeValue(fmt(s.volumeKm3 / 1000, 1)) : '—' }}</dd>
+        </div>
+        <div>
+          <dt>{{ tr.kvMaxDepth }}</dt>
+          <dd>{{ s.maxDepthM > 1 ? fmt(s.maxDepthM, 0) + ' m' : '—' }}</dd>
+        </div>
       </dl>
     }
-    <div class="sal" [attr.aria-label]="tr.salinityScale">
-      <div class="sal__bar"></div>
-      <div class="sal__ticks"><span>{{ tr.salinityFresh }}</span><span>5</span><span>18</span><span>{{ tr.salinityMarine }}</span></div>
-    </div>
+    @if (c && phaseEvents().length) {
+      <div class="events" role="group" [attr.aria-label]="tr.phaseEvents">
+        <span class="events__label">{{ tr.phaseEvents }}</span>
+        @for (e of phaseEvents(); track e.id) {
+          <button type="button" class="event" [class.event--active]="e.t === t()" (click)="pickTime.emit(e.t)">
+            {{ c.events[e.id].label }} · {{ fmt(e.t) }}
+          </button>
+        }
+      </div>
+    }
   `,
   styleUrl: './panels.scss'
 })
 export class PhaseCardComponent {
   readonly t = input.required<number>();
+  readonly pickTime = output<number>();
   readonly i18n = inject(I18nService);
   readonly content = inject(ContentService);
   private readonly data = inject(PaleoDataService);
 
   readonly phase = computed(() => phaseAt(this.t()));
   readonly event = computed(() => eventAt(this.t()));
+  readonly phaseEvents = computed(() => EVENTS.filter(e => phaseAt(e.t).id === this.phase().id));
   readonly frame = computed(() => {
     this.data.version();
     return this.data.state() === 'ready' ? this.data.frame(this.t()) : null;

@@ -1,12 +1,12 @@
 /// <reference lib="webworker" />
 /**
  * Computes frames off the main thread: H_paleo on the Baltic grid, the water mask
- * (ocean fill + priority-flood basin), the basin metrics and the shoreline.
+ * (ocean fill + priority-flood basin) and the basin metrics.
  * Requests are served newest-first so a jump on the timeline is answered before the
  * background precomputation of the remaining frames.
  */
 import { buildResampler, paleoElevation, Resampler, rslAt, RslCube, GridGeometry } from './paleo';
-import { basinStats, fillWater, shoreline } from './water';
+import { basinStats, fillWater } from './water';
 
 export interface WorkerInit {
   type: 'init';
@@ -30,7 +30,6 @@ export interface WorkerFrame {
   water: Uint8Array;
   level: number;
   stats: ReturnType<typeof basinStats>;
-  shore: Float32Array;
 }
 
 let baltic: GridGeometry;
@@ -72,10 +71,9 @@ function pump(): void {
       t: req.t,
       water,
       level,
-      stats: basinStats(baltic, hp, water, level),
-      shore: shoreline(baltic, water)
+      stats: basinStats(baltic, hp, water, level)
     };
-    postMessage(msg, [msg.water.buffer, msg.shore.buffer]);
+    postMessage(msg, [msg.water.buffer]);
     busy = false;
     pump();
   }, 0);

@@ -25,6 +25,8 @@ PR #2 zamknięty jako zbędny. Opisy #58, #17, #21, #16 zsynchronizowane z backl
 
 ## Prototyp na globie — stan
 
+- **Wersja 4 (2026-10-31, noc), po pytaniach do użytkownika:** linia „brzeg −1000 lat” liczona w shaderze z tej samej reguły co raster wody klatki t+1000 (pokrywa się co do piksela; działa w całej Europie i na przekrojach zdarzeniowych; wygaszona przy granicy okna Bałtyku). Bez pinów zdarzeń na osi — zdarzenia są przyciskami w karcie fazy. Panel krzywych RSL i suwak przewyższenia usunięte; rzeźba płaska (×1). Dock: Faza 2/5 (bez przewijania) i przekrój 3/5. „Źródła” opisują każdy zbiór: użycie, pochodzenie z DOI, licencja, zmiany (DOI Andrén 2011 i Hughes 2016 sprawdzone w Crossref).
+
 - **Wersja 3 (2026-10-31, noc):** po pytaniach do użytkownika — tylko wycinek kuli z domeną RSL (10°W–70°E / 45–85°N), siatka Europy 1/20° z mozaiki dwóch kafli GEBCO (kafel 90°W–0 pobrany), Bałtyk 1/40°, woda modelowana tylko w Bałtyku. Tło globu (ETOPO2, Natural Earth, world-atlas) usunięte; pierwsze wejście ok. 2,8 MB. Wydajność: liczenie wody w Web Workerze (krok osi czasu 4–13 ms), render tylko przy zmianach.
 
 - Uruchomienie: `npm start`, potem `http://localhost:4200/?t=11650` (cal BP, 0–20 000; działa też `?ka=11`).

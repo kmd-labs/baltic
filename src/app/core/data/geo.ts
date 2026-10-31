@@ -28,10 +28,3 @@ export const SILLS: readonly { id: SillId; lon: number; lat: number }[] = [
   { id: 'oresund', lon: 12.75, lat: 55.55 },
   { id: 'storebaelt', lon: 11.0, lat: 55.3 }
 ];
-
-/** Reference points of the RSL curves panel. */
-export const CURVE_POINTS: readonly { id: PlaceId; lon: number; lat: number }[] = [
-  { id: 'umea', lon: 20.26, lat: 63.83 },
-  { id: 'stockholm', lon: 18.07, lat: 59.33 },
-  { id: 'gdansk', lon: 18.65, lat: 54.4 }
-];

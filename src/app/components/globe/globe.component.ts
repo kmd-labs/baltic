@@ -93,10 +93,10 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   /** Time shown, cal yr BP. */
   readonly t = input.required<number>();
   readonly layers = input.required<GlobeLayers>();
-  readonly exaggeration = input<number>(10);
+  /** Vertical exaggeration of the 3D relief; flat (×1) by decision 2026-10-31. */
+  readonly exaggeration = input<number>(1);
   readonly labels = input<GlobeLabel[]>([]);
   readonly hover = output<GlobePointer | null>();
-  readonly pick = output<{ lon: number; lat: number }>();
 
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChildren('lbl') labelRefs!: QueryList<ElementRef<HTMLSpanElement>>;
@@ -123,13 +123,15 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   private patchMat?: THREE.ShaderMaterial;
   private rslTex?: THREE.DataTexture;
   private waterTex?: THREE.DataTexture;
+  private rslPrevTex?: THREE.DataTexture;
+  private waterPrevTex?: THREE.DataTexture;
+  private earlierShown: PaleoFrame | null = null;
   private overlayCanvas?: HTMLCanvasElement;
   private overlayTex?: THREE.CanvasTexture;
   private overlayBCanvas?: HTMLCanvasElement;
   private overlayBTex?: THREE.CanvasTexture;
   private frame: PaleoFrame | null = null;
   private shownT = -1;
-  private prevShoreShown: Float32Array | null = null;
   /** Render only when something changed (camera, data, layers, size). */
   private needsRender = true;
 
@@ -145,7 +147,6 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   private animId: number | null = null;
   private lastTime = 0;
   private resizeObs?: ResizeObserver;
-  private downAt: { x: number; y: number } | null = null;
   private pendingHover: PointerEvent | null = null;
 
   constructor() {
@@ -295,6 +296,8 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     const demE = this.demTexture(this.data.hNowEurope!, E);
     const demB = this.demTexture(this.data.hNowBaltic!, B);
     this.rslTex = half(new Float32Array(Rg.nx * Rg.ny), Rg.nx, Rg.ny);
+    this.rslPrevTex = half(new Float32Array(Rg.nx * Rg.ny), Rg.nx, Rg.ny);
+    this.waterPrevTex = this.dataTex(new Uint8Array(B.nx * B.ny * 2), B.nx, B.ny, THREE.RGFormat, THREE.UnsignedByteType);
     this.waterTex = this.dataTex(new Uint8Array(B.nx * B.ny * 2), B.nx, B.ny, THREE.RGFormat, THREE.UnsignedByteType);
 
     this.overlayCanvas = document.createElement('canvas');
@@ -326,6 +329,10 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
         uDemB: { value: demB },
         uRsl: { value: this.rslTex },
         uWater: { value: this.waterTex },
+        uRslPrev: { value: this.rslPrevTex },
+        uWaterPrev: { value: this.waterPrevTex },
+        uLakePrev: { value: 0 },
+        uPrevReady: { value: 0 },
         uOverlay: { value: this.overlayTex },
         uOverlayB: { value: this.overlayBTex },
         uBoxE: { value: new THREE.Vector4(...E.bbox) },
@@ -387,10 +394,10 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     const u = this.patchMat.uniforms;
     if (t !== this.shownT) {
       this.shownT = t;
-      const d = this.rslTex!.image.data as Uint16Array;
-      const v = this.data.rsl(t);
-      for (let i = 0; i < v.length; i++) d[i] = THREE.DataUtils.toHalfFloat(v[i]);
-      this.rslTex!.needsUpdate = true;
+      this.setHalf(this.rslTex!, this.data.rsl(t));
+      this.setHalf(this.rslPrevTex!, this.data.rsl(t + 1000));
+      this.earlierShown = null;
+      u['uPrevReady'].value = 0;
       const cls: WaterClass = phaseAt(t).cls;
       const token = cls === 'marine' ? 'paleo-marine' : cls === 'brackish' ? 'paleo-brackish' : 'paleo-fresh';
       (u['cBasin'].value as THREE.Color).set(this.theme.getTokenColor(token, '#8dbcdc'));
@@ -399,17 +406,32 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     const f = this.data.frame(t);
     if (f && f !== this.frame) {
       this.frame = f;
-      const wd = this.waterTex!.image.data as Uint8Array;
-      for (let i = 0; i < f.water.length; i++) {
-        wd[i * 2] = f.water[i] === WATER_OCEAN ? 255 : 0;
-        wd[i * 2 + 1] = f.water[i] === WATER_LAKE ? 255 : 0;
-      }
-      this.waterTex!.needsUpdate = true;
+      this.fillWaterTex(this.waterTex!, f.water);
       u['uLake'].value = f.lakeLevelM;
     }
-    const prev = this.data.peek(t + 1000)?.shore ?? null;
-    if (prev !== this.prevShoreShown) this.drawOverlayBaltic();
+    const e = this.data.earlier(t);
+    if (e && e !== this.earlierShown) {
+      this.earlierShown = e;
+      this.fillWaterTex(this.waterPrevTex!, e.water);
+      u['uLakePrev'].value = e.lakeLevelM;
+      u['uPrevReady'].value = 1;
+    }
     this.needsRender = true;
+  }
+
+  private setHalf(tex: THREE.DataTexture, v: Float32Array): void {
+    const d = tex.image.data as Uint16Array;
+    for (let i = 0; i < v.length; i++) d[i] = THREE.DataUtils.toHalfFloat(v[i]);
+    tex.needsUpdate = true;
+  }
+
+  private fillWaterTex(tex: THREE.DataTexture, water: Uint8Array): void {
+    const d = tex.image.data as Uint8Array;
+    for (let i = 0; i < water.length; i++) {
+      d[i * 2] = water[i] === WATER_OCEAN ? 255 : 0;
+      d[i * 2 + 1] = water[i] === WATER_LAKE ? 255 : 0;
+    }
+    tex.needsUpdate = true;
   }
 
   /** Present-day heights (r) with a hillshade factor baked once (g), as RG half floats. */
@@ -497,7 +519,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     this.drawOverlayBaltic();
   }
 
-  /** Lines inside the Baltic window: coast 1000 years earlier, transect, sills. */
+  /** Lines inside the Baltic window: transect and sills. */
   private drawOverlayBaltic(): void {
     const cv = this.overlayBCanvas;
     const B = this.data.baltic;
@@ -510,21 +532,6 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     const sx = W / (e - w);
     const sy = H / (n - s);
     const L = this.layers();
-    // Coast 1000 years earlier: the shoreline of the frame t + 1000 (Baltic window).
-    const segs = this.shownT >= 0 ? (this.data.peek(this.shownT + 1000)?.shore ?? null) : null;
-    this.prevShoreShown = segs;
-    if (L.prev && segs) {
-      ctx.beginPath();
-      for (let i = 0; i < segs.length; i += 4) {
-        ctx.moveTo((segs[i] - w) * sx, (n - segs[i + 1]) * sy);
-        ctx.lineTo((segs[i + 2] - w) * sx, (n - segs[i + 3]) * sy);
-      }
-      ctx.strokeStyle = this.theme.getTokenColor('accent', '#d37400');
-      ctx.globalAlpha = 0.85;
-      ctx.lineWidth = W / 1100;
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
     const ink = this.theme.getTokenColor('neutral-800', '#1e293b');
     if (L.transect) {
       ctx.beginPath();
@@ -571,14 +578,6 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     cv.addEventListener('pointerleave', () => {
       this.pendingHover = null;
       this.zone.run(() => this.hover.emit(null));
-    });
-    cv.addEventListener('pointerdown', e => (this.downAt = { x: e.clientX, y: e.clientY }));
-    cv.addEventListener('pointerup', e => {
-      const d = this.downAt;
-      this.downAt = null;
-      if (!d || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 4) return;
-      const ll = this.hit(e);
-      if (ll) this.zone.run(() => this.pick.emit(ll));
     });
   }
 

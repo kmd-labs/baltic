@@ -138,36 +138,60 @@
   ]
  ],
  "sources": [
-  [
-   "GEBCO Compilation Group 2024",
-   "GEBCO_2024 Grid, doi:10.5285/1c44ce99-0a0d-5f4f-e063-7086abc0ea0f — rzeźba i batymetria dziś (domena publiczna)."
-  ],
-  [
-   "Steffen i Kaufmann 2025",
-   "Pola RSL dla północnej Europy, ANU-ICE, 8 modeli Ziemi, Zenodo 10.5281/zenodo.15481755 (CC BY 4.0) — model GIA."
-  ],
-  [
-   "Hughes i in. 2016",
-   "DATED-1, zasięg lądolodów eurazjatyckich min / mc / maks, PANGAEA 10.1594/PANGAEA.848117 (CC BY 3.0)."
-  ],
-  [
-   "Andrén i in. 2011",
-   "The development of the Baltic Sea Basin during the last 130 ka — chronologia i opisy faz."
-  ],
-  [
-   "NOAA NGDC 2006",
-   "ETOPO2v2, doi:10.7289/V5J1012Q — przewyższenie terenu na globie."
-  ],
-  [
-   "Natural Earth",
-   "SR_50M i land-50m (przez world-atlas) — cieniowanie i kontur lądu na globie (domena publiczna)."
-  ]
+  {
+   "name": "GEBCO_2024 Grid — rzeźba terenu i dna dziś",
+   "use": "Wysokość dziś (H_dziś) w całej Europie: siatka 1/20° (dem-europe) i 1/40° w oknie Bałtyku (dem-baltic); stąd linia brzegowa dziś, cieniowanie i paleo-DEM.",
+   "origin": "GEBCO Compilation Group (2024), GEBCO 2024 Grid, doi:10.5285/1c44ce99-0a0d-5f4f-e063-7086abc0ea0f. Dwa kafle GeoTIFF (0–90°N / 90°W–0 i 0–90°N / 0–90°E, wariant ice-surface) z archiwum CEDA (dap.ceda.ac.uk/bodc/gebco).",
+   "licence": "Domena publiczna z obowiązkiem atrybucji (Terms of Use of the GEBCO Grid). Wolno kopiować, przetwarzać i publikować, także komercyjnie.",
+   "note": "Przetworzenie: uśrednienie blokowe 12 × 12 i 6 × 6 komórek 15″, mozaika kafli. Jeziora (Vänern, Vättern, Ładoga, Onega) mają w GEBCO tylko powierzchnię wody, bez dna."
+  },
+  {
+   "name": "Steffen i Kaufmann 2025 — względny poziom morza (RSL)",
+   "use": "Model GIA: pole RSL(t) dla 19 kroków 21,4 → 0 tys. lat, model Ziemi sk1. Aplikacja liczy H_paleo = H_dziś − RSL(t) (bez osobnego członu eustatycznego) i krzywą w przekroju.",
+   "origin": "Steffen, H., Kaufmann, G. (2025), dane na Zenodo, doi:10.5281/zenodo.15481755 — pliki rsl_SK05_skan_<model>.nc, zmienna RSL, siatka 1°, 10°W–70°E / 45–85°N. Model lądolodu w danych: ANU-ICE (1998).",
+   "licence": "CC BY 4.0 — wymagana atrybucja i informacja o zmianach.",
+   "note": "Zmiany: wybrany jeden z 8 modeli Ziemi (sk1), zapis jako int16 z rozdzielczością 1 cm, interpolacja liniowa w czasie i dwuliniowa w przestrzeni."
+  },
+  {
+   "name": "DATED-1 — zasięg lądolodów eurazjatyckich",
+   "use": "Lądolód na klatkach 20 → 10 tys. lat: wariant najbardziej prawdopodobny (mc) jako zasięg i ściana w modelu wody, warianty min / max jako pas niepewności.",
+   "origin": "Hughes, A. L. C. i in. (2016), Boreas 45, 1–45, doi:10.1111/bor.12142; dane PANGAEA, doi:10.1594/PANGAEA.848117 (DATED-1_TimeSlices_shp.zip, przekroje TS10–TS20).",
+   "licence": "CC BY 3.0 — wymagana atrybucja i informacja o zmianach.",
+   "note": "Zmiany: reprojekcja z biegunowej LAEA do WGS84, uproszczenie geometrii (tolerancja 0,02°). Przekroje zdarzeniowe biorą najbliższy przekrój DATED-1 (Billingen: 12 i 11 tys. lat), bez interpolacji."
+  },
+  {
+   "name": "Chronologia i opisy faz",
+   "use": "Granice siedmiu faz (cal BP), nazwy, opisy w karcie fazy, typ wody, orientacyjne zakresy zasolenia (PSU), gatunki wskaźnikowe, przekroje zdarzeniowe.",
+   "origin": "Andrén, T. i in. (2011), The Development of the Baltic Sea Basin During the Last 130 ka, w: Harff i in. (red.), The Baltic Sea Basin, Springer, doi:10.1007/978-3-642-17220-5_4; uzupełnienia według Björck (1995) i Kotthoff i in. (2022, IODP M0059).",
+   "licence": "Fakty naukowe cytowane z publikacji (daty, nazwy, zakresy). Teksty w aplikacji są własnym streszczeniem, nie przedrukiem.",
+   "note": "Zakresy PSU są wartościami dla całej fazy z literatury; zasolenie per basen przyjdzie z modelu (C-10). Daty nie przeszły jeszcze kalibracji IntCal20 (C-09)."
+  },
+  {
+   "name": "Poziomy jezior z literatury (sill-check)",
+   "use": "Wiersz „Poziom: literatura” w karcie fazy: Bałtyckie Jezioro Lodowe +25 m, drenaż Billingen 25–28 m, Jezioro Ancylusowe do +10 m nad ówczesnym oceanem.",
+   "origin": "Wartości zebrane w planie danych (docs/research/baltic-data-plan.md §2) z Björck (1995) i Andrén i in. (2011).",
+   "licence": "Fakty naukowe z cytowaniem.",
+   "note": "„Poziom: model” liczy aplikacja (najniższy próg odpływu, priority-flood); porównanie z literaturą to prototyp testu V-02."
+  },
+  {
+   "name": "Progi i miejscowości",
+   "use": "Pozycje progów (Billingen, Närke, Svea, Darss, Drogden, Wielki Bełt), miast na globie i punktów przekroju Umeå → Gdańsk.",
+   "origin": "Współrzędne geograficzne z planu danych (§3.2) i ogólnodostępnych gazeterów; rzędne i stany progów przyjdą z katalogu C-05.",
+   "licence": "Fakty geograficzne — bez ograniczeń licencyjnych.",
+   "note": "Na razie tylko położenie; stan otwarty / zamknięty i rzędna progu nie są pokazywane."
+  },
+  {
+   "name": "Oprogramowanie",
+   "use": "Wyświetlanie globu, obliczenia geometrii i interfejs.",
+   "origin": "three.js (MIT), d3-geo (ISC), Angular (MIT), lucide (ISC), krój Inter (SIL OFL 1.1), system projektowy KMD.",
+   "licence": "Licencje open source wymienione przy każdej bibliotece.",
+   "note": "Kod aplikacji: repozytorium kmd-labs/baltic."
+  }
  ],
  "about": [
   "To prototyp, nie wynik naukowy. Wysokości są prawdziwe (GEBCO 2024 i pola RSL Steffena i Kaufmanna 2025), ale pipeline nie ma jeszcze wszystkich kroków.",
   "H_paleo = H_dziś − RSL(t) liczymy w przeglądarce, z interpolacją liniową w czasie i dwuliniową w przestrzeni — tak samo jak pipeline (zgodność < 5 cm).",
   "Woda w oknie Bałtyku jest wypełniana od Skagerraku. Gdy basen nie ma połączenia z oceanem, wypełnia się do najniższego progu odpływu (priority-flood, lód działa jak ściana) — ten poziom karta fazy porównuje z literaturą, jak test sill-check (V-02).",
-  "Jeszcze nie ma: katalogu progów z rzędnymi i stanami (C-05), zasolenia per basen (C-10), krzywej eustatycznej (C-12), grubości lodu (C-07) ani danych na zachód od 0°E.",
-  "Kliknięcie w glob dodaje krzywą RSL dla wybranego punktu."
+  "Jeszcze nie ma: katalogu progów z rzędnymi i stanami (C-05), zasolenia per basen (C-10), krzywej eustatycznej (C-12), grubości lodu (C-07) ani danych na zachód od 0°E."
  ]
 }

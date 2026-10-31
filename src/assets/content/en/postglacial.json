@@ -138,36 +138,60 @@
   ]
  ],
  "sources": [
-  [
-   "GEBCO Compilation Group 2024",
-   "GEBCO_2024 Grid, doi:10.5285/1c44ce99-0a0d-5f4f-e063-7086abc0ea0f — present-day relief and bathymetry (public domain)."
-  ],
-  [
-   "Steffen & Kaufmann 2025",
-   "RSL fields for northern Europe, ANU-ICE, 8 earth models, Zenodo 10.5281/zenodo.15481755 (CC BY 4.0) — GIA model."
-  ],
-  [
-   "Hughes et al. 2016",
-   "DATED-1, Eurasian ice-sheet extent min / mc / max, PANGAEA 10.1594/PANGAEA.848117 (CC BY 3.0)."
-  ],
-  [
-   "Andrén et al. 2011",
-   "The development of the Baltic Sea Basin during the last 130 ka — chronology and phase descriptions."
-  ],
-  [
-   "NOAA NGDC 2006",
-   "ETOPO2v2, doi:10.7289/V5J1012Q — terrain relief on the globe."
-  ],
-  [
-   "Natural Earth",
-   "SR_50M and land-50m (via world-atlas) — shading and land outline on the globe (public domain)."
-  ]
+  {
+   "name": "GEBCO_2024 Grid — present-day relief and sea floor",
+   "use": "Present-day height (H_now) across Europe: a 1/20° grid (dem-europe) and 1/40° in the Baltic window (dem-baltic); source of today's coastline, the shading and the paleo-DEM.",
+   "origin": "GEBCO Compilation Group (2024), GEBCO 2024 Grid, doi:10.5285/1c44ce99-0a0d-5f4f-e063-7086abc0ea0f. Two GeoTIFF tiles (0–90°N / 90°W–0 and 0–90°N / 0–90°E, ice-surface variant) from the CEDA archive (dap.ceda.ac.uk/bodc/gebco).",
+   "licence": "Public domain with attribution required (Terms of Use of the GEBCO Grid). Copying, processing and publishing are allowed, including commercially.",
+   "note": "Processing: block average of 12 × 12 and 6 × 6 cells of 15″, mosaic of the tiles. Lakes (Vänern, Vättern, Ladoga, Onega) only have their water surface in GEBCO, no bottom."
+  },
+  {
+   "name": "Steffen & Kaufmann 2025 — relative sea level (RSL)",
+   "use": "GIA model: the RSL(t) field at 19 steps 21.4 → 0 ka, earth model sk1. The app computes H_paleo = H_now − RSL(t) (no separate eustatic term) and the transect.",
+   "origin": "Steffen, H., Kaufmann, G. (2025), data on Zenodo, doi:10.5281/zenodo.15481755 — files rsl_SK05_skan_<model>.nc, variable RSL, 1° grid, 10°W–70°E / 45–85°N. Ice model in the data: ANU-ICE (1998).",
+   "licence": "CC BY 4.0 — attribution and an indication of changes required.",
+   "note": "Changes: one of 8 earth models selected (sk1), stored as int16 with 1 cm resolution, linear interpolation in time and bilinear in space."
+  },
+  {
+   "name": "DATED-1 — Eurasian ice-sheet extent",
+   "use": "Ice in the frames 20 → 10 ka: the most credible outline (mc) as the extent and as a wall in the water model, the min / max outlines as the uncertainty band.",
+   "origin": "Hughes, A. L. C. et al. (2016), Boreas 45, 1–45, doi:10.1111/bor.12142; data on PANGAEA, doi:10.1594/PANGAEA.848117 (DATED-1_TimeSlices_shp.zip, slices TS10–TS20).",
+   "licence": "CC BY 3.0 — attribution and an indication of changes required.",
+   "note": "Changes: reprojected from polar LAEA to WGS84, geometry simplified (0.02° tolerance). Event sections take the nearest DATED-1 slice (Billingen: 12 and 11 ka), no interpolation."
+  },
+  {
+   "name": "Chronology and phase descriptions",
+   "use": "Boundaries of the seven phases (cal BP), names, descriptions in the phase card, water type, indicative salinity ranges (PSU), indicator species, event sections.",
+   "origin": "Andrén, T. et al. (2011), The Development of the Baltic Sea Basin During the Last 130 ka, in: Harff et al. (eds.), The Baltic Sea Basin, Springer, doi:10.1007/978-3-642-17220-5_4; additions from Björck (1995) and Kotthoff et al. (2022, IODP M0059).",
+   "licence": "Scientific facts cited from publications (dates, names, ranges). The texts in the app are our own summary, not a reprint.",
+   "note": "PSU ranges are phase-wide literature values; salinity per basin will come from the model (C-10). Dates are not yet recalibrated with IntCal20 (C-09)."
+  },
+  {
+   "name": "Lake levels from the literature (sill-check)",
+   "use": "The “Level: literature” row of the phase card: Baltic Ice Lake +25 m, Billingen drainage 25–28 m, Ancylus Lake up to +10 m above the ocean of the time.",
+   "origin": "Values compiled in the data plan (docs/research/baltic-data-plan.md §2) from Björck (1995) and Andrén et al. (2011).",
+   "licence": "Scientific facts with citation.",
+   "note": "“Level: model” is computed by the app (lowest outlet sill, priority-flood); the comparison with the literature is a prototype of test V-02."
+  },
+  {
+   "name": "Sills and places",
+   "use": "Positions of the sills (Billingen, Närke, Svea, Darss, Drogden, Great Belt), the cities on the globe and the points of the Umeå → Gdańsk transect.",
+   "origin": "Geographic coordinates from the data plan (§3.2) and public gazetteers; sill elevations and states will come from catalogue C-05.",
+   "licence": "Geographic facts — no licence restrictions.",
+   "note": "Only the position for now; open / closed state and threshold elevation are not shown."
+  },
+  {
+   "name": "Software",
+   "use": "Globe rendering, geometry and the interface.",
+   "origin": "three.js (MIT), d3-geo (ISC), Angular (MIT), lucide (ISC), Inter typeface (SIL OFL 1.1), KMD design system.",
+   "licence": "Open-source licences listed with each library.",
+   "note": "Application code: repository kmd-labs/baltic."
+  }
  ],
  "about": [
   "This is a prototype, not a scientific result. Heights are real (GEBCO 2024 and the Steffen & Kaufmann 2025 RSL fields), but the pipeline does not have all its steps yet.",
   "H_paleo = H_now − RSL(t) is computed in the browser, linear in time and bilinear in space — the same as the pipeline (agreement < 5 cm).",
   "Water in the Baltic window is filled from the Skagerrak. When the basin has no connection to the ocean it fills up to its lowest outlet sill (priority-flood, ice acts as a wall) — the phase card compares that level with the literature, like the sill-check test (V-02).",
-  "Not yet included: the sill catalogue with elevations and states (C-05), salinity per basin (C-10), the eustatic curve (C-12), ice thickness (C-07) and data west of 0°E.",
-  "Click the globe to add the RSL curve of that point."
+  "Not yet included: the sill catalogue with elevations and states (C-05), salinity per basin (C-10), the eustatic curve (C-12), ice thickness (C-07) and data west of 0°E."
  ]
 }

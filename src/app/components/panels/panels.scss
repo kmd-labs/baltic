@@ -33,10 +33,13 @@
   text-overflow: ellipsis;
 }
 
+// The canvas takes the space left in the panel but never sizes the panel itself (its height
+// attribute would otherwise push the dock row taller).
 canvas {
   display: block;
   width: 100%;
-  flex: 1;
+  height: 0;
+  flex: 1 1 0;
   min-height: 0;
 }
 
@@ -81,8 +84,8 @@ canvas {
 
 .phase-desc {
   margin: 0;
-  font-size: 12.5px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.4;
   color: color("text-desc");
 }
 
@@ -114,24 +117,45 @@ canvas {
   color: color("text-dim");
 }
 
-.sal {
+.kv--3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 12px;
+
+  > div { display: flex; flex-direction: column; min-width: 0; }
+}
+
+.events {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-top: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
 
-  &__bar {
-    height: 8px;
-    border-radius: 4px;
-    background: linear-gradient(90deg, #cfeee3, var(--color-paleo-fresh) 12%, var(--color-paleo-brackish) 40%, var(--color-paleo-marine));
-  }
-
-  &__ticks {
-    display: flex;
-    justify-content: space-between;
-    font-family: var(--font-family-mono);
-    font-size: 10px;
+  &__label {
+    font-size: 11px;
     color: color("text-dim");
+    margin-right: 2px;
+  }
+}
+
+.event {
+  height: 22px;
+  padding: 0 9px;
+  border: 1px solid color("line");
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  color: color("text-desc");
+  cursor: pointer;
+
+  &:hover { background: color("btn-hover"); }
+
+  &--active {
+    background: color("accent-glow-soft");
+    border-color: color("accent");
+    color: color("text-bright");
   }
 }
 
@@ -218,25 +242,15 @@ canvas {
     opacity: 1;
     box-shadow: inset 0 -2px 0 color("accent");
   }
-}
 
-.mark {
-  position: absolute;
-  top: -10px;
-  width: 9px;
-  height: 9px;
-  margin-left: -4.5px;
-  padding: 0;
-  transform: rotate(45deg);
-  border: 1.5px solid color("text-bright");
-  border-radius: 1px;
-  background: #fff;
-  cursor: pointer;
-
-  &:hover,
-  &--active {
-    background: color("accent");
-    border-color: color("accent");
+  // Narrow bands (Yoldia, Ancylus, Mastogloia) clip their label instead of spilling over
+  // the neighbours; the full name is in the title tooltip.
+  &__label {
+    display: block;
+    min-width: 0;
+    padding: 0 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 

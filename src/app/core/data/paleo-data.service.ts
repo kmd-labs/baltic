@@ -37,8 +37,6 @@ export interface PaleoFrame {
   ice: FrameIce | null;
   iceMask: Uint8Array | null;
   stats: FrameStats;
-  /** Shoreline segments [lon0, lat0, lon1, lat1, …] in the Baltic window. */
-  shore: Float32Array;
 }
 
 export interface PointInfo {
@@ -83,7 +81,7 @@ const ICE_SLICE_FOR_EVENT: Record<number, number> = Object.fromEntries(
 /**
  * Loads the present-day grids, the RSL cube and the DATED-1 outlines once. RSL fields are
  * interpolated on the main thread (3 321 cells); everything that needs the 1/40° grid — water
- * mask, basin metrics, shoreline — runs in a Web Worker, which precomputes every frame in the
+ * mask and basin metrics — runs in a Web Worker, which precomputes every frame in the
  * background so stepping through time is instant.
  */
 @Injectable({ providedIn: 'root' })
@@ -151,6 +149,17 @@ export class PaleoDataService {
   /** The frame at t if already computed, without requesting it. */
   peek(t: number): PaleoFrame | null {
     return this.frames.get(t) ?? null;
+  }
+
+  /**
+   * The frame 1000 years earlier (t + 1000), for the "coast 1000 years earlier" line. Also
+   * defined for event sections, whose t + 1000 is not on the timeline; requested on demand.
+   */
+  earlier(t: number): PaleoFrame | null {
+    const te = t + 1000;
+    const f = this.frames.get(te);
+    if (!f) this.request(te, false);
+    return f ?? null;
   }
 
   /** RSL field on the 1° grid at t (cal yr BP). Cheap; cached. */
@@ -237,20 +246,6 @@ export class PaleoDataService {
     return { total, points };
   }
 
-  /** RSL at a point for every time in `times` (null while the point is under the ice). */
-  rslSeries(lon: number, lat: number, times: readonly number[]): (number | null)[] {
-    const b = this.baltic!;
-    return times.map(t => {
-      const ice = this.iceFor(t);
-      if (ice) {
-        if (inside(b, lon, lat)) {
-          if (this.iceMask(ice.ka)[cellIndex(b, lon, lat)]) return null;
-        } else if (ice.features.mc && d3Geo.geoContains(ice.features.mc, [lon, lat])) return null;
-      }
-      return bilinear(this.rsl(t), this.rslGrid!, lon, lat);
-    });
-  }
-
   // ─── worker ───────────────────────────────────────────────────────────
 
   private startWorker(): void {
@@ -288,8 +283,7 @@ export class PaleoDataService {
       water: m.water,
       ice,
       iceMask: ice ? this.iceMask(ice.ka) : null,
-      stats: m.stats,
-      shore: m.shore
+      stats: m.stats
     });
     this.version.update(v => v + 1);
   }

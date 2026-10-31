@@ -38,11 +38,10 @@ import { FRAMES, nearestFrame, phaseAt } from './core/data/timeline';
 import { PLACES, SILLS } from './core/data/geo';
 import { PhaseCardComponent } from './components/panels/phase-card.component';
 import { TransectPanelComponent } from './components/panels/transect-panel.component';
-import { CurvesPanelComponent } from './components/panels/curves-panel.component';
 import { PhaseBandsComponent } from './components/panels/phase-bands.component';
 import { InfoPopupComponent } from './components/panels/info-popup.component';
 
-type Tab = 'phase' | 'transect' | 'curves';
+type Tab = 'phase' | 'transect';
 type LayerId = keyof GlobeLayers;
 
 @Component({
@@ -60,7 +59,6 @@ type LayerId = keyof GlobeLayers;
     GlobeComponent,
     PhaseCardComponent,
     TransectPanelComponent,
-    CurvesPanelComponent,
     PhaseBandsComponent
   ],
   templateUrl: './app.component.html',
@@ -86,8 +84,6 @@ export class AppComponent implements OnDestroy {
   readonly playing = signal(false);
   readonly collapsed = signal(false);
   readonly tab = signal<Tab>('phase');
-  readonly exaggeration = signal(10);
-  readonly probe = signal<{ lon: number; lat: number } | null>(null);
   readonly pointer = signal<GlobePointer | null>(null);
   readonly layers = signal<GlobeLayers>({ ice: true, band: true, today: true, prev: true, sills: true, transect: true, labels: true });
 

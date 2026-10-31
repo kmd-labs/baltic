@@ -147,48 +147,6 @@ export function basinStats(g: GridGeometry, hp: Float32Array, water: Uint8Array,
   return { areaKm2: area, volumeKm3: volume, maxDepthM: maxDepth, connected };
 }
 
-/** Shoreline as segments [lon0, lat0, lon1, lat1, …]: marching squares on the smoothed water mask. */
-export function shoreline(g: GridGeometry, water: Uint8Array): Float32Array {
-  const { nx, ny } = g;
-  const [west, south, east, north] = g.bbox;
-  const v = new Float32Array(nx * ny);
-  for (let r = 1; r < ny - 1; r++) {
-    for (let c = 1; c < nx - 1; c++) {
-      const k = r * nx + c;
-      const w = (i: number) => (water[i] ? 1 : 0);
-      v[k] = (w(k) * 4 + w(k - 1) + w(k + 1) + w(k - nx) + w(k + nx) + (w(k - nx - 1) + w(k - nx + 1) + w(k + nx - 1) + w(k + nx + 1)) * 0.5) / 10;
-    }
-  }
-  const L = (x: number) => west + ((x + 0.5) / nx) * (east - west);
-  const A = (y: number) => north - ((y + 0.5) / ny) * (north - south);
-  const out: number[] = [];
-  const seg = (p: [number, number], q: [number, number]) => out.push(L(p[0]), A(p[1]), L(q[0]), A(q[1]));
-  const iso = 0.5;
-  for (let j = 0; j < ny - 1; j++) {
-    for (let i = 0; i < nx - 1; i++) {
-      const k = j * nx + i;
-      const a = v[k], b = v[k + 1], c = v[k + 1 + nx], d = v[k + nx];
-      const idx = (a > iso ? 8 : 0) | (b > iso ? 4 : 0) | (c > iso ? 2 : 0) | (d > iso ? 1 : 0);
-      if (idx === 0 || idx === 15) continue;
-      const top = (): [number, number] => [i + (iso - a) / (b - a), j];
-      const right = (): [number, number] => [i + 1, j + (iso - b) / (c - b)];
-      const bottom = (): [number, number] => [i + (iso - d) / (c - d), j + 1];
-      const left = (): [number, number] => [i, j + (iso - a) / (d - a)];
-      switch (idx) {
-        case 1: case 14: seg(left(), bottom()); break;
-        case 2: case 13: seg(bottom(), right()); break;
-        case 3: case 12: seg(left(), right()); break;
-        case 4: case 11: seg(top(), right()); break;
-        case 6: case 9: seg(top(), bottom()); break;
-        case 7: case 8: seg(left(), top()); break;
-        case 5: seg(left(), bottom()); seg(top(), right()); break;
-        case 10: seg(left(), top()); seg(bottom(), right()); break;
-      }
-    }
-  }
-  return new Float32Array(out);
-}
-
 /** Binary min-heap of cell indices keyed by float priority (priority-flood). */
 class MinHeap {
   private readonly keys: Int32Array;

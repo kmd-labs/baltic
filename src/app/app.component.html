@@ -52,10 +52,8 @@
     <app-globe
       [t]="t()"
       [layers]="layers()"
-      [exaggeration]="exaggeration()"
       [labels]="labels()"
-      (hover)="pointer.set($event)"
-      (pick)="probe.set($event)">
+      (hover)="pointer.set($event)">
     </app-globe>
   </section>
 
@@ -78,7 +76,6 @@
       <div class="tip__row"><span>{{ tr.tipRelOcean }}</span><span>{{ tip.rel }}</span></div>
       <div class="tip__row"><span>{{ tr.tipToday }}</span><span>{{ tip.today }}</span></div>
       <div class="tip__row"><span>{{ tr.tipRsl }}</span><span>{{ tip.rsl }}</span></div>
-      <div class="tip__mono">{{ tr.tipClick }}</div>
     </div>
   }
 
@@ -92,20 +89,6 @@
               <span class="chip__sw" [attr.data-layer]="l.id" aria-hidden="true"></span>{{ l.label }}
             </button>
           }
-        </div>
-        <div class="exag glass-panel">
-          <span class="exag__label">{{ tr.exaggeration }}</span>
-          <div class="exag__slider">
-            <app-timeline-slider
-              [min]="1"
-              [max]="40"
-              [step]="1"
-              [value]="exaggeration()"
-              [ariaLabel]="tr.exaggeration"
-              (valueChange)="exaggeration.set($event)">
-            </app-timeline-slider>
-          </div>
-          <b class="exag__val">×{{ exaggeration() }}</b>
         </div>
         <div class="actions glass-panel">
           <app-button variant="ghost" (btnClick)="openInfo('glossary')" [ariaLabel]="tr.glossary">
@@ -131,7 +114,7 @@
           <div class="readout__sub">{{ calendar() }}</div>
         </div>
         <div class="tl">
-          <app-phase-bands [t]="t()" (pick)="setT($event)"></app-phase-bands>
+          <app-phase-bands [t]="t()"></app-phase-bands>
           <app-timeline-slider
             [min]="-20000"
             [max]="0"
@@ -168,19 +151,10 @@
         <div class="tabbar glass-panel" role="tablist" [attr.aria-label]="tr.panelsLabel">
           <button type="button" class="chip" role="tab" [attr.aria-selected]="tab() === 'phase'" (click)="tab.set('phase')">{{ tr.tabPhase }}</button>
           <button type="button" class="chip" role="tab" [attr.aria-selected]="tab() === 'transect'" (click)="tab.set('transect')">{{ tr.tabTransect }}</button>
-          <button type="button" class="chip" role="tab" [attr.aria-selected]="tab() === 'curves'" (click)="tab.set('curves')">{{ tr.tabCurves }}</button>
         </div>
         <div class="panels">
-          <app-phase-card class="panel glass-panel panel--scroll" [class.is-tab]="tab() === 'phase'" [t]="t()"></app-phase-card>
-          <app-transect-panel class="panel glass-panel" [class.is-tab]="tab() === 'transect'" [t]="t()"></app-transect-panel>
-          <app-curves-panel
-            class="panel glass-panel"
-            [class.is-tab]="tab() === 'curves'"
-            [t]="t()"
-            [probe]="probe()"
-            (pickTime)="t.set($event)"
-            (clearProbe)="probe.set(null)">
-          </app-curves-panel>
+          <app-phase-card class="panel panel--phase glass-panel" [class.is-tab]="tab() === 'phase'" [t]="t()" (pickTime)="t.set($event)"></app-phase-card>
+          <app-transect-panel class="panel panel--transect glass-panel" [class.is-tab]="tab() === 'transect'" [t]="t()"></app-transect-panel>
         </div>
       }
     </div>
