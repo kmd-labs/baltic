@@ -10,6 +10,20 @@
 > 3. **Krok 1000 lat** (21 klatek + ~6 zdarzeniowych) zamiast 500 lat.
 > 4. **Scena: glob jak w El Niño**, dane runtime hybrydowe (siatki + kostka RSL + wektory). Nowe zadanie `I-05`.
 
+## Stan issues (przegląd 2026-10-31, po scaleniu PR #61)
+
+Aplikacja liczy wodę, poziomy progów i metryki sama z siatek (Web Worker), więc pipeline nie emituje plików klatek.
+
+| Status | Zadania |
+| :-- | :-- |
+| **Zamknięte — wykonane** | `0-02` #8, `0-06` #12, `C-01` #15, `C-04` #18, `I-05` #58 |
+| **Zamknięte — wykonane z follow-upem** | `C-03` #17 (reszta → `I-01`, `0-07`, `V-03`), `C-06` #20 i `C-14` #27 (→ `C-06b` #62), `C-07` #21 (→ `C-07b` #63), `C-13` #28, `I-02` #53 (→ `I-02b` #64), `I-03` #54 (→ `I-03b` #65), `I-04` #55 (→ `I-04b` #66), `0-05` #11 (→ `0-05b` #67) |
+| **Usunięte — nie robimy** | `C-02` #16, `C-09` #22, `C-10` #24, `C-11` #25, `C-12` #26, `C-15` #29, `V-07` #46, `V-12` #52 — decyzja użytkownika; **trwałe skasowanie na GitHubie czeka na uprawnienia** (system zablokował `gh issue delete`) |
+| **Zawężone** | `I-01` #50 — siatki, zarysy lodu i manifest, bez plików klatek |
+| **Otwarte** | `0-01` #7, `0-03` #9, `0-04` #10, `0-07` #13, `0-08` #14, `C-05` #19, `C-08` #23, `V-01` #40, `V-02` #41, `V-03` #42, `V-06` #45, `V-08` #47, `V-11` #51 oraz follow-upy #62–#67 |
+
+Opisy zadań poniżej są historyczne dla pozycji zamkniętych i usuniętych; aktualny zakres jest w issues.
+
 ## Jak czytać
 
 | Pole | Znaczenie |

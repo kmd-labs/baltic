@@ -45,6 +45,10 @@ PR #2 zamknięty jako zbędny. Opisy #58, #17, #21, #16 zsynchronizowane z backl
 
 `https://claude.ai/artifact/4mtm5Y44DWh7ufwyXKAKi5` — makieta interakcji z syntetycznym DEM-em. Co z niej zostaje, a co wypada: plan §5.1. Najważniejsze wymagania na dane, które z niej wynikają: wysokość w każdym punkcie (stąd siatka + kostka RSL), poziom „model vs literatura” w karcie fazy (sill-check w UI), linia „ocean −X m” (krzywa eustatyczna `curves/esl`), stany progów per klatka. **Uwaga:** makieta koloruje wodę ciągłym polem PSU — takiego pola nie ma w źródłach; aplikacja koloruje klasą per basen.
 
+## Issues — przegląd 2026-10-31
+
+Szczegóły i tabela statusów: backlog, sekcja „Stan issues”. W skrócie: 5 zamkniętych jako wykonane, 9 zamkniętych z follow-upami #62–#67, `I-01` zawężone, 8 zadań do usunięcia (`C-02`, `C-09`, `C-10`, `C-11`, `C-12`, `C-15`, `V-07`, `V-12`) — **nadal otwarte na GitHubie**, bo `gh issue delete` został zablokowany przez system uprawnień; trzeba je skasować ręcznie albo po dodaniu uprawnienia. Zależności `V-03`, `V-06`, `V-08`, `C-08` poprawione po usunięciach.
+
 ## Issues — mapa
 
 `0-01`…`0-08` → #7–#14, `C-01`…`C-15` → #15–#29 (`C-09` = #22, `C-08` = #23, `C-14` = #27, `C-13` = #28), `V-01` = #40, `V-02` = #41, `V-03` = #42, `V-06` = #45, `V-07` = #46, `V-08` = #47, `I-01` = #50, `V-11` = #51, `V-12` = #52, `I-02`…`I-04` → #53–#55, **`I-05` = #58**.
