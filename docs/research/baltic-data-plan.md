@@ -12,7 +12,7 @@ Dokument jest scaleniem dwóch planów: wcześniejszego (kontrakt danych, budże
 - Zakres czasowy: **wyłącznie postglacjał, 20 ka → dziś**. Fanerozoik, czwartorzęd i mikroskala czterech wybrzeży są poza zakresem.
 - **Wyłącznie zbiory, które nie wymagają zapytania o licencję** — licencja otwarta (CC BY, CC0, domena publiczna) zweryfikowana u źródła albo liczby z literatury z cytowaniem. Zbiory bez licencji lub z klauzulą ND (ICE-6G_C, GLAC-1D, ANU-ICE, Stroeven 2016) **nie są używane w żadnej postaci**, także do walidacji. Zapytania licencyjne nie są wysyłane.
 - Krok czasowy: **1000 lat** (21 klatek 20 → 0 ka) plus ~6 przekrojów zdarzeniowych.
-- Scena: **glob 3D z rzeźbą terenu i batymetrią**, jak w `kmd-labs/el-nino`, zbliżony na Europę, bez obrotu w poziomie (§5.1).
+- Scena: **glob 3D z reliefem**, wzięty z `kmd-labs/el-nino` (tylko glob i relief, reszta pominięta), zbliżony na Bałtyk; próba obrotu wraca sprężyście do Bałtyku (§5.1).
 - Dane runtime: **hybrydowo** — pipeline liczy maski, progi, metryki i walidację; aplikacja dostaje siatkę wysokości dziś + kostkę RSL (do rzeźby 3D, przekroju i sondy punktowej) oraz wektory i JSON-y per klatka (§5).
 - Paleogeografia: policzony paleo-DEM weryfikowany literaturą.
 - Warstwy: **lądolód**, **zasolenie i połączenie z oceanem**, **krzywe poziomu wody i wypiętrzania**. Archeologia i paleoklimat — poza zakresem.
@@ -212,8 +212,9 @@ src/assets/data/
 
 Na podstawie makiety (`claude.ai/artifact/4mtm5Y44DWh7ufwyXKAKi5`) i decyzji z 2026-10-31.
 
-- **Glob three.js** przeniesiony z `kmd-labs/el-nino` (`GlobeComponent`: sfera, tekstura lądu na płótnie equirectangular, `displacementMap`, cieniowanie rzeźby, `ThemeService` do kolorów). Rzeźba terenu i oceany zostają.
-- **Kamera zablokowana na Europie:** start nad ~20°E / 58°N, zoom tylko w zakresie od „cała Europa” do „okno Bałtyku” (`minDistance` / `maxDistance`), `enablePan = false`, **azymut ograniczony** (`minAzimuthAngle` / `maxAzimuthAngle`) — próba przeciągnięcia w bok daje lekkie przechylenie i sprężynowy powrót, nie obrót globu.
+- **Z `kmd-labs/el-nino` bierzemy wyłącznie glob i relief** (decyzja z 2026-10-31): renderer, scena i kamera three.js z `OrbitControls`, sfera z teksturą lądu na płótnie equirectangular (`world-atlas` land-50m przez `d3-geo`), `displacementMap` z ETOPO2v2c (`elevation.png`), cieniowanie rzeźby z Natural Earth SR_50M (`relief.bin.gz` / `relief-2k.bin.gz`), poświata, kolory z `ThemeService`. **Cała reszta El Niño jest pomijana:** pole SST i przekolorowanie tekstury, warstwa bieżącej pogody, regiony wpływu i ich modale, bokeh, autoobrót, serwisy ENSO, analytics.
+- **Kamera wycentrowana na Bałtyku:** start zbliżony na obszar zainteresowania (okno Bałtyku, ~20°E / 58°N), zoom tylko w zakresie od „okno Bałtyku” do „cała Europa” (`minDistance` / `maxDistance`), `enablePan = false`, bez autoobrotu. **Próba obrócenia globu nie obraca go:** przeciągnięcie daje lekkie przechylenie (`minAzimuthAngle` / `maxAzimuthAngle`, `minPolarAngle` / `maxPolarAngle`), a po puszczeniu kamera sprężyście wraca i **centruje się z powrotem na Bałtyku**.
+- **Prototypy danych oglądamy na globie.** Już pierwszy prototyp paleo-DEM-u (`C-03`) jest wizualizowany na tym globie, nie na osobnej mapie 2D.
 - **Paleo na globie:** w domenie RSL tekstura i `displacementMap` są generowane per klatka z `dem-europe` / `dem-baltic` − RSL(t), z maską wody i lodu z klatki; poza domeną — współczesna Ziemia, przygaszona.
 - **Z makiety zostaje:** dock z osią czasu (play, kroki, markery zdarzeń, pasma faz), karta fazy (nazwa, typ wody, PSU, `dataQuality`, `datum`, flaga „sporne”, poziom model vs literatura, odpływ, powierzchnia, objętość, ocean −X m), przekrój Umeå → Gdańsk, krzywe RSL (Umeå, Sztokholm, Gdańsk + kliknięty punkt + ocean), tooltip (współrzędne, typ wody, PSU, grubość lodu, wysokość wzgl. ówczesnego oceanu i dziś), progi z tooltipem stanu, przewyższenie 3D, słowniczek, źródła.
 - **Z makiety wypada:** widoki Fanerozoik / Czwartorzęd / Wybrzeża, warstwa „Zatopione lasy”, lista źródeł z ICE-6G_C, Stroevenem, LR04, PALEOMAP i PhanDA. „Brzeg −500 lat” → „Brzeg −1000 lat”.

@@ -244,7 +244,7 @@ EMODnet DTM 2024 tylko po potwierdzeniu licencji (`0-03`).
 
 **Epik:** C · **Zależy od:** `C-01` · **Blokuje:** `C-14` · **Labels:** `data-pipeline`, `regime-c`
 
-**GEBCO 2024 ma dla tych jezior tylko powierzchnię wody** (sprawdzone na danych z tury 1: Vänern płasko 44 m, Vättern 88 m, Onega ~23 m). Vänern i Vättern leżą na trasie Rzeki Svea i korytarza Billingen, a Ładoga była częścią basenu w kilku fazach — bez batymetrii fazy jeziorne nie dostaną odpływów.
+**GEBCO 2024 ma dla tych jezior tylko powierzchnię wody** (sprawdzone na danych z tury 1: Vänern płasko 44 m, Vättern 88 m, Onega ~23 m, Ładoga ~1 m). Onega (~35,5°E) leży **poza oknem Bałtyku** (9–33°E) — trafia tylko do siatki domeny RSL (`dem-europe`); okno trzeba poszerzyć, jeśli Onega ma brać udział w flood-fill. Vänern i Vättern leżą na trasie Rzeki Svea i korytarza Billingen, a Ładoga była częścią basenu w kilku fazach — bez batymetrii fazy jeziorne nie dostaną odpływów.
 
 Dotyczy tylko **faz jeziornych** (`C-14`) — paleo-DEM faz morskich (`C-03`) nie czeka na to zadanie.
 
@@ -270,13 +270,17 @@ H_paleo(x,y,t) = H_now(x,y) − RSL(x,y,t)        # Steffen & Kaufmann 2025, jed
 
 **Bez osobnego członu eustatycznego** — RSL zawiera już składnik eustatyczny i geoidalny. Plan wejściowy podawał `+ ΔGIA − ΔEustatic`, co liczy eustatykę drugi raz, na dziesiątki metrów.
 
-Kontrola punktowa na danych z tury 1 (model `sk1`): Umeå ~282 m przy 11,3 ka (najwyższa linia brzegowa ~286 m); Gdańsk −25 m przy 8,9 ka i −14 m przy 7,8 ka.
+Kontrola punktowa na danych z tury 1 (model `sk1`, **najbliższa komórka 1°**): Umeå ~282 m przy 11,3 ka (najwyższa linia brzegowa ~286 m); Gdańsk −25 m przy 8,9 ka i −14 m przy 7,8 ka. Interpolacja dwuliniowa w tych samych punktach daje 274 / −23,7 / −11,9 m — wybór metody przestrzennej ma znaczenie rzędu 10 m.
+
+Rozrzut 8 modeli Ziemi jest duży: maksimum RSL w Umeå od **195 m** (`j88`) do **274 m** (`sk1`, `sk3`). Wybór modelu wiodącego to decyzja merytoryczna, nie formalność.
 
 **Zakres**
 - Odczyt `RSL(time, lat, lon)` z `rsl_SK05_skan_<model>.nc` (1°, 19 nierównych kroków 21,4 ka → 0).
 - **21 klatek co 1000 lat** (20 → 0 ka) + ~6 przekrojów zdarzeniowych; interpolacja liniowa w czasie między krokami modelu.
 - Wybór wiodącego modelu Ziemi spośród 8 wariantów (uzasadnienie w `V-03`); pozostałe jako pas niepewności poziomu.
-- Resampling 1° → siatka robocza okna Bałtyku i ~0,1° domeny RSL.
+- Resampling 1° → siatka robocza okna Bałtyku i ~0,1° domeny RSL; **ta sama metoda interpolacji przestrzennej** w pipeline'ie i w aplikacji (warunek ≤ 1 m z `I-01`).
+- **Maskowanie lodem:** pod zasięgiem DATED-1 (`C-07`) paleo-DEM nie jest powierzchnią terenu (RSL rośnie pod lądolodem, np. Umeå 21 → 11 ka) — komórki pod lodem oznaczone, nie interpretowane jako ląd ani morze.
+- **Prototyp oglądany na globie `I-05`** (tylko glob i relief z El Niño), nie na osobnej mapie 2D.
 
 **DoD**
 - [ ] 21 klatek + przekroje zdarzeniowe z `datum: "contemporaneous-geoid"`
@@ -284,6 +288,8 @@ Kontrola punktowa na danych z tury 1 (model `sk1`): Umeå ~282 m przy 11,3 ka (n
 - [ ] `gia.source` i `gia.earthModel` w każdej klatce
 - [ ] Nazwa pliku i zmiennej zapisana w metodyce
 - [ ] Zero wystąpień osobnego członu eustatycznego w kodzie
+- [ ] Komórki pod lądolodem (DATED-1 `mc`) oznaczone w każdej klatce ≥ 10 ka
+- [ ] Metoda interpolacji przestrzennej zapisana w `manifest.json` i w metodyce
 
 **Plan:** §0.1, §1, §4.1
 
@@ -356,6 +362,8 @@ BIL **+25 m**, Ancylus **+10 m** — poprawne tylko względem geoidy współczes
 **DATED-1** (Hughes i in. 2016, CC BY 3.0) to **jedyna geometria lądolodu**: wariant `mc` jako zasięg, `min` / `max` jako pas niepewności przeniesiony **do danych**. Dane z tury 1: 25 → 10 ka **co 1 ka** (`TS<ka>_{min,mc,max}.shp`), więc klatki 20 → 10 ka trafiają dokładnie w przekroje źródłowe — `ice.interpolated: false`. Interpolowane są tylko przekroje zdarzeniowe (np. 11 750 / 11 650). DATED-1 obejmuje też lądolody brytyjsko-irlandzki i barencki, widoczne na globie.
 
 Stroeven 2016 nie jest używany (CC BY-NC-ND, `0-02`).
+
+Archiwum zawiera 58 shapefile'i (sprawdzone 2026-10-31). Do ich odczytu trzeba dodać `pyogrio` (lub `geopandas`) do `tools/data/requirements.in` i `requirements.txt` — dziś ich tam nie ma. DATED-1 kończy się na 10 ka, a resztki lądolodu w Skandynawii przetrwały do ~9,7 ka; klatka 9 ka z `ice: null` jest uproszczeniem, które trzeba opisać w metodyce.
 
 **Grubość lodu** (rzeźba 3D na globie, tooltip): **profil plastyczny** od krawędzi `mc`: `h(d) = √(2·τ₀·d / (ρ_i·g))`, τ₀ ≈ 100 kPa → ~3000 m przy ~400 km od czoła. `ice.thickness: "plastic-profile"`, `dataQuality: "modelled"`, opis w UI jako schemat. Nie wchodzi do paleo-DEM-u (RSL zawiera już obciążenie lodem).
 
@@ -699,23 +707,26 @@ Zakres językowy: `Lang = 'en' | 'pl'` (stan `i18n.types.ts`). `AGENTS.md` dopus
 
 **Plan:** §5, §9
 
-## `I-05` Globe scene ported from el-nino, locked to Europe
+## `I-05` Globe scene ported from el-nino, centred on the Baltic
 
 **Epik:** I · **Zależy od:** `0-01`, `0-06` · **Blokuje:** `I-02` · **Labels:** `app`
 
-Decyzja z 2026-10-31: scena to **glob jak w `kmd-labs/el-nino`** — rzeźba terenu i oceany zostają, ale widok jest zbliżony na Europę i nie da się go obracać w poziomie.
+Decyzja z 2026-10-31: scena to **glob z `kmd-labs/el-nino` — tylko glob i relief, cała reszta pominięta**. Widok jest zbliżony na obszar zainteresowania, a próba obrócenia globu kończy się powrotem kamery na Bałtyk.
 
 **Zakres**
-- Port `GlobeComponent` z El Niño: three.js, sfera z teksturą lądu malowaną na płótnie equirectangular (`d3-geo`), `displacementMap`, cieniowanie rzeźby, poświata, kolory z `ThemeService.getTokenColor()`, napisy przez `i18n.t()` i `ThemeService.getFontFamily()`.
-- **Kamera:** start nad ~20°E / 58°N; `enablePan = false`; zoom w zakresie „cała Europa” ↔ „okno Bałtyku”; **azymut i biegun ograniczone** (`minAzimuthAngle` / `maxAzimuthAngle`, `minPolarAngle` / `maxPolarAngle`) — przeciągnięcie w bok daje lekkie przechylenie ze sprężystym powrotem, nie obrót.
-- **Tło:** ETOPO2v2c (`displacementMap`), Natural Earth SR_50M (cieniowanie), `world-atlas` land-50m — domena publiczna, jak w El Niño; poza domeną RSL przygaszone.
+- **Bierzemy z El Niño** (`src/app/components/globe/globe.component.ts`): renderer, scena, kamera i `OrbitControls`; sfera z teksturą lądu malowaną na płótnie equirectangular (`d3-geo`, `topojson-client`); `displacementMap` (`loadElevation`); cieniowanie reliefu (`reliefLayer`); poświata; kolory z `ThemeService.getTokenColor()`, napisy przez `i18n.t()` i `ThemeService.getFontFamily()`.
+- **Pomijamy:** pole SST i `recolorTexture`, `CurrentWeatherLayer`, regiony wpływu i `ImpactModalComponent`, bokeh, autoobrót, `EnsoStateService` / `EnsoMathService` (poza potrzebną matematyką sfery), `AnalyticsService`, tooltipy ENSO.
+- **Kamera:** start zbliżony na okno Bałtyku (~20°E / 58°N); `enablePan = false`; bez autoobrotu; zoom w zakresie „okno Bałtyku” ↔ „cała Europa”; **azymut i biegun ograniczone** (`minAzimuthAngle` / `maxAzimuthAngle`, `minPolarAngle` / `maxPolarAngle`) — przeciągnięcie daje lekkie przechylenie, a po puszczeniu kamera sprężyście wraca i **centruje się na Bałtyku**. Obrót globu poza Europę jest niemożliwy.
+- **Tło:** ETOPO2v2c (`displacementMap`, `scripts/fetch-elevation.mjs`), Natural Earth SR_50M (cieniowanie, `scripts/fetch-relief.mjs`), `world-atlas` land-50m — domena publiczna, jak w El Niño; poza domeną RSL przygaszone.
+- **Najpierw prototyp:** glob z reliefem na danych „dziś” służy od razu do oglądania prototypu `C-03` (paleo-DEM `H_now − RSL(t)` jako podmieniana tekstura / przemieszczenie w oknie Bałtyku).
 - **Paleo:** w domenie RSL tekstura i przemieszczenie generowane per klatka z `grid/dem-*` − RSL(t), z maską wody, lodu i zasoleniem z klatki; przewyższenie regulowane suwakiem.
 - Tryb 2D z makiety — do decyzji; domyślnie tylko glob.
 - Dropdown w prawym górnym rogu (`AGENTS.md` §2) — **do rozstrzygnięcia**; propozycja: Paleogeografia / Zasolenie / Lądolód.
 
 **DoD**
 - [ ] Glob działa na danych dziś (klatka 0) zanim powstaną klatki paleo
-- [ ] Nie da się obrócić globu poza Europę; próba daje przechylenie i powrót
+- [ ] Start zbliżony na Bałtyk; nie da się obrócić globu poza Europę — próba daje przechylenie, a po puszczeniu kamera wraca i centruje się na Bałtyku
+- [ ] Z El Niño przeniesione tylko glob i relief — żadnych warstw SST, pogody, wpływów ani bokehu
 - [ ] Zmiana klatki podmienia teksturę i przemieszczenie bez przeładowania sceny
 - [ ] Desktop i mobile (`BreakpointService`) — tekstury 2k na mobile jak w El Niño
 

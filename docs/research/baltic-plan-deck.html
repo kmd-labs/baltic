@@ -341,7 +341,7 @@ td b{font-weight:620; color:var(--ink)}
             <li><span>Warstwy: <b>lądolód</b>, <b>zasolenie i połączenie z oceanem</b>, <b>krzywe poziomu wody i wypiętrzania</b>.</span></li>
             <li><span>Krok <b>1000 lat</b> (21 klatek) plus ~6 przekrojów zdarzeniowych.</span></li>
             <li><span><b>Tylko zbiory bez zapytań licencyjnych</b> — CC BY, domena publiczna, liczby z literatury.</span></li>
-            <li><span>Scena: <b>glob jak w El Niño</b>, zbliżony na Europę, bez obrotu w poziomie.</span></li>
+            <li><span>Scena: <b>glob z El Niño — tylko glob i relief</b>, zbliżony na Bałtyk; próba obrotu wraca do Bałtyku.</span></li>
           </ul>
         </div>
         <div class="card">
@@ -1314,18 +1314,19 @@ td b{font-weight:620; color:var(--ink)}
 
         <details class="task">
           <summary><code class="t-id">I-05</code>
-            <span class="t-title">Globe scene ported from el-nino, locked to Europe
-              <span class="pl">Glob z rzeźbą i oceanami, zbliżony na Europę</span></span>
+            <span class="t-title">Globe scene ported from el-nino, centred on the Baltic
+              <span class="pl">Tylko glob i relief z El Niño, wycentrowany na Bałtyku</span></span>
             <span class="t-dep">← 0-01 · 0-06</span></summary>
           <div class="t-body">
-            <p>Port <code>GlobeComponent</code> z <code>kmd-labs/el-nino</code>: three.js, tekstura lądu na płótnie,
+            <p>Z <code>kmd-labs/el-nino</code> bierzemy <b>tylko glob i relief</b> (SST, pogoda, wpływy, bokeh i autoobrót pominięte): three.js, tekstura lądu na płótnie,
               <code>displacementMap</code> z ETOPO2, cieniowanie z Natural Earth, kolory z <code>ThemeService</code>.
-              Kamera nad ~20°E / 58°N, <code>enablePan = false</code>, zoom od Europy do okna Bałtyku,
-              <b>azymut ograniczony</b> — przeciągnięcie w bok daje przechylenie i sprężysty powrót.
+              Start zbliżony na Bałtyk (~20°E / 58°N), <code>enablePan = false</code>, zoom od okna Bałtyku do Europy,
+              <b>azymut ograniczony</b> — próba obrotu daje przechylenie, a po puszczeniu kamera wraca i centruje się na Bałtyku.
+              Na tym globie oglądamy już prototyp <code>C-03</code>.
               W domenie RSL tekstura i przemieszczenie liczone per klatka, poza nią współczesna Ziemia przygaszona.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span>Glob działa na klatce „dziś”, zanim powstaną klatki paleo</span></li>
-              <li><span>Nie da się obrócić globu poza Europę</span></li>
+              <li><span>Próba obrotu wraca i centruje kamerę na Bałtyku</span></li>
               <li><span>Zmiana klatki podmienia teksturę bez przeładowania sceny</span></li></ul>
             <p class="t-src">plan §5.1 · labels: app</p>
           </div>
