@@ -20,7 +20,7 @@ Backlog: **36 zadań w 4 epikach** (0, C, V, I), kamienie M1–M6. Wszystkie opi
 | `docs/postglacial-scope` | PR #57 **scalony** (na `8f9c1a0`) | zawężenie zakresu; ostatni commit `a256a8a` dopchnięty po scaleniu i nie trafił do `main` |
 | `docs/housekeeping-globe` | PR do `main` | `a256a8a` (licencje, 1 ka, glob) + wymagania globu + poprawki z weryfikacji danych |
 
-PR #2 (submoduł v1.14.1) zamknięty jako zbędny — `main` przypina już `137744d` = v1.14.1.
+PR #2 (submoduł v1.14.1) do zamknięcia jako zbędny — `main` przypina już `137744d` = v1.14.1.
 
 ## Makieta
 
