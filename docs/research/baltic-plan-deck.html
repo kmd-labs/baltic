@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bałtyk w 49 zadaniach</title>
-<meta name="description" content="Plan pracy warstwy danych Bałtyku: 7 epików, 49 zadań, roadmapa i graf zależności.">
+<title>Bałtyk w 35 zadaniach</title>
+<meta name="description" content="Plan pracy warstwy danych Bałtyku, postglacjał 20 ka → dziś: 4 epiki, 35 zadań, roadmapa i graf zależności.">
 <!--
-  Bałtyk w 49 zadaniach — widok backlogu warstwy danych.
+  Bałtyk w 35 zadaniach — widok backlogu warstwy danych.
   Rozpisanie docs/research/baltic-data-plan.md; pełna treść zadań
   w docs/research/baltic-issues-backlog.md.
 
@@ -307,16 +307,16 @@ td b{font-weight:620; color:var(--ink)}
   <section class="slide" id="s1" aria-label="Tytuł">
     <div class="sheet title-wrap">
       <div class="eyebrow"><span class="bar"></span>Plan pracy · warstwa danych · październik 2026</div>
-      <h1 class="h-title">Bałtyk<br>w <span class="accent">49 zadaniach</span></h1>
+      <h1 class="h-title">Bałtyk<br>w <span class="accent">35 zadaniach</span></h1>
       <p class="lead">Rozpisanie <code>baltic-data-plan.md</code> na backlog wykonawczy: skąd wziąć dane
-        o paleogeograficznej ewolucji Morza Bałtyckiego, jak je przetworzyć i w jakim kontrakcie
-        wystawić aplikacji.</p>
+        o postglacjalnej ewolucji Morza Bałtyckiego (20 ka → dziś), jak je przetworzyć i w jakim
+        kontrakcie wystawić aplikacji.</p>
       <ul class="title-meta">
-        <li class="tm"><span class="tm-n">7</span><span class="tm-l">epików</span></li>
-        <li class="tm"><span class="tm-n">49</span><span class="tm-l">zadań</span></li>
-        <li class="tm"><span class="tm-n">4</span><span class="tm-l">reżimy danych</span></li>
-        <li class="tm"><span class="tm-n">541 Ma</span><span class="tm-l">zakres czasowy</span></li>
-        <li class="tm"><span class="tm-n">~195</span><span class="tm-l">klatek</span></li>
+        <li class="tm"><span class="tm-n">4</span><span class="tm-l">epiki</span></li>
+        <li class="tm"><span class="tm-n">35</span><span class="tm-l">zadań</span></li>
+        <li class="tm"><span class="tm-n">7</span><span class="tm-l">faz</span></li>
+        <li class="tm"><span class="tm-n">20 ka</span><span class="tm-l">zakres czasowy</span></li>
+        <li class="tm"><span class="tm-n">~47</span><span class="tm-l">klatek</span></li>
         <li class="tm"><span class="tm-n">25 MB</span><span class="tm-l">budżet assetów</span></li>
       </ul>
       <p class="scroll-hint"><kbd>←</kbd><kbd>→</kbd> nawigacja · chipy epików i skok do slajdu w dockach</p>
@@ -327,35 +327,35 @@ td b{font-weight:620; color:var(--ink)}
   <section class="slide" id="s2" aria-label="Kontekst i zakres">
     <div class="sheet">
       <div class="eyebrow"><span class="bar"></span>01 · Punkt startowy</div>
-      <h2 class="h-sec">Zero logiki domenowej, zero danych</h2>
-      <p class="lead">W repozytorium stoi świeży scaffold KMD (Angular 21, <code>f3c4f6d</code>):
-        <code>AppComponent</code>, i18n EN/PL, submoduł design-systemu. UI jest przesądzone
-        przez <code>AGENTS.md</code> i świadomie poza zakresem — plan odpowiada na jedno pytanie:
-        skąd dane i w jakim kontrakcie.</p>
+      <h2 class="h-sec">Scaffold, pierwsza tura danych i węższy zakres</h2>
+      <p class="lead">W repozytorium stoi scaffold KMD (Angular 21): <code>AppComponent</code>, i18n EN/PL,
+        submoduł design-systemu, a od <code>0-05</code> także <code>fetch.py</code> z pobraną turą 1
+        (GEBCO 2024, RSL Steffena i Kaufmanna, DATED-1). UI jest przesądzone przez <code>AGENTS.md</code>
+        i świadomie poza zakresem — plan odpowiada na jedno pytanie: skąd dane i w jakim kontrakcie.</p>
       <div class="grid-2">
         <div class="card">
           <h3 class="card-t">Ustalenia zakresowe</h3>
           <ul class="flat">
-            <li><span><b>Pełny fanerozoik</b>, trzy równorzędne reżimy czasowe — nie jedna dłuższa oś.</span></li>
+            <li><span><b>Wyłącznie postglacjał, 20 ka → dziś</b> — jedna oś czasu, jedna siatka dla całego Bałtyku.</span></li>
             <li><span>Paleogeografia <b>hybrydowo</b>: policzony paleo-DEM weryfikowany literaturą.</span></li>
             <li><span>Warstwy: <b>lądolód</b>, <b>zasolenie i połączenie z oceanem</b>, <b>krzywe poziomu wody i wypiętrzania</b>.</span></li>
-            <li><span>Rozdzielczość postglacjalna <b>500 lat</b>, jednolicie dla 20–0 ka.</span></li>
-            <li><span>Mikroskala <b>symetrycznie dla czterech wybrzeży</b> — PL, SE, EE, DK.</span></li>
+            <li><span>Rozdzielczość <b>500 lat</b>, jednolicie dla 20–0 ka, plus ~6 przekrojów zdarzeniowych.</span></li>
           </ul>
         </div>
         <div class="card">
           <h3 class="card-t">Co zostało poza zakresem</h3>
           <ul class="flat">
-            <li><span>Archeologia i paleoklimat jako warstwa narracyjna — <b>wyjątek:</b> zatopione lasy, bo są danymi walidacyjnymi.</span></li>
+            <li><span><b>Fanerozoik</b> (541–2,6 Ma) i <b>czwartorzęd</b> (2,6 Ma–20 ka) — usunięte 2026-10-31.</span></li>
+            <li><span><b>Mikroskala czterech wybrzeży</b> na krajowym LiDAR-ze (PL, SE, EE, DK) — usunięta razem z harmonizacją datum.</span></li>
+            <li><span>Archeologia i paleoklimat jako warstwa narracyjna.</span></li>
             <li><span>Rastry paleo-DEM jako artefakt runtime'owy — zastąpione TopoJSON-em.</span></li>
-            <li><span>Klatki paleogeograficzne dla czwartorzędu — <b>nie istnieją</b> w tej rozdzielczości.</span></li>
             <li><span>Dark mode, modale ustawień, onboarding — zakazane przez <code>AGENTS.md</code>.</span></li>
           </ul>
         </div>
       </div>
-      <p class="callout">To <b>największy z rozważanych zakresów</b>: cztery niezależne pipeline'y i cztery
-        krajowe zbiory wysokościowe do zharmonizowania. Kolejność prac jest dobrana tak, by działająca
-        aplikacja powstała <b>przed</b> ukończeniem całości.</p>
+      <p class="callout"><b>Zakres zawężony z 49 do 35 zadań:</b> jeden pipeline zamiast czterech, zero krajowych
+        układów wysokościowych do zharmonizowania. Kolejność prac jest dobrana tak, by działająca
+        aplikacja (fazy morskie) powstała <b>przed</b> fazami jeziornymi.</p>
     </div>
   </section>
 
@@ -365,7 +365,7 @@ td b{font-weight:620; color:var(--ink)}
       <div class="eyebrow"><span class="bar"></span>02 · Poprawki blokujące · §0</div>
       <h2 class="h-sec">Trzy rzeczy do naprawienia przed pierwszą linią ETL</h2>
       <p class="lead">Plan jest scaleniem dwóch wcześniejszych. Z drugiego usunięty jest błąd,
-        który przeszedłby niezauważony aż do walidacji — i wtedy kosztowałby cały reżim C.</p>
+        który przeszedłby niezauważony aż do walidacji — i wtedy kosztowałby całą rekonstrukcję.</p>
 
       <div class="blk">
         <div class="blk-h"><span class="blk-n">§0.1</span><h3 class="blk-t">Formuła paleo-DEM podwójnie liczyła eustatykę</h3></div>
@@ -375,9 +375,10 @@ td b{font-weight:620; color:var(--ink)}
           <b>względem współczesnej sobie powierzchni morza</b>, czyli już zawiera składnik eustatyczny
           i geoidalny. Odjęcie <code>ΔEustatic(t)</code> liczy ten sam sygnał drugi raz, <b>na dziesiątki
           metrów</b>. Znak przy <code>ΔGIA</code> był dodatkowo dwuznaczny.</p>
-        <div class="formula good">H_paleo(x,y,t) = H_now(x,y) + [Topo(t) − Topo(0)]</div>
-        <p class="blk-b">Osobny człon RSL jest uprawniony <b>tylko</b> przy czystym polu odkształcenia
-          sprężystego bez członu oceanicznego. Metodyka musi wskazywać <b>plik i nazwę zmiennej</b>, nie pojęcie.</p>
+        <div class="formula good">H_paleo(x,y,t) = H_now(x,y) − RSL(x,y,t)            ← Steffen &amp; Kaufmann 2025, start</div>
+        <div class="formula good">H_paleo(x,y,t) = H_now(x,y) + [Topo(t) − Topo(0)]    ← ICE-6G_C / GLAC-1D, po zgodzie</div>
+        <p class="blk-b">W obu wariantach <b>nie ma osobnego członu eustatycznego</b> — RSL i <code>Topo</code>
+          są już względem współczesnego sobie morza. Metodyka musi wskazywać <b>plik i nazwę zmiennej</b>, nie pojęcie.</p>
       </div>
 
       <div class="grid-2">
@@ -398,80 +399,49 @@ td b{font-weight:620; color:var(--ink)}
             zamkniętym obniżeniu terenu. Zbiornik musi być hydrologicznie połączony z progiem odpływu —
             analiza spójnych składowych z zasiewem w cieśninie aktywnej dla danego <em>t</em>.</p>
           <div class="formula">water_mask(t) = flood_fill(dem, level, seed=outlet(t))</div>
-          <p class="blk-b">Przy ~47 przekrojach × 4 regiony mikroskalowe to krok <b>obowiązkowy</b>,
-            nie optymalizacja.</p>
+          <p class="blk-b">Przy ~47 przekrojach to krok <b>obowiązkowy</b>, nie optymalizacja.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 4 -->
-  <section class="slide" id="s4" aria-label="Cztery reżimy danych">
+  <!-- 4 · źródła -->
+  <section class="slide" id="s4" aria-label="Źródła i licencje">
     <div class="sheet">
-      <div class="eyebrow"><span class="bar"></span>03 · Reżimy · §1</div>
-      <h2 class="h-sec">Fanerozoik nie jest dłuższą osią czasu</h2>
-      <p class="lead">To inna klasa danych — jeden pipeline ich nie obsłuży. Oś logarytmiczna pokazuje,
-        dlaczego: reżim C zajmuje ostatnie 0,004 % zakresu.</p>
-
-      <figure class="figure">
-        <div class="fig-scroll">
-          <svg class="fig-svg" viewBox="0 0 1000 306" role="img"
-            aria-label="Logarytmiczna oś czasu od 541 mln lat BP do dziś z czterema reżimami danych">
-            <!-- gridlines + ticks -->
-            <g font-family="JetBrains Mono, monospace" font-size="10" fill="#7b8798">
-              <line x1="60" y1="46" x2="60" y2="258" stroke="#d8e0ea" stroke-width="1"/>
-              <line x1="158" y1="46" x2="158" y2="258" stroke="#e8eef4" stroke-width="1"/>
-              <line x1="292" y1="46" x2="292" y2="258" stroke="#e8eef4" stroke-width="1"/>
-              <line x1="425" y1="46" x2="425" y2="258" stroke="#e8eef4" stroke-width="1"/>
-              <line x1="559" y1="46" x2="559" y2="258" stroke="#e8eef4" stroke-width="1"/>
-              <line x1="693" y1="46" x2="693" y2="258" stroke="#e8eef4" stroke-width="1"/>
-              <line x1="826" y1="46" x2="826" y2="258" stroke="#e8eef4" stroke-width="1"/>
-              <line x1="960" y1="46" x2="960" y2="258" stroke="#d8e0ea" stroke-width="1"/>
-              <text x="60" y="276" text-anchor="start">541 Ma</text>
-              <text x="158" y="276" text-anchor="middle">100 Ma</text>
-              <text x="292" y="276" text-anchor="middle">10 Ma</text>
-              <text x="425" y="276" text-anchor="middle">1 Ma</text>
-              <text x="559" y="276" text-anchor="middle">100 ka</text>
-              <text x="693" y="276" text-anchor="middle">10 ka</text>
-              <text x="826" y="276" text-anchor="middle">1 ka</text>
-              <text x="960" y="276" text-anchor="end">dziś</text>
-              <text x="60" y="294" text-anchor="start" font-size="9" fill="#a8b2c0">skala logarytmiczna · cal yr BP</text>
-            </g>
-            <!-- A -->
-            <rect x="60" y="56" width="310" height="28" rx="5" fill="#c3d6e3"/>
-            <text x="72" y="74" font-family="Inter, sans-serif" font-size="12" font-weight="650" fill="#11161d">A · Fanerozoik</text>
-            <text x="382" y="74" font-family="JetBrains Mono, monospace" font-size="10" fill="#4a5563">krok 5 Ma · ~108 klatek · Bałtyku nie ma</text>
-            <!-- B -->
-            <rect x="370" y="98" width="283" height="28" rx="5" fill="#f2f5f9" stroke="#b3261e"
-              stroke-width="1" stroke-dasharray="4 3"/>
-            <text x="382" y="116" font-family="Inter, sans-serif" font-size="12" font-weight="650" fill="#11161d">B · Czwartorzęd</text>
-            <text x="665" y="116" font-family="JetBrains Mono, monospace" font-size="10" fill="#b3261e">luka danych · 8–12 kart · bez klatek</text>
-            <!-- C -->
-            <rect x="653" y="140" width="307" height="28" rx="5" fill="#1f5f8b"/>
-            <text x="665" y="158" font-family="Inter, sans-serif" font-size="12" font-weight="650" fill="#ffffff">C · Postglacjał</text>
-            <text x="665" y="186" font-family="JetBrains Mono, monospace" font-size="10" fill="#1f5f8b">krok 500 lat · 41 + 6 klatek · rdzeń produktu</text>
-            <!-- D -->
-            <rect x="682" y="200" width="278" height="28" rx="5" fill="#4e87a8"/>
-            <text x="694" y="218" font-family="Inter, sans-serif" font-size="12" font-weight="650" fill="#ffffff">D · Mikroskala</text>
-            <text x="694" y="246" font-family="JetBrains Mono, monospace" font-size="10" fill="#4e87a8">fazowo · ~10 × 4 regiony · krajowy LiDAR</text>
-          </svg>
-        </div>
-        <figcaption class="fig-cap">Reżim B jest celowo narysowany jako kontur, nie wypełnienie —
-          w tym przedziale nie ma rekonstrukcji GIS, więc nie powstaną klatki, tylko karty z flagą
-          <code>dataQuality: "qualitative"</code>. Udawanie precyzji, której źródła nie mają,
-          byłoby tu najgorszym możliwym wyborem.</figcaption>
-      </figure>
-
+      <div class="eyebrow"><span class="bar"></span>03 · Źródła · §1, §3</div>
+      <h2 class="h-sec">Start bez czekania na licencje</h2>
+      <p class="lead">Żaden model GIA z paleotopografią nie ma licencji — tylko prośbę o cytowanie.
+        Pierwsza wizualizacja powstaje więc w całości ze zbiorów o czystej licencji, a lepsze modele
+        wchodzą później jako <b>podmiana źródła bez zmiany kontraktu</b>.</p>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th>Warstwa</th><th>Start — pobrane, licencja ✅</th><th>Ulepszenie po zgodzie autorów</th></tr></thead>
+          <tbody>
+            <tr><td class="m">Paleo-DEM / GIA</td>
+              <td><b>Steffen &amp; Kaufmann 2025</b> — pola RSL 1°, 21,4 ka → 0, 8 modeli Ziemi, CC BY 4.0</td>
+              <td>ICE-6G_C (siatka 10′, co 500 lat) → GLAC-1D (co 100 lat) — oba bez licencji ❓</td></tr>
+            <tr><td class="m">Lądolód</td>
+              <td><b>DATED-1</b> — co 1000 lat, warianty min. / mc / maks., CC BY 3.0</td>
+              <td>Stroeven 2016 — CC BY-NC-ND ⛔, do czasu zgody tylko wewnętrzna kontrola</td></tr>
+            <tr><td class="m">Batymetria</td>
+              <td><b>GEBCO 2024</b> — 15″, domena publiczna z atrybucją</td>
+              <td>EMODnet DTM 2024 (licencja ❓), batymetrie wielkich jezior (źródła nieustalone)</td></tr>
+            <tr><td class="m">Kontrola</td>
+              <td>Rosentau 2021 (1099 wskaźników RSL) · ESD 2025 (tylko 11,7–0 ka)</td>
+              <td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
       <div class="grid-3">
-        <div class="card"><h3 class="card-t">Uczciwość w A</h3>
-          <p class="card-b">Pokazujemy region, nie morze. Nazwa „Bałtyk” przed ~1 Ma jest anachronizmem —
-            to opowieść o kratonie Baltiki i basenie bałtyckim.</p></div>
-        <div class="card"><h3 class="card-t">Decyzja o kroku w C</h3>
+        <div class="card"><h3 class="card-t">Decyzja o kroku</h3>
           <p class="card-b">Odrzucono 1000 lat dla 8–0 ka: transgresja littorynowa, mierzeje i jeziora
-            przybrzeżne mieszczą się właśnie tam. <b>Jednolite 500 lat.</b></p></div>
-        <div class="card"><h3 class="card-t">Granica D</h3>
-          <p class="card-b">GIA ma siatkę 1°×1°, LiDAR ma 1 m. Downscaling byłby pozorną precyzją —
-            D to osobne wstawki, nie zagęszczenie C.</p></div>
+            przybrzeżne mieszczą się właśnie tam. <b>Jednolite 500 lat</b>, 41 klatek + ~6 zdarzeniowych.</p></div>
+        <div class="card"><h3 class="card-t">Klatki gęstsze niż model</h3>
+          <p class="card-b">RSL ma 19 <b>nierównych</b> kroków (21,4; 20,2; … 0,9; 0 ka), więc niemal każda
+            klatka 500-letnia jest interpolowana w czasie i nosi <code>dataQuality: "interpolated"</code>.</p></div>
+        <div class="card"><h3 class="card-t">Kontrola na danych z tury 1</h3>
+          <p class="card-b">Model <code>sk1</code>: Umeå ~282 m przy 11,3 ka (najwyższa linia brzegowa ~286 m);
+            Gdańsk −25 m przy 8,9 ka i −14 m przy 7,8 ka.</p></div>
       </div>
     </div>
   </section>
@@ -479,7 +449,7 @@ td b{font-weight:620; color:var(--ink)}
   <!-- 5 -->
   <section class="slide" id="s5" aria-label="Siedem faz postglacjalnych">
     <div class="sheet">
-      <div class="eyebrow"><span class="bar"></span>04 · Chronologia reżimu C · §2</div>
+      <div class="eyebrow"><span class="bar"></span>04 · Chronologia · §2</div>
       <h2 class="h-sec">Siedem faz i tylko tyle poziomów, ile podaje literatura</h2>
 
       <figure class="figure">
@@ -563,7 +533,7 @@ td b{font-weight:620; color:var(--ink)}
         </ul>
         <figcaption class="fig-cap">Linia ciągła biegnie tylko tam, gdzie plan podaje liczbę. Odcinki
           przerywane to wartości z modelu GIA — <b>nie</b> zmyślona krzywa. Trzy niebieskie punkty
-          to kontrolki testu <code>V-04</code> dla polskiego brzegu.</figcaption>
+          to wartości z literatury (Uścinowicz) dla polskiego brzegu.</figcaption>
       </figure>
 
       <div class="grid-2">
@@ -592,7 +562,7 @@ td b{font-weight:620; color:var(--ink)}
   <section class="slide" id="s6" aria-label="Przegląd epików">
     <div class="sheet">
       <div class="eyebrow"><span class="bar"></span>05 · Podział pracy</div>
-      <h2 class="h-sec">Siedem epików, 49 zadań</h2>
+      <h2 class="h-sec">Cztery epiki, 35 zadań</h2>
       <p class="lead">Kliknij epik, żeby przejść do jego zadań. Każde zadanie rozwija się
         na slajdzie epiku — zakres i Definition of Done.</p>
       <div class="epics" id="epicNav">
@@ -606,23 +576,8 @@ td b{font-weight:620; color:var(--ink)}
           <span class="epic-n">Postglacjał 20–0 ka</span>
           <span class="epic-d">Rdzeń produktu. Fazy morskie (M3) przed jeziornymi (M4).</span>
         </button>
-        <button class="epic-card" data-go="s10">
-          <span class="epic-top"><span class="epic-k">A</span><span class="epic-c">3</span></span>
-          <span class="epic-n">Fanerozoik 541–2,6 Ma</span>
-          <span class="epic-d">W pełni niezależny pipeline. Można prowadzić równolegle.</span>
-        </button>
-        <button class="epic-card" data-go="s11">
-          <span class="epic-top"><span class="epic-k">B</span><span class="epic-c">1</span></span>
-          <span class="epic-n">Czwartorzęd</span>
-          <span class="epic-d">Treść redakcyjna. Jawna luka danych, zero klatek.</span>
-        </button>
-        <button class="epic-card" data-go="s12">
-          <span class="epic-top"><span class="epic-k">D</span><span class="epic-c">6</span></span>
-          <span class="epic-n">Mikroskala 4 wybrzeży</span>
-          <span class="epic-d">Cztery zamknięte porcje. Przerwanie zostawia spójny produkt.</span>
-        </button>
         <button class="epic-card" data-go="s13" data-tone="val">
-          <span class="epic-top"><span class="epic-k">V</span><span class="epic-c">12</span></span>
+          <span class="epic-top"><span class="epic-k">V</span><span class="epic-c">8</span></span>
           <span class="epic-n">Walidacja</span>
           <span class="epic-d">Jedna bramka ilościowa. Resztę da się liczyć wcześnie.</span>
         </button>
@@ -668,17 +623,17 @@ td b{font-weight:620; color:var(--ink)}
               <span class="pl">Licencja modelu GIA i wybór fallbacku</span></span>
             <span class="t-dep block">blokuje C-03</span></summary>
           <div class="t-body">
-            <p>Warunki redystrybucji ICE-6G_C (VM5a) są nieznane. Pochodne tego modelu <b>nie mogą</b>
-              wejść do repo przed potwierdzeniem — a cały reżim C stoi na jego polu <code>Topo</code>.
-              Fallback w kolejności: <b>GLAC-1D</b> → <b>ANU/Lambeck</b> → pochodne <b>SELEN</b>
-              z ESD 16, 585 (2025, CC BY). <b>GLAC-1D i ANU też nie mają jawnej licencji</b> — jedyny
-              fallback o znanej licencji to SELEN. Przy okazji: źródło pola współczesnej prędkości
-              wypiętrzania (dla <code>V-08</code>).</p>
+            <p><b>Żaden model GIA z paleotopografią nie ma licencji</b> — ICE-6G_C, GLAC-1D i ANU-ICE mają
+              tylko prośbę o cytowanie. Jedyna ścieżka z czystą licencją na 20–0 ka to pola RSL
+              <b>Steffena i Kaufmanna 2025</b> (CC BY 4.0), więc praca startuje na nich. Kolejność:
+              ICE-6G_C → GLAC-1D → Steffen &amp; Kaufmann → ESD 2025 (tylko 11,7–0 ka, kontrola).
+              Zapytania do Peltiera i Tarasova czekają na wysłanie. Przy okazji: źródło pola
+              współczesnej prędkości wypiętrzania (dla <code>V-08</code>).</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span>Wpis w <code>SOURCES.md</code>: model, licencja, data ustalenia, osoba</span></li>
-              <li><span>Wybrany model wpisany jako wartość <code>ice.source</code> w kontrakcie</span></li>
-              <li><span>Żadna pochodna GIA nie jest zacommitowana przed tym wpisem</span></li></ul>
-            <p class="t-src">plan §3.3, §8 · labels: blocker, licensing</p>
+              <li><span>Wybrany model wpisany jako wartość <code>gia.source</code> w kontrakcie</span></li>
+              <li><span>Żadna pochodna modelu bez licencji nie jest zacommitowana</span></li></ul>
+            <p class="t-src">plan §0.1, §3.2, §8 · labels: blocker, licensing</p>
           </div>
         </details>
 
@@ -689,9 +644,9 @@ td b{font-weight:620; color:var(--ink)}
             <span class="t-dep">blokuje I-04</span></summary>
           <div class="t-body">
             <p>Prawie każdy zbiór w §3 to CC BY, co nakłada wymóg atrybucji — a atrybucja jest warunkiem
-              legalności publikacji. Dwie pozycje mają status nierozstrzygnięty: <b>BSBD/BSHC</b>
-              to CC BY 3.0 <b>z ograniczeniami</b>, <b>PhanDA</b> jest oznaczony „do weryfikacji”.
-              Cztery krajowe DEM-y reżimu D mają osobne reżimy licencyjne.</p>
+              legalności publikacji. Nierozstrzygnięte: <b>EMODnet DTM 2024</b> (DataCite nie podaje licencji),
+              <b>BSBD/BSHC</b> (CC BY 3.0 <b>z ograniczeniami</b>), siatki <b>NKG2016LU</b>,
+              batymetrie jezior, SGU, HELCOM.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span><code>SOURCES.md</code> pokrywa 100 % zbiorów z §3</span></li>
               <li><span>Zero pozycji ze statusem „do weryfikacji”</span></li>
@@ -706,10 +661,10 @@ td b{font-weight:620; color:var(--ink)}
               <span class="pl">Szkielet pipeline'u danych</span></span>
             <span class="t-dep">← 0-01</span></summary>
           <div class="t-body">
-            <p>Struktura z §6: <code>fetch · phanerozoic · postglacial · regional · curves · calibrate ·
-              validate · emit</code>. <code>data/raw/</code> i <code>data/interim/</code> w
-              <code>.gitignore</code>, assety wyjściowe w gicie. Stack: xarray + rioxarray, rasterio,
-              geopandas, shapely, pyogrio, gplately, scipy.ndimage, pyproj; mapshaper do uproszczenia.</p>
+            <p>Struktura z §6: <code>fetch · postglacial · curves · calibrate · validate · emit</code>.
+              <code>data/raw/</code> i <code>data/interim/</code> w <code>.gitignore</code>, assety
+              wyjściowe w gicie. Stack: xarray + netCDF4, rasterio, geopandas, shapely, pyogrio,
+              scipy.ndimage, pyproj; mapshaper do uproszczenia.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span><code>npm run data:build</code> uruchamia pipeline end-to-end</span></li>
               <li><span>Pipeline <b>idempotentny</b> — powtórny run nie zmienia wyjścia</span></li>
@@ -726,7 +681,8 @@ td b{font-weight:620; color:var(--ink)}
             <span class="t-dep">← 0-04</span></summary>
           <div class="t-body">
             <p>Pobieranie po DOI/URL dla każdego zbioru z §3, weryfikacja sum kontrolnych <b>przed</b>
-              użyciem pliku, cache w <code>data/raw/</code>. Sumy trafiają do <code>manifest.json</code>.</p>
+              użyciem pliku, cache w <code>data/raw/</code>. Sumy trafiają do <code>manifest.json</code>.
+              <b>Tura 1 gotowa:</b> GEBCO 2024, RSL Steffena i Kaufmanna, DATED-1 (~905 MB, SHA-256 przypięte).</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span>Każdy zbiór z §3 pobieralny jednym wywołaniem</span></li>
               <li><span>Niezgodna suma kontrolna przerywa build z czytelnym komunikatem</span></li>
@@ -748,7 +704,7 @@ td b{font-weight:620; color:var(--ink)}
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span>JSON Schema dla klatki, manifestu, <code>timeline</code>, <code>sills</code>, <code>taxa</code>, <code>curves/*</code></span></li>
               <li><span>Schemat odrzuca fixture klatki bez <code>datum</code></span></li>
-              <li><span>Enum <code>datum</code> per reżim: <code>contemporaneous-geoid</code> (C), <code>EVRF2007</code> (D), paleo-poziom morza (A)</span></li>
+              <li><span><code>datum: "contemporaneous-geoid"</code> w każdej klatce; <code>gia.source</code> + <code>gia.earthModel</code> obowiązkowe</span></li>
               <li><span>Enum <code>dataQuality</code> = <code>modelled | interpolated | qualitative</code></span></li>
               <li><span><code>ice: null</code> dopuszczalne (klatki bez lądolodu)</span></li></ul>
             <p class="t-src">plan §0.2, §5 · labels: blocker, contract</p>
@@ -766,11 +722,12 @@ td b{font-weight:620; color:var(--ink)}
               eustatykę podwójnie <b>właśnie dlatego</b>, że formuła nie nazywała pola, które konsumuje.
               <code>baltic-data-catalog.md</code> dowozi tabelę korelacji cal yr BP ↔ ¹⁴C BP ↔ BCE/CE.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>Formuła z nazwami plików i zmiennych</span></li>
+              <li><span>Formuła z nazwami plików i zmiennych (<code>RSL</code> w <code>rsl_SK05_skan_*.nc</code>)</span></li>
+              <li><span>Metoda interpolacji w czasie między nierównymi krokami RSL</span></li>
               <li><span>Jawnie zapisane, dlaczego <b>nie ma</b> osobnego członu eustatycznego</span></li>
               <li><span>Tabela korelacji kompletna dla 7 faz</span></li>
               <li><span>Odstępstwa od Andréna i in. 2011 wypisane, nie uśrednione</span></li>
-              <li><span>Transformacja <code>EVRF2007</code> ↔ <code>contemporaneous-geoid</code> jako formuła</span></li></ul>
+              <li><span>Transformacja <code>contemporaneous-geoid</code> ↔ dzisiejszy poziom (dla <code>V-03</code>) jako formuła</span></li></ul>
             <p class="t-src">plan §0.1, §9 · labels: docs</p>
           </div>
         </details>
@@ -808,15 +765,15 @@ td b{font-weight:620; color:var(--ink)}
               <span class="pl">Mozaika batymetrii i topografii bazowej</span></span>
             <span class="t-dep">← 0-05</span></summary>
           <div class="t-body">
-            <p>EMODnet Digital Bathymetry <b>DTM 2024</b> (1/16′ ≈ 115 m, 59 kafli) na dno Bałtyku,
-              Cieśnin Duńskich i Kattegatu; Copernicus DEM / GEBCO 2024 na ląd. Przetwarzanie
+            <p>Baza: <b>GEBCO 2024</b> z tury 1 (15″, okno 5760 × 3360 komórek). Ulepszenie po rozstrzygnięciu
+              licencji: EMODnet <b>DTM 2024</b> (1/16′ ≈ 115 m) na dno, Copernicus DEM na ląd. Przetwarzanie
               w <b>EPSG:3035</b> (ETRS89-LAEA, konwencja HELCOM), eksport w EPSG:4326.
               Kontrola wobec BSBD (BSHC) i IOWTOPO2.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span>Mozaika bez szwów i dziur w całym oknie</span></li>
               <li><span>Raport pokrycia i rozdzielczości per źródło</span></li>
               <li><span>Udokumentowana metoda łączenia na linii brzegowej</span></li></ul>
-            <p class="t-src">plan §3.3, §4.3 · labels: data-pipeline, regime-c</p>
+            <p class="t-src">plan §3.3, §4.1 · labels: data-pipeline, regime-c</p>
           </div>
         </details>
 
@@ -828,7 +785,8 @@ td b{font-weight:620; color:var(--ink)}
           <div class="t-body">
             <p>Batymetria wielkich jezior nie jest dodatkiem. <b>Vänern i Vättern leżą na trasie
               Rzeki Svea i korytarza Billingen</b>, Ładoga była częścią basenu w kilku fazach.
-              Bez nich drenaży nie da się zamodelować — pipeline wygeneruje <b>jeziora bez odpływu</b>.</p>
+              Bez nich drenaży nie da się zamodelować — pipeline wygeneruje <b>jeziora bez odpływu</b>.
+              To <b>jedyne dane na ścieżce krytycznej bez wskazanego zbioru</b>.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span>Cztery batymetrie wtopione w mozaikę ze spójnym datum</span></li>
               <li><span>Progi odpływowe widoczne w profilu wysokościowym</span></li>
@@ -843,18 +801,17 @@ td b{font-weight:620; color:var(--ink)}
               <span class="pl">Paleo-DEM z modelu GIA, 41 klatek co 500 lat</span></span>
             <span class="t-dep block">← 0-02 · 0-06 · C-02</span></summary>
           <div class="t-body">
-            <p>Obowiązuje <code>H_paleo = H_now + [Topo(t) − Topo(0)]</code> — <b>bez osobnego członu
-              eustatycznego</b>. Plan wejściowy podawał <code>+ ΔGIA − ΔEustatic</code>, co liczy
-              eustatykę drugi raz, na dziesiątki metrów: paleotopografia ICE-6G_C jest już podana względem
-              współczesnej sobie powierzchni morza. Osobny człon RSL jest uprawniony tylko przy czystym
-              polu odkształcenia sprężystego.</p>
+            <p>Start: <code>H_paleo = H_now − RSL(t)</code> (Steffen &amp; Kaufmann 2025); po zgodzie
+              <code>H_now + [Topo(t) − Topo(0)]</code>. <b>Bez osobnego członu eustatycznego</b> — plan
+              wejściowy podawał <code>+ ΔGIA − ΔEustatic</code>, co liczy eustatykę drugi raz, na dziesiątki
+              metrów. RSL ma 19 nierównych kroków, więc klatki co 500 lat są interpolowane w czasie.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span>41 klatek + 6 przekrojów zdarzeniowych z <code>datum: "contemporaneous-geoid"</code></span></li>
-              <li><span>Przekroje poza siatką 500 lat z <code>dataQuality: "interpolated"</code></span></li>
+              <li><span>Klatki poza krokami modelu z <code>dataQuality: "interpolated"</code>; <code>gia.source</code> w każdej</span></li>
               <li><span>Nazwa pliku i zmiennej GIA zapisana w metodyce</span></li>
               <li><span>Zero wystąpień osobnego członu eustatycznego w kodzie</span></li>
               <li><span>Udokumentowany resampling 1° → siatka robocza</span></li></ul>
-            <p class="t-src">plan §0.1, §4.3 · labels: blocker, data-pipeline, regime-c</p>
+            <p class="t-src">plan §0.1, §1, §4.1 · labels: blocker, data-pipeline, regime-c</p>
           </div>
         </details>
 
@@ -873,7 +830,7 @@ td b{font-weight:620; color:var(--ink)}
               <li><span>Maska dla wszystkich przekrojów faz morskich</span></li>
               <li><span>Raport: zero zbiorników bez połączenia z odpływem</span></li>
               <li><span>Test regresyjny na zamkniętym obniżeniu — musi zostać suche</span></li></ul>
-            <p class="t-src">plan §0.3, §4.3 · labels: blocker, data-pipeline, regime-c</p>
+            <p class="t-src">plan §0.3, §4.1 · labels: blocker, data-pipeline, regime-c</p>
           </div>
         </details>
 
@@ -886,15 +843,16 @@ td b{font-weight:620; color:var(--ink)}
             <p>Współrzędne, rzędne progowe i okresy aktywności: <b>Billingen</b> (58,4°N 13,8°E),
               <b>Närke</b> (59,1°N 15,0°E), <b>Svea / Degerfors</b>, <b>Dana / Wielki Bełt</b>,
               <b>Darss</b>, <b>Drogden / Øresund</b>. Przesmyk karelsko-białomorski oznaczony jako
-              <em>hipoteza historyczna, nie konsensus</em>.</p>
+              <em>hipoteza historyczna, nie konsensus</em>. Rzędne Närke i Billingen z <b>SGU
+              Strandförskjutningsmodell</b> — baza Rosentaua ma lukę właśnie w Szwecji.</p>
             <p><b>Uwaga do kolejności z §6.</b> Plan umieszcza ten plik w kroku 3 („krzywe i katalogi”),
               ale <code>C-14</code> potrzebuje zasiewu w aktywnej cieśninie, <code>C-06</code> rzędnych
-              progowych, a <code>C-10</code> stanów progów. Powstaje <b>razem z C-03</b> (M2), nie po reżimie C.</p>
+              progowych, a <code>C-10</code> stanów progów. Powstaje <b>razem z C-03</b> (M2), nie po nim.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span>Każdy próg: współrzędne, rzędna, okresy aktywności, źródło</span></li>
               <li><span>Stan otwarty / zamknięty per faza dla wszystkich 7 faz</span></li>
               <li><span>Hipotezy oznaczone flagą, nie podane jako fakt</span></li></ul>
-            <p class="t-src">plan §3.3, §5 · labels: blocker, contract, regime-c</p>
+            <p class="t-src">plan §3.2, §3.4, §5 · labels: blocker, contract, regime-c</p>
           </div>
         </details>
 
@@ -912,7 +870,7 @@ td b{font-weight:620; color:var(--ink)}
               <li><span><code>water.type</code>, <code>water.levelM</code>, <code>water.outlet</code> w każdej klatce</span></li>
               <li><span>Fazy morskie z GIA, jeziorne z rzędnej progu</span></li>
               <li><span>Czas trwania finalnego drenażu oznaczony jako <b>sporny</b></span></li></ul>
-            <p class="t-src">plan §2, §4.3 · labels: data-pipeline, regime-c</p>
+            <p class="t-src">plan §2, §4.1 · labels: data-pipeline, regime-c</p>
           </div>
         </details>
 
@@ -929,7 +887,7 @@ td b{font-weight:620; color:var(--ink)}
               <li><span>Maska dla wszystkich przekrojów faz jeziornych i deglacjacji</span></li>
               <li><span>Raport: zero zbiorników bez połączenia z odpływem</span></li>
               <li><span>Test przypadku z dwoma aktywnymi odpływami</span></li></ul>
-            <p class="t-src">plan §0.3, §4.3 · labels: blocker, data-pipeline, regime-c</p>
+            <p class="t-src">plan §0.3, §4.1 · labels: blocker, data-pipeline, regime-c</p>
           </div>
         </details>
       </div>
@@ -948,17 +906,17 @@ td b{font-weight:620; color:var(--ink)}
               <span class="pl">Lądolód z pasem niepewności</span></span>
             <span class="t-dep">← 0-05</span></summary>
           <div class="t-body">
-            <p><b>Stroeven i in. 2016</b> (izochrony deglacjacji 22,0–9,7 ka cal BP) jako <b>geometria
-              wiodąca</b> — gęstsze niż DATED-1 i dokładniejsze w niecce bałtyckiej, więc decyduje
-              o momencie otwarcia Billingen. <b>DATED-1</b> jako pas min. / najbardziej prawdopodobny /
-              maks. przeniesiony <b>do danych</b>, nie do opisu. Grubość: kopuła 2500–3000 m w centrum
-              → 0 m na czole.</p>
+            <p><b>DATED-1</b> (CC BY 3.0) jako <b>geometria wiodąca</b> (wariant <code>mc</code>) i pas
+              min. / maks. przeniesiony <b>do danych</b>, nie do opisu. <b>Stroeven i in. 2016</b> jest
+              gęstszy i dokładniejszy w niecce bałtyckiej, ale ma licencję <b>CC BY-NC-ND ⛔</b> — do czasu
+              zgody autorów tylko wewnętrzna kontrola w <code>validate.py</code>. Grubość lodu dopiero
+              z ICE-6G_C / GLAC-1D.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>Warstwa <code>ice</code> w każdej klatce ≥ 10 ka; <code>ice: null</code> w młodszych (Stroeven kończy się na 9,7 ka)</span></li>
+              <li><span>Warstwa <code>ice</code> w każdej klatce ≥ 10 ka; <code>ice: null</code> w młodszych (DATED-1 kończy się na 10 ka)</span></li>
               <li><span><code>ice.interpolated: true</code> na każdej klatce interpolowanej</span></li>
               <li><span><code>ice.band: "dated1"</code> tam, gdzie DATED-1 ma pokrycie (25–10 ka)</span></li>
-              <li><span><code>ice.source</code> zgodne z decyzją z <code>0-02</code></span></li></ul>
-            <p class="t-src">plan §3.3, §4.3 · labels: data-pipeline, regime-c</p>
+              <li><span><code>ice.source: "dated1"</code>; zero geometrii Stroevena w <code>src/assets/data/</code></span></li></ul>
+            <p class="t-src">plan §3.1, §4.1 · labels: data-pipeline, regime-c</p>
           </div>
         </details>
 
@@ -985,7 +943,7 @@ td b{font-weight:620; color:var(--ink)}
           <summary><code class="t-id">C-09</code>
             <span class="t-title">calibrate.py — IntCal20 recalibration of literature dates
               <span class="pl">Kalibracja dat ¹⁴C do cal yr BP</span></span>
-            <span class="t-dep">← 0-04 · blokuje C-08 · D-02 · D-06</span></summary>
+            <span class="t-dep">← 0-04 · blokuje C-08</span></summary>
           <div class="t-body">
             <p>Wszystkie daty ¹⁴C ze starszej literatury muszą przejść kalibrację <b>IntCal20</b> —
               bez tego daty z Björcka 1995 przesuwają się o <b>~1000–1500 lat</b> w późnym glacjale.
@@ -1015,7 +973,7 @@ td b{font-weight:620; color:var(--ink)}
               <li><span><code>salinity.class</code> + <code>psuRange</code> per basen per faza</span></li>
               <li><span><code>psuRange</code> nigdy nie jest skalarem</span></li>
               <li><span>Stan każdego progu spójny z klasą reżimu</span></li></ul>
-            <p class="t-src">plan §2, §3.3, §4.3 · labels: data-pipeline, regime-c</p>
+            <p class="t-src">plan §2, §3.4, §4.1 · labels: data-pipeline, regime-c</p>
           </div>
         </details>
 
@@ -1030,7 +988,7 @@ td b{font-weight:620; color:var(--ink)}
               przybrzeżnych mieszczą się właśnie tam. Ten etap: fazy <b>Yoldia, Mastogloia, Littorina,
               post-Littorina</b> i przekroje littorynowe. Fazy jeziorne to <code>C-15</code>.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>Klatki faz morskich w <code>frames/postglacial/</code>, z kompletem pól kontraktu</span></li>
+              <li><span>Klatki faz morskich w <code>frames/</code>, z kompletem pól kontraktu</span></li>
               <li><span><code>dataQuality</code> w każdej klatce</span></li>
               <li><span>Kolejność: dziś → 8 ka, potem Yoldia</span></li></ul>
             <p class="t-src">plan §1, §2 · labels: data-pipeline, regime-c</p>
@@ -1039,35 +997,35 @@ td b{font-weight:620; color:var(--ink)}
 
         <details class="task">
           <summary><code class="t-id">C-12</code>
-            <span class="t-title">curves.py — RSL sites, GMST/CO₂, NKG uplift, LR04
-              <span class="pl">Cztery krzywe źródłowe — bez zależności od GIA</span></span>
+            <span class="t-title">curves.py — RSL sites and NKG uplift
+              <span class="pl">Krzywe źródłowe — bez zależności od GIA</span></span>
             <span class="t-dep">← 0-05</span></summary>
           <div class="t-body">
-            <p><code>rsl-sites</code> (Rosentau i in. 2021 — 1099 wskaźników, format HOLSEA, 3 klastry),
-              <code>gmst-co2</code> (PhanDA — percentyle 5/16/50/84/95), <code>uplift-nkg</code>
-              (NKG2016LU), <code>lr04</code> (Lisiecki &amp; Raymo 2005). Pochodzą wprost ze źródeł,
-              więc <b>nie czekają na paleo-DEM ani na licencję GIA</b> — odblokowują <code>B-01</code>.</p>
+            <p><code>rsl-sites</code> (Rosentau i in. 2021 — 1099 wskaźników, format HOLSEA, 3 klastry)
+              i <code>uplift-nkg</code> (NKG2016LU, po rozstrzygnięciu licencji siatek). Pochodzą wprost
+              ze źródeł, więc <b>nie czekają na paleo-DEM ani na licencję GIA</b> — zasilają
+              <code>V-03</code> i <code>V-08</code>.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>Cztery pliki w <code>curves/</code></span></li>
-              <li><span>Percentyle PhanDA zachowane, nie spłaszczone do mediany</span></li>
-              <li><span>Luka 541–485 Ma w <code>gmst-co2</code> jawnie oznaczona (PhanDA zaczyna się od 485 Ma)</span></li></ul>
-            <p class="t-src">plan §3, §5 · labels: data-pipeline, regime-c</p>
+              <li><span>Dwa pliki w <code>curves/</code></span></li>
+              <li><span>Klastry Rosentaua zachowane jako pole, nie spłaszczone</span></li>
+              <li><span>Daty w cal yr BP, z oryginalną datą ¹⁴C tam, gdzie baza ją podaje</span></li></ul>
+            <p class="t-src">plan §3.2, §5 · labels: data-pipeline, regime-c</p>
           </div>
         </details>
 
         <details class="task">
           <summary><code class="t-id">C-13</code>
-            <span class="t-title">Compute basin metrics for every regime-C cross-section
+            <span class="t-title">Compute basin metrics for every cross-section
               <span class="pl">Metryki bilansowe z maski wody</span></span>
             <span class="t-dep">← C-04 · C-14</span></summary>
           <div class="t-body">
             <p><b>Metryki bilansowe</b> per przekrój: powierzchnia (km²), objętość (km³), średnia
               i maksymalna głębokość, szacowany czas wymiany wód. Liczone z <b>maski wody</b>, nie z samego
-              paleo-DEM-u. Reżim A liczy metryki w <code>A-02</code>, reżim D w <code>regional.py</code>.</p>
+              paleo-DEM-u. Niemal darmowe, a dają cztery dodatkowe krzywe i kontrolę sensowności.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span><code>curves/basin-metrics</code></span></li>
-              <li><span><code>metrics</code> w każdej klatce reżimu C</span></li></ul>
-            <p class="t-src">plan §4.4, §5 · labels: data-pipeline, regime-c</p>
+              <li><span><code>metrics</code> w każdej klatce</span></li></ul>
+            <p class="t-src">plan §4.2, §5 · labels: data-pipeline, regime-c</p>
           </div>
         </details>
 
@@ -1081,7 +1039,7 @@ td b{font-weight:620; color:var(--ink)}
               zdarzeniowe: przed i po drenażu Billingen, maksimum ancylusowe, próg regresji ancylusowej.
               Razem z <code>C-11</code> daje komplet 47 klatek.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>47 klatek w <code>frames/postglacial/</code> łącznie z <code>C-11</code></span></li>
+              <li><span>47 klatek w <code>frames/</code> łącznie z <code>C-11</code></span></li>
               <li><span><code>water.type: "lake"</code> + <code>water.outlet</code> w każdej klatce fazy jeziornej</span></li>
               <li><span><code>dataQuality</code> w każdej klatce</span></li></ul>
             <p class="t-src">plan §1, §2 · labels: data-pipeline, regime-c</p>
@@ -1091,243 +1049,10 @@ td b{font-weight:620; color:var(--ink)}
     </div>
   </section>
 
-  <!-- 10 · EPIC A -->
-  <section class="slide" id="s10" aria-label="Epik A — fanerozoik">
-    <div class="sheet">
-      <div class="eyebrow"><span class="bar"></span>Epik A · fanerozoik · 3 zadania</div>
-      <h2 class="h-sec">Baltika wędrowała — stałe okno pokazałoby inny fragment Ziemi</h2>
-      <p class="lead">W pełni niezależny pipeline. Można prowadzić równolegle do całego reżimu C,
-        bo jedyną zależnością jest <code>0-05</code>.</p>
-      <div class="tasks">
-        <details class="task">
-          <summary><code class="t-id">A-01</code>
-            <span class="t-title">Reconstruct ROI by plate rotation, not a fixed window
-              <span class="pl">Rekonstrukcja regionu przez rotację płyt</span></span>
-            <span class="t-dep">← 0-05</span></summary>
-          <div class="t-body">
-            <p>Najczęstszy błąd przy głębokim czasie: wycięcie stałego okna lat/lon z globalnej siatki.
-              <b>Baltika wędrowała</b> — w kambrze leżała na półkuli południowej.</p>
-            <p>Kroki: (1) poligon ROI — dzisiejsza misa plus otaczający kraton — z przypisanym
-              <b>plate ID</b> Baltiki; (2) dla każdego kroku 5 Ma odwrotna rotacja ROI do pozycji paleo
-              (pyGPlates / gplately lokalnie, GWS <code>gws.gplates.org</code> jako fallback);
-              (3) rotacje z <b>modelu PALEOMAP</b> — tego samego, w którego układzie liczone są PaleoDEM-y
-              i PaleoCoastlines. Merdith i in. 2021 tylko jako kontrola. Pierwotne „Merdith 1000–410 +
-              Müller 2019” zostawiało lukę <b>410–250 Ma</b> i mieszało układy odniesienia.</p>
-            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>Trajektoria ROI dla wszystkich ~108 kroków w modelu PALEOMAP</span></li>
-              <li><span>Udokumentowany plate ID Baltiki; rozbieżność vs Merdith 2021 per krok</span></li>
-              <li><span>Fallback na GWS przetestowany</span></li></ul>
-            <p class="t-src">plan §3.1, §4.1 · labels: data-pipeline, regime-a</p>
-          </div>
-        </details>
-
-        <details class="task">
-          <summary><code class="t-id">A-02</code>
-            <span class="t-title">Clip PaleoDEM and PaleoCoastlines per 5 Ma step
-              <span class="pl">108 klatek fanerozoiku z metrykami</span></span>
-            <span class="t-dep">← A-01 · 0-06</span></summary>
-          <div class="t-body">
-            <p>PALEOMAP PaleoDEMs (Scotese &amp; Wright 2018, 117 siatek, netCDF 0,1°) + PaleoCoastlines
-              v7 (Kocsis &amp; Scotese 2020, krawędź szelfu = <b>izobata −1400 m</b>) dla <b>tych samych
-              kroków</b> — spójne, bo liczone z tych samych DEM-ów. Metryki na klatkę: paleoszerokość
-              centroidu, udział powierzchni zalanej, średnia głębokość.</p>
-            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>~108 klatek w <code>frames/phanerozoic/</code></span></li>
-              <li><span><code>tMa</code> zamiast <code>tBP</code>, <code>regime: "phanerozoic"</code></span></li>
-              <li><span>EPSG:4326 i trzy metryki w każdej klatce</span></li></ul>
-            <p class="t-src">plan §3.1, §4.1 · labels: data-pipeline, regime-a</p>
-          </div>
-        </details>
-
-        <details class="task">
-          <summary><code class="t-id">A-03</code>
-            <span class="t-title">Author regime-A event cards by hand
-              <span class="pl">Karty zdarzeń kamienistych, opisane ręcznie</span></span>
-            <span class="t-dep">← 0-03</span></summary>
-          <div class="t-body">
-            <p>Zdarzenia opisane ręcznie z cytowaniami, <b>nie generowane</b>: Morze Tornquista i Iapetus,
-              kambryjsko-sylurska pokrywa epikontynentalna, orogeneza kaledońska (~430–400 Ma,
-              Baltika + Laurencja → Laurussia), dewoński Old Red, permski Zechstein, subsydencja
-              i inwersja bruzdy śródpolskiej, kenozoiczne wypiętrzenie Fennoskandii.</p>
-            <p><b>Uczciwość w tym reżimie jest wymogiem, nie ozdobą.</b> Pokazujemy region, nie morze.</p>
-            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>Karty w <code>events.json</code> z odsyłaczami do <code>sources.json</code></span></li>
-              <li><span><b>Zero</b> wystąpień „Bałtyk” / „Baltic Sea” w treści reżimu A</span></li>
-              <li><span>Każda karta w EN i PL</span></li></ul>
-            <p class="t-src">plan §3.1, §1 · labels: regime-a, docs</p>
-          </div>
-        </details>
-      </div>
-    </div>
-  </section>
-
-  <!-- 11 · EPIC B -->
-  <section class="slide" id="s11" aria-label="Epik B — czwartorzęd">
-    <div class="sheet">
-      <div class="eyebrow"><span class="bar"></span>Epik B · czwartorzęd · 1 zadanie</div>
-      <h2 class="h-sec">Luka danych, pokazana jako luka</h2>
-      <div class="tasks">
-        <details class="task" open>
-          <summary><code class="t-id">B-01</code>
-            <span class="t-title">Ship regime B as an explicit data gap, not fake frames
-              <span class="pl">Reżim B jako jawna luka, bez udawanych klatek</span></span>
-            <span class="t-dep">← 0-06 · C-12</span></summary>
-          <div class="t-body">
-            <p>Brak rekonstrukcji GIS w tej rozdzielczości. Bez klatek paleogeograficznych.
-              Produkt: 8–12 kart + krzywa LR04 + 2–3 mapy schematyczne.</p>
-            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span><code>regime: "quaternary"</code> i <code>dataQuality: "qualitative"</code> na każdej karcie</span></li>
-              <li><span><b>Zero</b> klatek paleogeograficznych w tym reżimie</span></li>
-              <li><span>Niedobór danych widoczny w UI, nie tylko w kontrakcie</span></li></ul>
-            <p class="t-src">plan §1, §3.2, §4.2 · labels: regime-b, docs</p>
-          </div>
-        </details>
-      </div>
-      <div class="tbl-scroll">
-        <table>
-          <thead><tr><th>Treść</th><th>Źródło</th><th>Co z tego wynika</th></tr></thead>
-          <tbody>
-            <tr><td><b>Cykle glacjalne δ¹⁸O</b></td><td class="m">stos bentoniczny LR04<br>Lisiecki &amp; Raymo 2005</td>
-              <td>Jedyna gęsta, ciągła krzywa dla tego reżimu — oś, na której wiszą karty.</td></tr>
-            <tr><td><b>Geneza misy bałtyckiej</b></td><td class="m">GFF 2020<br>10.1080/11035897.2020.1781246</td>
-              <td>Erozja ostatniego 1 Ma: ~20 m w podłożu krystalicznym, ~40 m w osadowym.
-                Rynna Landsort <b>459 m</b>, strop skalny <b>518 m</b>.</td></tr>
-            <tr><td><b>Morze Eemskie</b><br>~130–115 ka</td><td class="m">Gibbard i in. 2026, Boreas<br>EGQSJ 73, 217 (2024)</td>
-              <td>Mapy schematyczne, <b>brak gotowych warstw GIS</b> — stąd flaga <code>qualitative</code>.</td></tr>
-            <tr><td><b>System rzeczny Eridanos</b><br>12 Ma → ~1 Ma</td><td class="m">literatura o delcie Eridanos<br>basen Morza Północnego</td>
-              <td><b>Najlepszy pomost narracyjny A→C</b>: rzeka drenująca tarczę przez dzisiejszą misę;
-                zanik ~1 Ma, gdy lądolody wyorały misę.</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="callout"><b>Uczciwość w reżimie B jest wymogiem, nie ozdobą.</b> Trzeba oznaczyć niedobór
-        danych flagą <code>dataQuality</code>, inaczej aplikacja sugeruje precyzję, której źródła nie mają.</p>
-    </div>
-  </section>
-
-  <!-- 12 · EPIC D -->
-  <section class="slide" id="s12" aria-label="Epik D — mikroskala">
-    <div class="sheet">
-      <div class="eyebrow"><span class="bar"></span>Epik D · mikroskala · 6 zadań</div>
-      <h2 class="h-sec">Cztery wybrzeża, cztery układy wysokościowe</h2>
-      <p class="lead">Kolejność <b>PL → DK → SE → EE</b> — malejąca dostępność gotowych rekonstrukcji.
-        Każdy region to zamknięta porcja pracy; przerwanie po dowolnym zostawia spójny produkt.</p>
-      <div class="tasks">
-        <details class="task" data-block="1">
-          <summary><code class="t-id">D-01</code>
-            <span class="t-title">Harmonise four height datums to EVRF2007
-              <span class="pl">Harmonizacja układów wysokościowych</span></span>
-            <span class="t-dep block">blokuje D-02…D-05 · V-10</span></summary>
-          <div class="t-body">
-            <p>Łatwy do przeoczenia blocker. Cztery kraje, cztery układy wysokościowe
-              (<b>PL-EVRF2007-NH, RH 2000, EH2000, DVR90</b>) i cztery CRS
-              (<b>EPSG:2180, 3006, 3301, 25832</b>). Wszystko musi przejść na <b>EVRF2007 / EVRS</b>
-              przed jakimkolwiek porównaniem z wyjściem modelu GIA. Rozbieżności między datami
-              to dziesiątki centymetrów — przy wybrzeżu płaskim, jak polskie, to <b>metry linii brzegowej</b>.</p>
-            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>Transformacje <code>pyproj</code> udokumentowane per kraj, z wersją siatki</span></li>
-              <li><span>Klatki regionalne z <code>datum: "EVRF2007"</code></span></li>
-              <li><span><code>metrics</code> liczone w <code>regional.py</code> dla każdej klatki</span></li>
-              <li><span>~10 klatek na region, nie 41</span></li></ul>
-            <p class="t-src">plan §3.4 · labels: blocker, data-pipeline, regime-d</p>
-          </div>
-        </details>
-
-        <details class="task">
-          <summary><code class="t-id">D-02</code>
-            <span class="t-title">Region PL — Polish coast
-              <span class="pl">GUGiK ISOK 1/5 m · EPSG:2180 / PL-EVRF2007-NH</span></span>
-            <span class="t-dep">← D-01 · C-09 · C-12 · blokuje V-04</span></summary>
-          <div class="t-body">
-            <p>Paleogeografia i RSL: Uścinowicz 2003, 2006, 2014; Sydor &amp; Uścinowicz 2022
-              (Zalew Szczeciński, Zatoka Pomorska); PIG-PIB. Formy: <b>Ławica Słupska i Odrzańska,
-              Mierzeja Helska i Wiślana, Zalew Szczeciński, Łebsko i Gardno</b>.</p>
-            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>~10 klatek w <code>frames/regional/pl/</code></span></li>
-              <li><span>Wszystkie formy z listy obecne w co najmniej jednej klatce</span></li>
-              <li><span>Krzywa RSL dla polskiego brzegu w <code>curves/rsl-sites</code></span></li></ul>
-            <p class="t-src">plan §3.4 · labels: regime-d</p>
-          </div>
-        </details>
-
-        <details class="task">
-          <summary><code class="t-id">D-03</code>
-            <span class="t-title">Region DK — Danish straits
-              <span class="pl">DHM/Terræn 0,4 m · EPSG:25832 / DVR90</span></span>
-            <span class="t-dep">← D-01 · C-05</span></summary>
-          <div class="t-body">
-            <p>Paleogeografia i RSL: Bennike &amp; Jensen; GEUS. Formy: <b>otwieranie Wielkiego Bełtu
-              i Øresundu</b> — te same progi, które <code>C-05</code> trzyma w katalogu, więc oba
-              zadania muszą podawać te same rzędne.</p>
-            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>~10 klatek w <code>frames/regional/dk/</code></span></li>
-              <li><span>Momenty otwarcia progów spójne z <code>sills.json</code></span></li></ul>
-            <p class="t-src">plan §3.4 · labels: regime-d</p>
-          </div>
-        </details>
-
-        <details class="task">
-          <summary><code class="t-id">D-04</code>
-            <span class="t-title">Region SE — Swedish coast and Billingen corridor
-              <span class="pl">Lantmäteriet 2 m · EPSG:3006 / RH 2000</span></span>
-            <span class="t-dep">← D-01 · C-05</span></summary>
-          <div class="t-body">
-            <p>SGU Strandförskjutningsmodell; Påsse &amp; Andersson. Formy: <b>wynurzanie szkierów,
-              Höga Kusten</b>.</p>
-            <p><b>Ten region zasila reżim C.</b> SGU Strandförskjutningsmodell obejmuje Cieśninę Närke
-              i korytarz Billingen — a luka bazy Rosentaua jest właśnie w Szwecji. Kolejność
-              PL → DK → SE → EE jest słuszna pod kątem dostępności rekonstrukcji, ale jeśli
-              <code>V-02</code> / <code>V-03</code> wykażą problem w fazach jeziornych,
-              <b>SE trzeba podciągnąć do przodu</b>.</p>
-            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>~10 klatek w <code>frames/regional/se/</code></span></li>
-              <li><span>Rzędne progów Närke i Billingen z SGU przeniesione do <code>sills.json</code></span></li></ul>
-            <p class="t-src">plan §3.3, §3.4 · labels: regime-d</p>
-          </div>
-        </details>
-
-        <details class="task">
-          <summary><code class="t-id">D-05</code>
-            <span class="t-title">Region EE — Estonian coast
-              <span class="pl">Maa-amet LiDAR 1/5 m · EPSG:3301 / EH2000</span></span>
-            <span class="t-dep">← D-01</span></summary>
-          <div class="t-body">
-            <p>Rekonstrukcje Rosentaua i zespołu z Tartu (SW Estonia, Pärnu).
-              Formy: <b>Zatoka Pärnu, Sõrve</b>.</p>
-            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>~10 klatek w <code>frames/regional/ee/</code></span></li>
-              <li><span>Spójność z punktami RSL Rosentaua dla SW Estonii</span></li></ul>
-            <p class="t-src">plan §3.4 · labels: regime-d</p>
-          </div>
-        </details>
-
-        <details class="task">
-          <summary><code class="t-id">D-06</code>
-            <span class="t-title">Submerged relict forests as RSL control points
-              <span class="pl">Zatopione lasy jako punktowe wskaźniki RSL</span></span>
-            <span class="t-dep">← D-02 · C-09 · C-12 · blokuje V-05</span></summary>
-          <div class="t-body">
-            <p>Pnie sosen i dębów <b>in situ</b> na 15–30 m w rejonie Czołpina, Rowów, Zatoki Gdańskiej
-              i Puckiej, datowane ¹⁴C na <b>10 500–8 500 cal BP</b>. Pełnią <b>podwójną rolę</b>:
-              są treścią narracyjną i jednocześnie punktowymi wskaźnikami RSL do walidacji paleo-DEM-u.</p>
-            <p>To jedyny element „człowiek i środowisko”, który wchodzi do zakresu — i wchodzi
-              jako dane walidacyjne. Baza SPLASHCOS jako punkt wejścia (projekt SUBLAND —
-              dostępność do weryfikacji).</p>
-            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>Punkty z datowaniem, głębokością i źródłem w <code>curves/rsl-sites</code></span></li>
-              <li><span>Daty skalibrowane IntCal20</span></li>
-              <li><span>Zasila test <code>V-05</code></span></li></ul>
-            <p class="t-src">plan §3.4 · labels: regime-d, validation</p>
-          </div>
-        </details>
-      </div>
-    </div>
-  </section>
-
-  <!-- 13 · EPIC V ① -->
+  <!-- 10 · EPIC V ① -->
   <section class="slide" id="s13" aria-label="Epik V część 1">
     <div class="sheet">
-      <div class="eyebrow"><span class="bar"></span>Epik V · walidacja · testy 1–6 z 12</div>
+      <div class="eyebrow"><span class="bar"></span>Epik V · walidacja · testy 1–4 z 8</div>
       <h2 class="h-sec">Raport kończący się błędem, nie ostrzeżeniem</h2>
       <div class="tasks">
         <details class="task">
@@ -1339,7 +1064,7 @@ td b{font-weight:620; color:var(--ink)}
             <p>Rejestr testów z progami, uruchamiany z <code>npm run data:build</code>.
               Niezaliczony test o statusie <code>blocking</code> przerywa build.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>Raport w czytelnej formie — tabela per test, per reżim</span></li>
+              <li><span>Raport w czytelnej formie — tabela per test</span></li>
               <li><span>Rozdzielenie statusów <code>blocking</code> / <code>warning</code></span></li></ul>
             <p class="t-src">plan §7 · labels: validation, ci</p>
           </div>
@@ -1381,38 +1106,8 @@ td b{font-weight:620; color:var(--ink)}
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span>RMSE per region × per klaster w raporcie</span></li>
               <li><span>Ustalony i uzasadniony próg akceptacji</span></li>
-              <li><span>Rozkład reszt, nie tylko liczba zbiorcza</span></li></ul>
-            <p class="t-src">plan §7 · labels: validation</p>
-          </div>
-        </details>
-
-        <details class="task">
-          <summary><code class="t-id">V-04</code>
-            <span class="t-title">Polish coast curve versus Uścinowicz
-              <span class="pl">Trzy wahania i dwa punkty kontrolne</span></span>
-            <span class="t-dep">← V-01 · D-02</span></summary>
-          <div class="t-body">
-            <p>Oczekiwane: <b>trzy wahania o amplitudzie 25–27 m</b> między 13,0 i 8,5 ka BP,
-              poziom <b>~−28 m</b> przy trwałym połączeniu z oceanem w ~8,5 ka BP,
-              <b>~−10 m</b> w 7,0 ka BP.</p>
-            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>Trzy wahania odtworzone z amplitudą w tolerancji</span></li>
-              <li><span>Dwa punkty kontrolne zaliczone</span></li></ul>
-            <p class="t-src">plan §7 · labels: validation</p>
-          </div>
-        </details>
-
-        <details class="task">
-          <summary><code class="t-id">V-05</code>
-            <span class="t-title">Submerged forests as control points
-              <span class="pl">Pień rosnący pod wodą oznacza błąd modelu</span></span>
-            <span class="t-dep">← V-01 · C-03 · D-06</span></summary>
-          <div class="t-body">
-            <p>Dla każdego datowanego pnia in situ: paleo-DEM w tym punkcie i czasie musi dawać
-              powierzchnię <b>powyżej</b> poziomu wody. Warunek zero-jedynkowy, nie statystyczny.</p>
-            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>Test dla wszystkich punktów z <code>D-06</code></span></li>
-              <li><span>Status <code>blocking</code></span></li></ul>
+              <li><span>Rozkład reszt, nie tylko liczba zbiorcza</span></li>
+              <li><span>RMSE dla każdego z 8 modeli Ziemi — uzasadnia wybór wiodącego w <code>C-03</code></span></li></ul>
             <p class="t-src">plan §7 · labels: validation</p>
           </div>
         </details>
@@ -1435,10 +1130,10 @@ td b{font-weight:620; color:var(--ink)}
     </div>
   </section>
 
-  <!-- 14 · EPIC V ② -->
+  <!-- 11 · EPIC V ② -->
   <section class="slide" id="s14" aria-label="Epik V część 2">
     <div class="sheet">
-      <div class="eyebrow"><span class="bar"></span>Epik V · walidacja · testy 7–12 z 12</div>
+      <div class="eyebrow"><span class="bar"></span>Epik V · walidacja · testy 5–8 z 8</div>
       <h2 class="h-sec">Kontrole niezależne od własnego modelu</h2>
       <div class="tasks">
         <details class="task">
@@ -1457,7 +1152,7 @@ td b{font-weight:620; color:var(--ink)}
               <li><span><code>taxa.json</code>: tolerancja zasolenia i temperatury per gatunek, ze źródłem</span></li>
               <li><span>Test zgodności dla każdego udokumentowanego wystąpienia</span></li>
               <li><span><em>Mya arenaria</em> z flagą sporności i oboma datowaniami</span></li></ul>
-            <p class="t-src">plan §3.3, §7, §2 · labels: validation, contract</p>
+            <p class="t-src">plan §3.4, §7, §2 · labels: validation, contract</p>
           </div>
         </details>
 
@@ -1468,44 +1163,14 @@ td b{font-weight:620; color:var(--ink)}
             <span class="t-dep">← V-01 · C-03 · C-12</span></summary>
           <div class="t-body">
             <p>Wymaga <b>pola współczesnej prędkości wypiętrzania</b> z modelu GIA — osobny produkt,
-              nie <code>Topo</code>; źródło ustalane w <code>0-02</code>.</p>
+              nie <code>Topo</code> ani RSL; źródło ustalane w <code>0-02</code>. Przy samym Steffenie
+              i Kaufmannie — przybliżenie gradientem RSL między 0,9 ka a dziś, z jawną adnotacją.</p>
             <p>Gradient z modelu GIA vs NKG2016LU: maks. <b>~10,3 mm/rok przy Umeå</b>,
               <b>linia zerowa na wybrzeżu Niemiec i Polski</b>.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span>Oba punkty kontrolne zaliczone z tolerancją</span></li>
               <li><span>Mapa reszt gradientu w raporcie</span></li></ul>
             <p class="t-src">plan §7 · labels: validation</p>
-          </div>
-        </details>
-
-        <details class="task">
-          <summary><code class="t-id">V-09</code>
-            <span class="t-title">Regime A sanity check
-              <span class="pl">Paleoszerokość i spójność linii brzegowej</span></span>
-            <span class="t-dep">← V-01 · A-02</span></summary>
-          <div class="t-body">
-            <ul class="dod">
-              <li><span>Paleoszerokość centroidu ROI vs dane paleomagnetyczne dla Baltiki</span></li>
-              <li><span>Linia brzegowa z PaleoCoastlines spójna z izobatą 0 m z PaleoDEM</span></li>
-              <li><span>Rozbieżność raportowana per krok 5 Ma</span></li></ul>
-            <p class="t-src">plan §7 · labels: validation, regime-a</p>
-          </div>
-        </details>
-
-        <details class="task">
-          <summary><code class="t-id">V-10</code>
-            <span class="t-title">Regime D seam consistency
-              <span class="pl">Spójność szwów — diagnostyka datum</span></span>
-            <span class="t-dep">← V-01 · D-01…D-05 · C-15</span></summary>
-          <div class="t-body">
-            <p>Linia brzegowa wstawki krajowej na granicy z reżimem C nie może odbiegać bardziej niż
-              o uzgodnioną tolerancję. <b>Rozjazd oznacza niezharmonizowany datum wysokościowy</b> —
-              ten test jest diagnostyką <code>D-01</code>, nie geometrii.</p>
-            <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
-              <li><span>Test dla każdego z czterech regionów</span></li>
-              <li><span>Tolerancja ustalona i uzasadniona</span></li>
-              <li><span>Komunikat błędu wskazuje na datum, nie na geometrię</span></li></ul>
-            <p class="t-src">plan §7 · labels: validation, regime-d</p>
           </div>
         </details>
 
@@ -1521,7 +1186,7 @@ td b{font-weight:620; color:var(--ink)}
               nie w dobrych intencjach.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span>Bramka w CI, status <code>blocking</code></span></li>
-              <li><span>Raport rozmiaru per chunk per reżim</span></li></ul>
+              <li><span>Raport rozmiaru per chunk</span></li></ul>
             <p class="t-src">plan §5, §7 · labels: validation, ci</p>
           </div>
         </details>
@@ -1535,14 +1200,15 @@ td b{font-weight:620; color:var(--ink)}
             <p>Nałożenie klatek na mapy etapów z <b>Björcka 1995 / Andréna i in. 2011</b>
               dla 11,7 / 11,1 / 10,5 ka BP oraz na paleo-DEM-y z <b>ESD 16, 585 (2025)</b> —
               niezależną implementację tej samej metody (paleo-DEM-y co 500 lat na GEBCO_2023
-              z korektą ancylusową za Uścinowiczem, CC BY).</p>
+              z korektą ancylusową za Uścinowiczem, CC BY). ESD obejmuje tylko <b>11,7–0 ka</b> —
+              dla BIL i deglacjacji zostają mapy Björcka / Andréna.</p>
             <p>Skoro ESD 2025 to ta sama metoda liczona niezależnie, <b>rozbieżność linii brzegowej
               większa niż kilka kilometrów oznacza błąd u nas</b>.</p>
             <p><b>Ukryta praca:</b> mapy Björcka / Andréna istnieją tylko jako rysunki — pomiar wymaga
               ich georeferencji i cyfryzacji linii brzegowej.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span>Zgeoreferowane i zdigitalizowane linie brzegowe dla 11,7 / 11,1 / 10,5 ka</span></li>
-              <li><span>Nakładki dla trzech przekrojów kontrolnych</span></li>
+              <li><span>Nakładki ESD 2025 dla przekrojów 11,7–0 ka</span></li>
               <li><span>Rozbieżność zmierzona liczbowo, nie oceniona wzrokowo</span></li>
               <li><span>Wynik w raporcie, nie tylko jako obrazek</span></li></ul>
             <p class="t-src">plan §7 · labels: validation</p>
@@ -1552,7 +1218,7 @@ td b{font-weight:620; color:var(--ink)}
     </div>
   </section>
 
-  <!-- 15 · EPIC I -->
+  <!-- 12 · EPIC I -->
   <section class="slide" id="s15" aria-label="Epik I — kontrakt i integracja">
     <div class="sheet">
       <div class="eyebrow"><span class="bar"></span>Epik I · kontrakt i integracja · 4 zadania</div>
@@ -1581,18 +1247,17 @@ td b{font-weight:620; color:var(--ink)}
 
         <details class="task">
           <summary><code class="t-id">I-02</code>
-            <span class="t-title">Wire src/assets/data into the app with lazy per-regime chunks
-              <span class="pl">Leniwe chunki per reżim i region</span></span>
+            <span class="t-title">Wire src/assets/data into the app with lazy per-phase chunks
+              <span class="pl">Leniwe chunki per faza</span></span>
             <span class="t-dep">← I-01</span></summary>
           <div class="t-body">
-            <p>Chunki <b>per reżim i per region</b>, ładowane leniwie — nikt nie potrzebuje 108 klatek
-              fanerozoiku ani czterech wybrzeży na starcie. Serwis ładujący reaktywnie (sygnały),
-              z mapą chunków z <code>manifest.json</code> i kontrolą <code>schemaVersion</code>.
-              Układ zgodny z <code>AGENTS.md</code> §2: oś czasu w dolnym docku, przełącznik reżimów
-              w prawym górnym.</p>
+            <p>Chunki <b>per faza</b>, ładowane leniwie — na starcie wystarczy klatka bieżąca i jej sąsiedzi.
+              Serwis ładujący reaktywnie (sygnały), z mapą chunków z <code>manifest.json</code> i kontrolą
+              <code>schemaVersion</code>. Układ zgodny z <code>AGENTS.md</code> §2: suwak 20 ka → 0
+              z markerami faz w dolnym docku, przełącznik widoków (warstwy / zasolenie / lód) w prawym górnym.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span>Pierwsze wejście ładuje <b>≤ 4 MB</b></span></li>
-              <li><span>Przełączenie reżimu dociąga chunk bez blokowania wizualizacji</span></li>
+              <li><span>Przewinięcie do innej fazy dociąga chunk bez blokowania wizualizacji</span></li>
               <li><span>Niezgodny <code>schemaVersion</code> daje czytelny błąd, nie pustą scenę</span></li></ul>
             <p class="t-src">plan §5 · labels: app</p>
           </div>
@@ -1605,7 +1270,7 @@ td b{font-weight:620; color:var(--ink)}
             <span class="t-dep block">← 0-06 · start najwcześniej</span></summary>
           <div class="t-body">
             <p><code>AGENTS.md</code> wymaga <b>zera zahardkodowanych stringów</b> i równoległości EN/PL,
-              ale ~150 kart zdarzeń, progów i taksonów rozsadziłoby <code>en.ts</code> / <code>pl.ts</code>.</p>
+              ale kilkadziesiąt kart zdarzeń, progów i taksonów rozsadziłoby <code>en.ts</code> / <code>pl.ts</code>.</p>
             <p>Obowiązuje: <b>dane noszą wyłącznie identyfikatory</b>. Chrome UI zostaje w <code>Dict</code> —
               najpierw <code>i18n.types.ts</code>, żeby TypeScript wymusił kompletność, potem
               <code>en.ts</code> i <code>pl.ts</code> <b>jednocześnie</b>. Długie teksty idą
@@ -1613,7 +1278,7 @@ td b{font-weight:620; color:var(--ink)}
               sygnału <code>lang</code>. Zakres: <code>en</code> i <code>pl</code>; dodatkowe locale (np.
               <code>es</code>) poza zakresem, ale mechanizm ma je przyjąć bez zmian w kodzie.</p>
             <p><b>content/{lang}/ od pierwszego commita, nie na końcu.</b> Dorabianie równoległości EN/PL
-              po napisaniu 150 kart to przepisywanie, nie uzupełnianie.</p>
+              po napisaniu wszystkich kart to przepisywanie, nie uzupełnianie.</p>
             <ul class="dod"><li class="dod-l" style="display:block">Definition of Done</li>
               <li><span><b>Brak tłumaczenia = błąd builda</b> (test pokrycia kluczy EN↔PL)</span></li>
               <li><span>Zero stringów użytkownika w <code>.ts</code> i <code>.html</code> poza <code>Dict</code></span></li>
@@ -1643,11 +1308,11 @@ td b{font-weight:620; color:var(--ink)}
     </div>
   </section>
 
-  <!-- 16 · roadmapa -->
+  <!-- 13 · roadmapa -->
   <section class="slide" id="s16" aria-label="Roadmapa">
     <div class="sheet">
       <div class="eyebrow"><span class="bar"></span>06 · Roadmapa · §6</div>
-      <h2 class="h-sec">Osiem kamieni milowych, zero dat</h2>
+      <h2 class="h-sec">Sześć kamieni milowych, zero dat</h2>
       <p class="lead">Plan nie zawiera estymacji czasowych, więc roadmapa jest kolejnością i bramkami —
         nie Ganttem z wymyślonymi tygodniami.</p>
       <div class="ms">
@@ -1662,22 +1327,18 @@ td b{font-weight:620; color:var(--ink)}
           <span class="ms-t">C-06 · C-14 · C-15 · C-13</span><span class="ms-g">BIL i Ancylus z poziomem z progu, komplet 47 klatek</span></div>
         <div class="ms-row"><span class="ms-k">M5</span><span class="ms-n">Walidacja ilościowa</span>
           <span class="ms-t">C-12 · V-01 · V-02 · V-03 · V-11</span><span class="ms-g">sill-check zielony, RMSE w progu, budżet trzyma</span></div>
-        <div class="ms-row"><span class="ms-k">M6</span><span class="ms-n">Fanerozoik</span>
-          <span class="ms-t">A-01…A-03 · V-09</span><span class="ms-g">108 klatek, zero „Bałtyku” przed 1 Ma</span></div>
-        <div class="ms-row"><span class="ms-k">M7</span><span class="ms-n">Cztery wybrzeża</span>
-          <span class="ms-t">D-01…D-06 · V-04 · V-05 · V-10</span><span class="ms-g">szwy w tolerancji, lasy nad wodą</span></div>
-        <div class="ms-row"><span class="ms-k">M8</span><span class="ms-n">Domknięcie</span>
-          <span class="ms-t">B-01 · I-04 · V-06…V-08 · V-12</span><span class="ms-g">panel źródeł, nakładki kontrolne</span></div>
+        <div class="ms-row"><span class="ms-k">M6</span><span class="ms-n">Domknięcie</span>
+          <span class="ms-t">I-04 · V-06…V-08 · V-12</span><span class="ms-g">panel źródeł, nakładki kontrolne</span></div>
       </div>
       <p class="callout"><b>M3 jest celem, nie etapem.</b> Kolejność prac z §6 jest dobrana tak,
-        by działająca aplikacja powstała <b>przed</b> ukończeniem całości — reżim C liczony
+        by działająca aplikacja powstała <b>przed</b> ukończeniem całości — rekonstrukcja liczona
         od końca ku początkowi istnieje właśnie po to. Dlatego maska wody i emisja są rozbite na etap
         morski (<code>C-04</code>, <code>C-11</code>) i jeziorny (<code>C-14</code>, <code>C-15</code>):
         M3 nie zależy od niczego z M4.</p>
     </div>
   </section>
 
-  <!-- 17 · graf -->
+  <!-- 14 · graf -->
   <section class="slide" id="s17" aria-label="Graf zależności">
     <div class="sheet">
       <div class="eyebrow"><span class="bar"></span>07 · Zależności</div>
@@ -1785,8 +1446,8 @@ td b{font-weight:620; color:var(--ink)}
           <p class="card-b">Bez README i przypiętego submodułu nie ma odtwarzalnego builda — każda inna
             praca jest wtedy niesprawdzalna.</p></div>
         <div class="card"><h3 class="card-t"><code>0-02</code> przed <code>C-03</code></h3>
-          <p class="card-b">Bez potwierdzonej licencji pochodne GIA nie wchodzą do repo. Odmowa w połowie
-            reżimu C oznacza przepisanie pipeline'u na inny model.</p></div>
+          <p class="card-b">Źródło GIA musi być wybrane i wpisane do <code>SOURCES.md</code> przed pierwszą
+            pochodną. Ścieżka Steffena i Kaufmanna (CC BY 4.0) jest odblokowana już teraz.</p></div>
         <div class="card"><h3 class="card-t"><code>0-06</code> przed emisją</h3>
           <p class="card-b"><code>datum</code> musi być w kontrakcie, nie w komentarzu — inaczej poprawka
             §0.2 pozostaje deklaracją.</p></div>
@@ -1794,16 +1455,12 @@ td b{font-weight:620; color:var(--ink)}
     </div>
   </section>
 
-  <!-- 18 · równolegle -->
+  <!-- 15 · równolegle -->
   <section class="slide" id="s18" aria-label="Co można robić równolegle">
     <div class="sheet">
       <div class="eyebrow"><span class="bar"></span>08 · Niezależność</div>
       <h2 class="h-sec">Siedem torów, które mogą jechać obok siebie</h2>
       <div class="lanes">
-        <div class="lane"><span class="lane-n">Reżim A</span>
-          <span class="lane-bar"><span class="lane-fill" style="width:100%;background:#c3d6e3"></span></span>
-          <span class="lane-ids">A-01 → A-02 → A-03</span>
-          <span class="lane-gate">wejście: 0-05</span></div>
         <div class="lane"><span class="lane-n">C · morskie</span>
           <span class="lane-bar"><span class="lane-fill" style="width:100%;background:#1f5f8b"></span></span>
           <span class="lane-ids">C-01 → C-02 → C-03 → C-04 → C-11</span>
@@ -1816,13 +1473,17 @@ td b{font-weight:620; color:var(--ink)}
           <span class="lane-bar"><span class="lane-fill" style="width:66%;background:#4e87a8"></span></span>
           <span class="lane-ids">C-12</span>
           <span class="lane-gate">wejście: 0-05</span></div>
-        <div class="lane"><span class="lane-n">Mikroskala</span>
-          <span class="lane-bar"><span class="lane-fill" style="width:84%;background:#7eb0cd"></span></span>
-          <span class="lane-ids">D-01 → {D-02 ‖ D-03 ‖ D-04 ‖ D-05}</span>
-          <span class="lane-gate">wejście: D-01</span></div>
+        <div class="lane"><span class="lane-n">Lądolód</span>
+          <span class="lane-bar"><span class="lane-fill" style="width:66%;background:#c3d6e3"></span></span>
+          <span class="lane-ids">C-07</span>
+          <span class="lane-gate">wejście: 0-05 · DATED-1 pobrany</span></div>
+        <div class="lane"><span class="lane-n">Batymetria jezior</span>
+          <span class="lane-bar"><span class="lane-fill" style="width:100%;background:#7eb0cd"></span></span>
+          <span class="lane-ids">research źródeł do C-02</span>
+          <span class="lane-gate">wejście: brak</span></div>
         <div class="lane"><span class="lane-n">Dokumentacja</span>
           <span class="lane-bar"><span class="lane-fill" style="width:100%;background:#d8e0ea"></span></span>
-          <span class="lane-ids">0-03 · 0-07 · A-03</span>
+          <span class="lane-ids">0-03 · 0-07</span>
           <span class="lane-gate">wejście: brak</span></div>
         <div class="lane"><span class="lane-n">i18n</span>
           <span class="lane-bar"><span class="lane-fill" style="width:100%;background:#d37400"></span></span>
@@ -1831,25 +1492,25 @@ td b{font-weight:620; color:var(--ink)}
       </div>
       <div class="grid-2">
         <div class="card">
-          <h3 class="card-t">Jedyne miejsce na bezkarne przerwanie</h3>
-          <p class="card-b">Cztery regiony <code>D-02</code>…<code>D-05</code> są wzajemnie niezależne
-            i każdy jest zamkniętą porcją. Przerwanie po dowolnym zostawia spójny produkt — nigdzie
-            indziej w planie tak nie jest.</p>
+          <h3 class="card-t">Jedyna luka w danych na ścieżce krytycznej</h3>
+          <p class="card-b">Batymetrie Ładogi, Onegi, Vänern i Vättern (<code>C-02</code>) nie mają
+            jeszcze wskazanego źródła. Research może iść od pierwszego dnia — bez nich fazy jeziorne
+            nie dostaną odpływów.</p>
         </div>
         <div class="card">
           <h3 class="card-t">Tory tanie i natychmiast weryfikowalne</h3>
-          <p class="card-b"><code>0-03</code>, <code>0-07</code> i <code>A-03</code> nie mają zależności
+          <p class="card-b"><code>0-03</code> i <code>0-07</code> nie mają zależności
             technicznych i można je pisać od pierwszego dnia. <code>C-12</code> (krzywe źródłowe)
             zależy tylko od <code>0-05</code> — nie czeka na paleo-DEM ani licencję GIA.</p>
         </div>
       </div>
       <p class="callout"><b><code>I-03</code> musi startować najwcześniej, nie najpóźniej.</b>
         To jedyne zadanie, którego przesunięcie na koniec zamienia uzupełnianie w przepisywanie —
-        ~150 kart bez równoległości EN/PL od pierwszego commita.</p>
+        karty bez równoległości EN/PL od pierwszego commita.</p>
     </div>
   </section>
 
-  <!-- 19 · ryzyka -->
+  <!-- 16 · ryzyka -->
   <section class="slide" id="s19" aria-label="Ryzyka sprzęgnięć">
     <div class="sheet">
       <div class="eyebrow"><span class="bar"></span>09 · Ryzyka sprzęgnięć</div>
@@ -1858,60 +1519,59 @@ td b{font-weight:620; color:var(--ink)}
         <table>
           <thead><tr><th>Sprzęgnięcie</th><th>Dlaczego boli</th><th>Reakcja</th></tr></thead>
           <tbody>
-            <tr><td class="m">D-04 ↔ C-05 / C-06</td>
-              <td>SGU Strandförskjutningsmodell pokrywa Närke i korytarz Billingen — a <b>luka bazy
-                Rosentaua jest właśnie w Szwecji</b>. Reżim C potrzebuje danych z toru, który w kolejności
-                stoi trzeci.</td>
+            <tr><td class="m">C-05 ↔ SGU</td>
+              <td>Rzędne progów Närke i Billingen pochodzą z SGU Strandförskjutningsmodell — a <b>luka bazy
+                Rosentaua jest właśnie w Szwecji</b>, więc <code>V-03</code> słabo je kontroluje.</td>
               <td>Jeśli <code>V-02</code> / <code>V-03</code> padną na fazach jeziornych,
-                <b>podciągnąć SE przed DK</b>.</td></tr>
+                <b>najpierw zweryfikować rzędne SGU</b>.</td></tr>
             <tr><td class="m">C-05 vs kolejność §6</td>
               <td>Plan stawia <code>sills.json</code> w kroku 3, ale <code>C-10</code> i <code>C-14</code>
                 potrzebują go już w kroku 2.</td>
               <td><code>C-05</code> w M2, w pakiecie z <code>C-03</code>.</td></tr>
-            <tr><td class="m">A-01 ↔ A-02</td>
-              <td>Rotacja ROI innym modelem niż układ PaleoDEM-ów daje przesunięte położenie,
-                a „Merdith + Müller 2019” zostawiało lukę 410–250 Ma.</td>
-              <td>Rotacje <b>PALEOMAP</b>; Merdith 2021 tylko jako kontrola.</td></tr>
+            <tr><td class="m">C-07 ↔ Stroeven</td>
+              <td>Najlepsze izochrony deglacjacji mają licencję CC BY-NC-ND — klauzula ND zakazuje
+                publikacji uproszczonej, interpolowanej geometrii.</td>
+              <td><b>DATED-1</b> jako geometria wiodąca; Stroeven tylko w <code>validate.py</code> do czasu zgody.</td></tr>
             <tr><td class="m">I-03 vs cały content</td>
-              <td>~150 kart zdarzeń, progów i taksonów. Dorobienie równoległości EN/PL po fakcie
+              <td>Kilkadziesiąt kart zdarzeń, progów i taksonów. Dorobienie równoległości EN/PL po fakcie
                 to przepisywanie całości.</td>
               <td><code>content/{lang}/</code> od pierwszego commita; brak tłumaczenia = błąd builda.</td></tr>
-            <tr><td class="m">0-02 vs start reżimu C</td>
-              <td>Odmowa licencji ICE-6G_C przerywa <code>C-03</code> w połowie i wymusza przepisanie
-                pipeline'u na inny model GIA.</td>
-              <td>Fallback wybrany <b>przed</b> startem C, nie po. Kolejność: GLAC-1D → ANU/Lambeck → SELEN —
-                licencję pierwszych dwóch też trzeba potwierdzić.</td></tr>
+            <tr><td class="m">0-02 vs start C</td>
+              <td>ICE-6G_C, GLAC-1D i ANU-ICE nie mają licencji; odmowa w połowie pracy wymusiłaby
+                przepisanie pipeline'u.</td>
+              <td>Start na <b>Steffenie i Kaufmannie 2025</b> (CC BY 4.0); lepsze modele jako podmiana
+                źródła bez zmiany kontraktu.</td></tr>
           </tbody>
         </table>
       </div>
       <p class="note">Pozostałe ryzyka — podwójne liczenie eustatyki, fałszywe jeziora, pozorna precyzja,
-        downscaling GIA do LiDAR, budżet 25/4 MB — są już zaadresowane w zadaniach i ich Definition of Done,
+        budżet 25/4 MB — są już zaadresowane w zadaniach i ich Definition of Done,
         więc nie wracają tu jako osobne pozycje.</p>
     </div>
   </section>
 
-  <!-- 20 · domknięcie -->
+  <!-- 17 · domknięcie -->
   <section class="slide" id="s20" aria-label="Domknięcie">
     <div class="sheet">
       <div class="eyebrow"><span class="bar"></span>10 · Co z tego wynika</div>
       <h2 class="h-sec">Trzy rzeczy do zrobienia w tym tygodniu</h2>
       <div class="grid-3">
-        <div class="card"><h3 class="card-t"><code>0-01</code> · czysty klon</h3>
-          <p class="card-b">README i przypięty SHA w deployu. Dopóki tego nie ma, żadna inna praca
-            nie jest sprawdzalna.</p></div>
-        <div class="card"><h3 class="card-t"><code>0-02</code> · licencja GIA</h3>
-          <p class="card-b">Zapytanie wychodzi dziś, odpowiedź może przyjść za tydzień.
-            To najdłuższy lead time w całym planie, a blokuje rdzeń.</p></div>
+        <div class="card"><h3 class="card-t"><code>0-02</code> · zapytania licencyjne</h3>
+          <p class="card-b">Peltier i Tarasov, potem Stroeven. Nie blokują już startu, ale mają
+            najdłuższy lead time w planie i decydują o jakości.</p></div>
+        <div class="card"><h3 class="card-t"><code>C-03</code> + <code>C-04</code> · prototyp</h3>
+          <p class="card-b">GEBCO − RSL(t), interpolacja do kroków 500 lat, flood-fill z zasiewem
+            w Skagerraku. Sprawdzić Littorinę ~7,8 ka i dziś. Dane z tury 1 już leżą lokalnie.</p></div>
         <div class="card"><h3 class="card-t"><code>0-06</code> · kontrakt</h3>
           <p class="card-b">JSON Schema z obowiązkowym <code>datum</code>. Bez niego poprawki §0.1
             i §0.2 są tylko notatką w dokumencie.</p></div>
       </div>
       <dl class="kv">
-        <div><dt>Zadań łącznie</dt><dd>49</dd></div>
-        <div><dt>Blokujących</dt><dd>11</dd></div>
+        <div><dt>Zadań łącznie</dt><dd>35</dd></div>
+        <div><dt>Blokujących</dt><dd>10</dd></div>
         <div><dt>Bez zależności</dt><dd>5</dd></div>
-        <div><dt>Klatek do wyemitowania</dt><dd>~195</dd></div>
-        <div><dt>Testów walidacyjnych</dt><dd>12</dd></div>
+        <div><dt>Klatek do wyemitowania</dt><dd>~47</dd></div>
+        <div><dt>Testów walidacyjnych</dt><dd>8</dd></div>
         <div><dt>Budżet assetów</dt><dd>25 / 4 MB</dd></div>
       </dl>
       <p class="callout">Backlog w pełnej rozpisce — zakres, Definition of Done, zależności i etykiety —
@@ -1926,15 +1586,12 @@ td b{font-weight:620; color:var(--ink)}
   <nav class="pill chips" id="chips" aria-label="Skok do epiku">
     <button class="chip" data-go="s7">0</button>
     <button class="chip" data-go="s8">C</button>
-    <button class="chip" data-go="s10">A</button>
-    <button class="chip" data-go="s11">B</button>
-    <button class="chip" data-go="s12">D</button>
     <button class="chip" data-go="s13">V</button>
     <button class="chip" data-go="s15">I</button>
   </nav>
   <div class="pill pager">
     <button class="nav-btn" id="prev" aria-label="Poprzedni slajd">←</button>
-    <span class="count" id="count">1 / 20</span>
+    <span class="count" id="count">1 / 17</span>
     <button class="nav-btn" id="next" aria-label="Następny slajd">→</button>
   </div>
   <ol class="pill dots" id="dots" aria-hidden="true"></ol>
@@ -1965,7 +1622,7 @@ td b{font-weight:620; color:var(--ink)}
   var dotEls = Array.prototype.slice.call(dots.children);
 
   // epic chip ranges: first slide index of each epic block
-  var chipRange = [[6,6],[7,8],[9,9],[10,10],[11,11],[12,13],[14,14]];
+  var chipRange = [[6,6],[7,8],[9,10],[11,11]];
 
   function paint(i){
     current = i;

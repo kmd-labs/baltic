@@ -35,11 +35,13 @@ Daty weryfikacji w formacie ISO. „DataCite” oznacza pole `rightsList` w meta
 | **Steffen & Kaufmann 2025 (ANU-ICE / ICE-5G → RSL)** | Zenodo: pola **RSL** względem 1950, 1°, 10°W–70°E / 45–85°N, 21,4 ka, 19 kroków, 8 modeli Ziemi (`rsl_SK05_skan_*.nc`, ~2 MB) | ✅ CC BY 4.0 | **jedyna ścieżka z czystą licencją na pełny zakres 20–0 ka**; paleo-DEM jako `H_now − RSL(t)` (RSL zawiera człon eustatyczny i geoidalny, więc §0.1 nie jest naruszony); wada: krok ~1 ka i starsza wersja ANU-ICE (1998) |
 | **ESD 16, 585 (2025)** | paleo-DEM-y 0,01° w suplemencie artykułu, 9,5–31°E / 52–66,5°N | ✅ CC BY 4.0 (artykuł i suplement) | **nie jest pełnym fallbackiem**: obejmuje tylko **11,7–0 ka** (brak BIL i deglacjacji), a SELEN jest napędzany ICE-5G Peltiera; zostaje jako kontrola w `V-12` |
 
-**Proponowana kolejność fallbacku** (zmiana wobec backlogu `0-02`): ICE-6G_C → GLAC-1D → **Steffen & Kaufmann 2025 (CC BY, bez czekania na odpowiedź)** → ESD 2025 tylko dla 11,7–0 ka. ANU-ICE w postaci siatek topografii wypada — jego licencjonowana pochodna jest już dostępna jako RSL.
+**Kolejność fallbacku** (przyjęta w `0-02`): ICE-6G_C → GLAC-1D → **Steffen & Kaufmann 2025 (CC BY, bez czekania na odpowiedź)** → ESD 2025 tylko dla 11,7–0 ka. ANU-ICE w postaci siatek topografii wypada — jego licencjonowana pochodna jest już dostępna jako RSL.
 
 ---
 
-## Reżim C — postglacjał
+## Postglacjał, 20 ka → dziś
+
+Zakres aplikacji od 2026-10-31. Zbiory dla usuniętych reżimów (fanerozoik, czwartorzęd, mikroskala czterech wybrzeży) zostały wykreślone z rejestru.
 
 ### Model GIA i poziom morza
 
@@ -113,51 +115,6 @@ Daty weryfikacji w formacie ISO. „DataCite” oznacza pole `rightsList` w meta
 
 ---
 
-## Reżim A — fanerozoik
-
-| id | Zbiór | DOI / URL | Licencja | Weryfikacja | Status |
-| :-- | :-- | :-- | :-- | :-- | :-: |
-| `paleomap_dem` | PALEOMAP PaleoDEMs, Scotese & Wright 2018 | `10.5281/zenodo.5460860` | CC BY 4.0 | 2026-10-30, DataCite | ✅ |
-| `paleocoastlines_v7` | PaleoMAP PaleoCoastlines v7, Kocsis & Scotese 2020 | `10.5281/zenodo.4017820` | CC BY 4.0 | 2026-10-30, DataCite | ✅ |
-| `gplates_geodata` | GPlates 2.5 GeoData bundle — model rotacji PALEOMAP | Zenodo | plan zakłada CC BY 4.0 | niezweryfikowane | ❓ |
-| `merdith2021` | Merdith i in. 2021 — model rotacji 1000–0 Ma (kontrola `A-01`) | — | — | — | ❓ |
-| `gws` | GPlates Web Service | https://gws.gplates.org | API — warunki użycia | niezweryfikowane | ❓ |
-| `phanda` | PhanDA, Judd i in. 2024, Science 385, eadk3705 — GMST i CO₂, percentyle | https://github.com/EJJudd/PhanDA | **repozytorium bez pliku LICENSE** | 2026-10-30, GitHub | ❓ |
-| `macrostrat` | Macrostrat API (opcjonalnie) | https://macrostrat.org | plan zakłada CC BY 4.0 | niezweryfikowane | ❓ |
-
-> **`phanda`** — brak licencji w repozytorium oznacza brak zgody na redystrybucję. Licencja CC BY 4.0 dotyczy tylko rekordu *PhanDA HadCM3L Model Priors* (`10.5281/zenodo.8237751`), nie wyjściowych percentyli GMST/CO₂. Do ustalenia: rekord Zenodo z sekcji *Data availability* artykułu w Science albo zapytanie do autorów.
-
-**Atrybucja (✅):**
-- `paleomap_dem` — Scotese, C. R., Wright, N. M. (2018). *PALEOMAP Paleodigital Elevation Models (PaleoDEMS) for the Phanerozoic*. Zenodo. https://doi.org/10.5281/zenodo.5460860. CC BY 4.0.
-- `paleocoastlines_v7` — Kocsis, A. T., Scotese, C. R. (2020). *PaleoMAP PaleoCoastlines data*, v7. Zenodo. https://doi.org/10.5281/zenodo.4017820. CC BY 4.0.
-
----
-
-## Reżim B — czwartorzęd
-
-| id | Zbiór | DOI / URL | Licencja | Weryfikacja | Status |
-| :-- | :-- | :-- | :-- | :-- | :-: |
-| `lr04` | LR04 benthic stack, Lisiecki & Raymo 2005 | `10.1594/PANGAEA.701576` | CC BY 3.0 | 2026-10-30, DataCite | ✅ |
-| `gff2020` | Origin of the Baltic Sea basin by Pleistocene glacial erosion, GFF 2020 | `10.1080/11035897.2020.1781246` | publikacja — cytowane wartości liczbowe, bez redystrybucji danych | — | ❓ |
-| `gibbard2026` | Gibbard i in. 2026, Boreas — Morze Eemskie | `10.1111/bor.70040` | publikacja — mapy schematyczne do przerysowania, nie kopiowania | — | ❓ |
-
-**Atrybucja (✅):**
-- `lr04` — Lisiecki, L. E., Raymo, M. E. (2005). *Global Plio-Pleistocene stack of benthic oxygen isotope records*. PANGAEA. https://doi.org/10.1594/PANGAEA.701576. CC BY 3.0. Artykuł: Paleoceanography 20, PA1003, https://doi.org/10.1029/2004PA001071.
-
----
-
-## Reżim D — mikroskala
-
-| id | Zbiór | DOI / URL | Licencja | Weryfikacja | Status |
-| :-- | :-- | :-- | :-- | :-- | :-: |
-| `gugik_nmt` | GUGiK NMT z LiDAR (ISOK), 1 m / 5 m | https://www.geoportal.gov.pl | — | — | ❓ |
-| `lm_hojddata` | Lantmäteriet GSD-Höjddata, 2 m | https://www.lantmateriet.se | — | — | ❓ |
-| `maaamet_dem` | Maa-amet LiDAR DEM, 1 m / 5 m | https://geoportaal.maaamet.ee | — | — | ❓ |
-| `sdfi_dhm` | DHM/Terræn, SDFI Dataforsyningen, 0,4 m | https://dataforsyningen.dk | — | — | ❓ |
-| `splashcos` | SPLASHCOS / SUBLAND — zatopione lasy | — | dostępność do weryfikacji | — | ❓ |
-
----
-
 ## Literatura cytowana w kartach i klatkach
 
 Publikacje, których **liczby** (granice faz, rzędne, poziomy) trafiają do kontraktu. Fakty i wartości liczbowe nie podlegają prawu autorskiemu, ale każda musi mieć cytowanie w `sources.json`.
@@ -167,8 +124,7 @@ Publikacje, których **liczby** (granice faz, rzędne, poziomy) trafiają do kon
 | `andren2011` | Andrén, T. i in. 2011 — źródło wiodące chronologii faz (`C-08`) |
 | `bjorck1995` | Björck, S. 1995 |
 | `bjorck2008` | Björck, S. 2008 |
-| `uscinowicz2003` · `uscinowicz2006` · `uscinowicz2014` | Uścinowicz, Sz. |
-| `sydor2022` | Sydor, P., Uścinowicz, Sz. 2022 |
+| `uscinowicz2014` | Uścinowicz, Sz. 2014 — odstępstwa chronologii (`C-08`) |
 | `argus2014` | Argus, D. F. i in. 2014, GJI 198, 537–563, `10.1093/gji/ggu140` |
 | `peltier2015` | Peltier, W. R., Argus, D. F., Drummond, R. 2015, JGR Solid Earth 120, 450–487, `10.1002/2014JB011176` |
 | `steffen2005` | Steffen, H., Kaufmann, G. 2005, GJI 163, 801–812, `10.1111/j.1365-246X.2005.02740.x` |

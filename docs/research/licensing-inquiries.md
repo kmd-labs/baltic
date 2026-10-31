@@ -1,6 +1,6 @@
 # Zapytania licencyjne
 
-Rejestr zapytań o warunki użycia zbiorów bez jawnej licencji (`0-02`, `0-03`). Każda odpowiedź trafia tu dosłownie, z datą, a decyzja — do [`SOURCES.md`](../../SOURCES.md).
+Rejestr zapytań o warunki użycia zbiorów bez jawnej licencji (`0-02`, `0-03`). Zakres: postglacjał 20 ka → dziś — zapytanie o PhanDA (fanerozoik) wycofane 2026-10-31. Każda odpowiedź trafia tu dosłownie, z datą, a decyzja — do [`SOURCES.md`](../../SOURCES.md).
 
 > **Cisza nie jest zgodą.** Do czasu pisemnej odpowiedzi zbiór ma status ❓ i żadna jego pochodna nie wchodzi do repo.
 
@@ -12,9 +12,8 @@ Rejestr zapytań o warunki użycia zbiorów bez jawnej licencji (`0-02`, `0-03`)
 | 2 | GLAC-1D | L. Tarasov, Memorial University of Newfoundland | — | — | — |
 | 3 | ANU-ICE | K. Lambeck, ANU Research School of Earth Sciences | — | — | — |
 | 4 | Stroeven i in. 2016 (CC BY-NC-ND) | A. P. Stroeven, Stockholm University | — | — | — |
-| 5 | PhanDA GMST/CO₂ | E. J. Judd | — | — | — |
 
-**Adresy do potwierdzenia przed wysłaniem.** `peltier@atmosp.physics.utoronto.ca` jest podany na stronie danych Peltiera (`atmosp.physics.utoronto.ca/~peltier/data.php`; strona ma uszkodzony certyfikat TLS, więc nie sprawdziłem jej bezpośrednio). `lev@mun.ca` pochodzi z adresów korespondencyjnych w pracach Tarasova. Dla 3–5 adres trzeba ustalić na stronach instytucji.
+**Adresy do potwierdzenia przed wysłaniem.** `peltier@atmosp.physics.utoronto.ca` jest podany na stronie danych Peltiera (`atmosp.physics.utoronto.ca/~peltier/data.php`; strona ma uszkodzony certyfikat TLS, więc nie sprawdziłem jej bezpośrednio). `lev@mun.ca` pochodzi z adresów korespondencyjnych w pracach Tarasova. Dla 3–4 adres trzeba ustalić na stronach instytucji.
 
 **Do uzupełnienia w każdym szkicu:** `[NADAWCA]`, `[ROLA]` oraz jedno zdanie o charakterze KMD Labs. Od tego, czy publikacja jest **niekomercyjna**, zależy odpowiedź przy #4 (klauzula NC) i prawdopodobnie przy #1–#3.
 
@@ -113,20 +112,3 @@ Rejestr zapytań o warunki użycia zbiorów bez jawnej licencji (`0-02`, `0-03`)
 > With kind regards,
 > [NADAWCA]
 
----
-
-## 5. PhanDA — GMST i CO₂
-
-**Stan wiedzy (2026-10-30):** repozytorium `github.com/EJJudd/PhanDA` nie ma pliku LICENSE. CC BY 4.0 ma tylko rekord *Model Priors* (`10.5281/zenodo.8237751`). **Najpierw** sprawdzić sekcję *Data availability* w Judd i in. 2024 (Science 385, eadk3705) — jeśli percentyle są w rekordzie Zenodo z licencją, zapytanie jest zbędne.
-
-**To:** [ADRES — autor korespondencyjny Judd i in. 2024]
-**Subject:** Licence for the PhanDA GMST/CO₂ percentile output
-
-> Dear Dr Judd,
->
-> We would like to display the PhanDA GMST and CO₂ reconstruction (the 5/16/50/84/95 percentile series in `5_Outputs`) as a background curve in an open, interactive visualisation of the Baltic region through the Phanerozoic. [ONE SENTENCE ON KMD LABS.]
->
-> The GitHub repository does not include a licence file. Could you confirm under what terms the percentile output may be redistributed — for example CC BY 4.0, as for the model priors on Zenodo? We would cite Judd et al. (2024) and keep the percentiles intact rather than reducing them to the median.
->
-> With kind regards,
-> [NADAWCA]
