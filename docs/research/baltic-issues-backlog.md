@@ -1,10 +1,14 @@
 # Baltic — backlog issues warstwy danych
 
 > Rozpisanie [`baltic-data-plan.md`](./baltic-data-plan.md) na zadania wykonawcze.
-> **4 epiki / 35 zadań.** Tytuły po angielsku (spójne z commitami i publicznym repo `kmd-labs/baltic`), treść po polsku.
+> **4 epiki / 36 zadań.** Tytuły po angielsku (spójne z commitami i publicznym repo `kmd-labs/baltic`), treść po polsku.
 > Dokument żywy — aktualizowany razem z planem. Odsyłacze `§x.y` wskazują sekcje planu.
 
-> **Zmiana zakresu (2026-10-31):** aplikacja wizualizuje **wyłącznie postglacjał, 20 ka → dziś**. Usunięte epiki: `A` (fanerozoik), `B` (czwartorzęd), `D` (mikroskala czterech wybrzeży) oraz zadania walidacyjne zależne tylko od nich (`V-04`, `V-05`, `V-09`, `V-10`). Identyfikatory pozostałych zadań się nie zmieniają, więc w numeracji są luki.
+> **Zmiany zakresu (2026-10-31):**
+> 1. Aplikacja wizualizuje **wyłącznie postglacjał, 20 ka → dziś**. Usunięte epiki `A`, `B`, `D` i zadania `V-04`, `V-05`, `V-09`, `V-10`. Numeracja ma luki.
+> 2. **Tylko zbiory bez zapytań licencyjnych.** ICE-6G_C, GLAC-1D, ANU-ICE i Stroeven 2016 nie są używane w żadnej postaci. Model GIA: Steffen & Kaufmann 2025; lądolód: DATED-1.
+> 3. **Krok 1000 lat** (21 klatek + ~6 zdarzeniowych) zamiast 500 lat.
+> 4. **Scena: glob jak w El Niño**, dane runtime hybrydowe (siatki + kostka RSL + wektory). Nowe zadanie `I-05`.
 
 ## Jak czytać
 
@@ -21,25 +25,25 @@
 ## Ścieżka krytyczna
 
 ```
-0-01 ──> 0-04 ──> 0-05 ──> C-01 ──> C-02 ──> C-03 ──> C-04 ──> C-11 ──> I-01 ──> I-02     ★ M3 (fazy morskie)
-                                               ▲                 ▲
-0-02 ──────────────────────────────────────────┤                 │
-0-06 ──────────────────────────────────────────┘    C-09 ──> C-08┘
+0-01 ──> 0-04 ──> 0-05 ──> C-01 ──> C-03 ──> C-04 ──> C-11 ──> I-01 ──> I-02     ★ M3 (fazy morskie na globie)
+                                      ▲                 ▲                 ▲
+0-06 ─────────────────────────────────┘    C-09 ──> C-08┘        I-05 ────┘
                                                                          C-14 ──> C-15      M4 (fazy jeziorne)
-                                    C-05 ──> C-06 ──────────────────────────▲
-                                                └──> V-02   (ilościowa bramka na §0.1 / §0.2)
+                           C-02 ─────────────────────────────────────────▲
+                           C-05 ──> C-06 ────────────────────────────────┘
+                                      └──> V-02   (ilościowa bramka na §0.1 / §0.2)
 ```
 
-Trzy rzeczy nieobejściowe: **`0-01`** (bez submodułu nie ma builda), **`0-02`** (wybór źródła GIA zasila `C-03`; ścieżka Steffen & Kaufmann 2025 jest odblokowana już teraz), **`0-06`** (bez obowiązkowego `datum` poprawka §0.2 pozostaje deklaracją).
+Dwie rzeczy nieobejściowe: **`0-01`** (bez submodułu nie ma builda) i **`0-06`** (kontrakt hybrydowy z obowiązkowym `datum`). `0-02` jest rozstrzygnięte decyzją „tylko zbiory bez zapytań” i nie blokuje już niczego. Batymetria jezior (`C-02`) blokuje tylko fazy jeziorne (`C-14`), nie paleo-DEM faz morskich.
 
 ## Epiki
 
 | Epik | Nazwa | Zadań | Charakter |
 | :-- | :-- | --: | :-- |
-| **0** | Fundamenty i blokery | 8 | musi być pierwsze; dwa zadania to decyzje, nie kod |
+| **0** | Fundamenty i blokery | 8 | musi być pierwsze |
 | **C** | Postglacjał, 20–0 ka | 15 | rdzeń produktu; fazy morskie (M3) przed jeziornymi (M4) |
 | **V** | Walidacja | 8 | jedna bramka ilościowa (`V-03`), resztę da się liczyć wcześnie |
-| **I** | Kontrakt, emisja, integracja | 4 | `I-03` od pierwszego commita, nie na końcu |
+| **I** | Kontrakt, emisja, integracja | 5 | `I-03` od pierwszego commita; glob `I-05` równolegle z danymi |
 
 ---
 
@@ -63,43 +67,46 @@ W świeżej kopii roboczej submoduł `src/design-system` jest niezainicjowany (`
 
 **Plan:** §6 (Kolejność prac, p. 1)
 
-## `0-02` Confirm ICE-6G_C redistribution terms, pick GIA fallback
+## `0-02` Record licence policy: licence-free sources only
 
-**Epik:** 0 · **Blokuje:** `C-03` · **Labels:** `blocker`, `licensing`
+**Epik:** 0 · **Labels:** `licensing`
 
-**Żaden model GIA z paleotopografią nie ma licencji.** ICE-6G_C, GLAC-1D i ANU-ICE mają tylko prośbę o cytowanie, a brak licencji oznacza brak zgody na publikację pochodnych. Jedyna ścieżka z czystą licencją na pełny zakres 20–0 ka to **pola RSL Steffena i Kaufmanna 2025** (Zenodo `10.5281/zenodo.15481755`, CC BY 4.0; ANU-ICE 1998, 1°, 21,4 ka → 0, 8 modeli Ziemi). Paleo-DEM: `H_paleo = H_now − RSL(t)` — §0.1 nie jest naruszony, bo RSL zawiera już człon eustatyczny i geoidalny.
+**Decyzja (2026-10-31): używamy wyłącznie zbiorów, które nie wymagają zapytania o licencję.** Zapytania do Peltiera, Tarasova, Lambecka i Stroevena **nie są wysyłane**.
 
-Ustalenia techniczne: ICE-6G_C w dystrybucji PMIP4 ma siatkę **10′** (nie 1°) i krok 500 lat do 21 ka; GLAC-1D ma krok **100 lat**, więc przekroje zdarzeniowe nie wymagałyby interpolacji. ESD 16, 585 (2025) **nie jest pełnym fallbackiem** — obejmuje tylko 11,7–0 ka i bazuje na ICE-5G; zostaje jako kontrola w `V-12`.
+Ustalenia, na których stoi decyzja:
+- ICE-6G_C, GLAC-1D i ANU-ICE nie mają licencji — tylko prośbę o cytowanie. Brak licencji = brak zgody na publikację pochodnych.
+- Stroeven 2016 ma licencję CC BY-NC-ND 4.0 — klauzula ND zakazuje publikacji pochodnej geometrii.
+- Pełny zakres 20–0 ka pokrywają pola RSL **Steffena i Kaufmanna 2025** (Zenodo `10.5281/zenodo.15481755`, CC BY 4.0; ANU-ICE 1998, 1°, 8 modeli Ziemi). Paleo-DEM: `H_paleo = H_now − RSL(t)`.
+- Lądolód: **DATED-1** (CC BY 3.0), przekroje co 1 ka.
+- ESD 16, 585 (2025, CC BY) — tylko kontrola 11,7–0 ka (`V-12`).
 
-**Kolejność fallbacków:** ICE-6G_C → GLAC-1D → **Steffen & Kaufmann 2025** → ESD 2025 (tylko 11,7–0 ka). Reżim prac: **start na Steffenie i Kaufmannie**, podmiana źródła po zgodzie.
-
-**Zakres**
-- Wysłać zapytania z [`licensing-inquiries.md`](./licensing-inquiries.md) (Peltier, Tarasov; Lambeck niżej w priorytecie). Kluczowe: czy publikacja KMD Labs jest niekomercyjna.
-- Ustalić przy okazji źródło **pola współczesnej prędkości wypiętrzania** z wybranego modelu (osobny produkt, nie `Topo`) — potrzebne do `V-08`.
-- Decyzja zapisana z datą i treścią zgody/licencji.
+Konsekwencje: brak grubości lodu z modelu (profil plastyczny w `C-07`), brak pola współczesnej prędkości wypiętrzania (przybliżenie w `V-08`).
 
 **DoD**
-- [ ] Wpis w `SOURCES.md`: model, licencja, data ustalenia, osoba
-- [ ] Wybrany model wpisany jako wartość `gia.source` w kontrakcie
-- [ ] Żadna pochodna modelu bez licencji nie jest zacommitowana przed tym wpisem
+- [x] Decyzja z datą w `SOURCES.md`; odrzucone zbiory wypisane z powodem
+- [x] `gia.source: "steffen2025_rsl"` jako jedyna wartość w kontrakcie (`0-06`)
+- [x] `licensing-inquiries.md` oznaczony jako zarchiwizowany — nic nie jest wysyłane
+- [x] Żadna pochodna zbioru bez licencji nie jest zacommitowana
 
-**Plan:** §0.1, §3.2, §8
+**Plan:** §3, §8
 
 ## `0-03` Audit licences of all remaining sources, write SOURCES.md
 
 **Epik:** 0 · **Blokuje:** `I-04` · **Labels:** `licensing`, `docs`
 
-Prawie każdy zbiór w §3 to CC BY, co nakłada wymóg atrybucji — a atrybucja jest warunkiem legalności publikacji. Pozycje nierozstrzygnięte: **EMODnet DTM 2024** (DataCite nie podaje licencji), **BSBD/BSHC** (CC BY 3.0 **z ograniczeniami**), **NKG2016LU** (licencja siatek u Lantmäteriet), batymetrie jezior, SGU, HELCOM, IntCal20.
+Reguła z `0-02`: zbiór wchodzi do pipeline'u tylko ze statusem ✅. Pozycje ❓ trzeba **sprawdzić na stronie źródła** (bez zapytań): **EMODnet DTM 2024** (DataCite nie podaje licencji), **NKG2016LU** (licencja siatek u Lantmäteriet), **BSBD/BSHC** (CC BY 3.0 z ograniczeniami), **IOWTOPO2**, **HELCOM**, **SGU Strandförskjutningsmodell**, **GLOBathy**, **IntCal20**. Jeśli któraś wymaga zapytania albo ma ND — zbiór wypada i wchodzi fallback z §3 planu.
+
+Nowe zbiory dla globu (§5.1): kafel GEBCO 0–90°N / 90°W–0, ETOPO2v2c, Natural Earth SR_50M, `world-atlas` land-50m — domena publiczna, do wpisania z atrybucją.
 
 **Zakres**
 - Przegląd wszystkich pozycji z §3.1–3.4: licencja, wersja, format, DOI/URL.
-- Gotowy tekst atrybucji per zbiór, dokładnie taki, jaki wymaga licencja.
-- `SOURCES.md` jako jedyne źródło prawdy dla generowanego `sources.json`.
+- Gotowy tekst atrybucji per zbiór.
+- `SOURCES.md` jako jedyne źródło prawdy dla `sources.json`.
 
 **DoD**
 - [x] `SOURCES.md` pokrywa 100% zbiorów z §3
-- [ ] Zero pozycji ze statusem „do weryfikacji"
-- [ ] Każda pozycja ma pełne cytowanie i tekst atrybucji
+- [ ] Zero pozycji ❓ — każda ✅ albo przeniesiona do „Odrzucone”
+- [ ] Każda pozycja ✅ ma pełne cytowanie i tekst atrybucji
 
 **Plan:** §3, §5, §9
 
@@ -108,7 +115,7 @@ Prawie każdy zbiór w §3 to CC BY, co nakłada wymóg atrybucji — a atrybucj
 **Epik:** 0 · **Zależy od:** `0-01` · **Blokuje:** `0-05`, cały epik C · **Labels:** `data-pipeline`
 
 **Zakres**
-- Struktura z §6: `fetch.py`, `postglacial.py`, `curves.py`, `calibrate.py`, `validate.py`, `emit.py`.
+- Struktura z §6: `fetch.py`, `postglacial.py`, `ice.py`, `curves.py`, `calibrate.py`, `validate.py`, `emit.py`.
 - `data/raw/` i `data/interim/` w `.gitignore`; assety wyjściowe w gicie.
 - Skrypt `data:build` w `package.json`, obok istniejącego `data:fetch`.
 - Stack: `xarray` + `netCDF4`, `rasterio`, `geopandas`, `shapely`, `pyogrio`, `scipy.ndimage`, `pyproj`; `mapshaper`/`topojson` do uproszczenia.
@@ -125,35 +132,38 @@ Prawie każdy zbiór w §3 to CC BY, co nakłada wymóg atrybucji — a atrybucj
 
 **Epik:** 0 · **Zależy od:** `0-04` · **Blokuje:** `C-01`, `C-07`, `C-12` · **Labels:** `data-pipeline`
 
-Tura 1 gotowa: `gebco2024`, `steffen2025_rsl`, `dated1` — minimum do pierwszego paleo-DEM-u faz morskich. Kolejne tury dopisywane do `tools/data/registry.json`.
+Tura 1 gotowa: `gebco2024` (kafel 0–90°E), `steffen2025_rsl`, `dated1`.
+
+**Tura 2** (wszystkie ✅, bez zapytań): `rosentau2021`, `kotthoff2022`, `steffen2025_rsl_sbaltic`, `esd2025` (suplement z paleo-DEM-ami), kafel GEBCO 0–90°N / 90°W–0 (domena RSL sięga 10°W), Natural Earth SR_50M i ETOPO2v2c (tło globu). Zbiory ❓ dopiero po ✅ w `0-03`.
 
 **Zakres**
-- Pobieranie po DOI / URL dla każdego zbioru z §3.
+- Pobieranie po DOI / URL dla każdego zbioru ✅ z §3.
 - Weryfikacja sum kontrolnych **przed** użyciem pliku; sumy trafiają do `manifest.json`.
 - Cache w `data/raw/`, pomijanie już pobranych.
 
 **DoD**
-- [ ] Każdy zbiór z §3 pobieralny jednym wywołaniem
+- [ ] Każdy zbiór ✅ z §3 pobieralny jednym wywołaniem (tura 2 w `registry.json`)
 - [x] Niezgodna suma kontrolna przerywa build z czytelnym komunikatem
 - [x] Powtórny run nie pobiera ponownie
 
-**Plan:** §6
+**Plan:** §3, §6
 
 ## `0-06` Define frame and manifest JSON contract with mandatory `datum`
 
-**Epik:** 0 · **Blokuje:** każdą emisję klatek · **Labels:** `blocker`, `contract`
+**Epik:** 0 · **Blokuje:** każdą emisję klatek, `I-05` · **Labels:** `blocker`, `contract`
 
-Kontrakt z §5: `schemaVersion`, `tBP`, `t14C`, `calCurve`, **`datum`**, `stageId`, `water`, `salinity`, `ice`, `gia`, `metrics`, `dataQuality`, `frame`, `sources`.
+**Kontrakt hybrydowy** (§5): pipeline liczy maski, progi, metryki i walidację; aplikacja dostaje dodatkowo siatki wysokości dziś (`grid/dem-baltic`, `grid/dem-europe`) i kostkę RSL (`grid/rsl`), żeby liczyć rzeźbę 3D na globie, przekrój Umeå → Gdańsk, wysokość w tooltipie i krzywą RSL dla klikniętego punktu (wymagania z makiety, §5.1).
 
-Pole `datum` jest obowiązkowe w manifeście **i w każdej klatce**. Powód jest ilościowy: poziomy faz jeziornych (+25 m BIL, +10 m Ancylus) jako skalary są poprawne **wyłącznie** względem geoidy współczesnej danemu *t*. Zalanie DEM-u w dzisiejszym układzie wysokościowym tą samą liczbą daje wynik jawnie fałszywy, bo rebound jest silnie zróżnicowany przestrzennie — **>285 m w Zatoce Botnickiej vs ~0 m na wybrzeżu Polski**.
+Klatka: `schemaVersion`, `tBP`, `t14C`, `calCurve`, **`datum`**, `stageId`, `water`, `salinity[]` (per basen), `sills[]` (stan per próg), `ice`, `gia`, `eslM`, `metrics`, `dataQuality`, `frame`, `sources`. Oś czasu: **co 1000 lat** (20 → 0 ka) + przekroje zdarzeniowe.
+
+Pole `datum` jest obowiązkowe w manifeście **i w każdej klatce**: poziomy faz jeziornych (+25 m BIL, +10 m Ancylus) są poprawne **wyłącznie** względem geoidy współczesnej *t* — rebound to **>285 m w Zatoce Botnickiej vs ~0 m na wybrzeżu Polski**.
 
 **Zakres**
 - JSON Schema dla klatki, manifestu, `timeline.json`, `sills.json`, `taxa.json`, `curves/*`.
+- Format binarny siatek (`grid/*.bin.gz`): nagłówek (magic, wersja, wymiary, bbox, skala, typ), wzór jak `relief.bin.gz` w `kmd-labs/el-nino`.
 - Fixture'y testowe (poprawne i celowo zepsute) obok schematu.
 - `schemaVersion` z polityką wersjonowania.
-- Enum `datum`: `contemporaneous-geoid` dla klatek. Transformacja do dzisiejszego układu (potrzebna przy porównaniu z obserwacjami RSL w `V-03`) opisana w `0-07`.
-- `ice` może być `null` (brak lądolodu w klatce, ~9,5–0 ka).
-- `gia.source` + `gia.earthModel` — z którego modelu GIA i wariantu lepkości policzono klatkę.
+- `ice` może być `null` (brak lądolodu w klatce, < 10 ka).
 
 Egzekwowanie schematu w pipeline'ie to `V-01`, w CI — `0-08`.
 
@@ -161,7 +171,8 @@ Egzekwowanie schematu w pipeline'ie to `V-01`, w CI — `0-08`.
 - [ ] Schemat odrzuca fixture klatki bez `datum`
 - [ ] Enum `dataQuality` = `modelled | interpolated | qualitative`
 - [ ] `ice: null` dopuszczalne, `ice: {}` bez `source` — nie
-- [ ] `gia.source` obowiązkowe i zgodne z decyzją `0-02`
+- [ ] `gia.source` + `gia.earthModel` obowiązkowe
+- [ ] Format `grid/*.bin.gz` opisany i z fixture'em czytanym w teście TypeScript
 
 **Plan:** §0.2, §5
 
@@ -169,17 +180,18 @@ Egzekwowanie schematu w pipeline'ie to `V-01`, w CI — `0-08`.
 
 **Epik:** 0 · **Labels:** `docs`
 
-Dwa artefakty z §9. `paleo-reconstruction-methodology.md` to specyfikacja matematyczna i geoprzestrzenna — **musi wskazywać konkretny plik i nazwę zmiennej** modelu GIA (`RSL` w `rsl_SK05_skan_<model>.nc`; po zgodzie `Topo` / `HDC`), nie pojęcie. To nie formalizm: plan wejściowy liczył eustatykę podwójnie **właśnie dlatego**, że formuła nie nazywała pola, które konsumuje.
+Dwa artefakty z §9. `paleo-reconstruction-methodology.md` **musi wskazywać konkretny plik i nazwę zmiennej** (`RSL` w `rsl_SK05_skan_<model>.nc`), nie pojęcie — plan wejściowy liczył eustatykę podwójnie **właśnie dlatego**, że formuła nie nazywała pola.
 
-`baltic-data-catalog.md` to raport z researchu: bezpośrednie linki, licencje, formaty, **tabela korelacji wiekowej** cal yr BP ↔ ¹⁴C BP ↔ BCE/CE dla wszystkich 7 faz, parametry liczbowe per przekrój, katalog współrzędnych punktów kluczowych.
+`baltic-data-catalog.md`: linki, licencje, formaty, **tabela korelacji wiekowej** cal yr BP ↔ ¹⁴C BP ↔ BCE/CE dla 7 faz, parametry liczbowe per przekrój, współrzędne punktów kluczowych, **tabela eustatyki co 1 ka** (Lambeck i in. 2014) z cytowaniem.
 
 **DoD**
-- [ ] Formuła `H_paleo = H_now − RSL(t)` (i wariant `H_now + [Topo(t) − Topo(0)]`) z nazwami plików i zmiennych
-- [ ] Jawnie zapisane, dlaczego **nie ma** osobnego członu eustatycznego
-- [ ] Metoda interpolacji w czasie między nierównymi krokami RSL (21,4; 20,2; … 0,9; 0 ka)
+- [ ] Formuła `H_paleo = H_now − RSL(t)` z nazwą pliku i zmiennej
+- [ ] Jawnie zapisane, dlaczego **nie ma** osobnego członu eustatycznego, a eustatyka służy tylko do odczytu w UI
+- [ ] Metoda interpolacji w czasie między nierównymi krokami RSL
+- [ ] Profil plastyczny grubości lodu: wzór, τ₀, uzasadnienie, ograniczenia
 - [ ] Tabela korelacji kompletna dla 7 faz
 - [ ] Odstępstwa źródeł od Andréna i in. 2011 wypisane, nie uśrednione
-- [ ] Transformacja `contemporaneous-geoid` ↔ dzisiejszy poziom morza zapisana jako formuła z nazwami pól
+- [ ] Transformacja `contemporaneous-geoid` ↔ dzisiejszy poziom zapisana jako formuła
 
 **Plan:** §0.1, §9
 
@@ -209,67 +221,75 @@ Rdzeń produktu. Kolejność wewnątrz epiku zgodna z §6 (Kolejność prac, p. 
 
 ## `C-01` Build base topo-bathy mosaic for 9–33°E / 53–67°N
 
-**Epik:** C · **Zależy od:** `0-05` · **Blokuje:** `C-02` · **Labels:** `data-pipeline`, `regime-c`
+**Epik:** C · **Zależy od:** `0-05` · **Blokuje:** `C-03`, `C-02` · **Labels:** `data-pipeline`, `regime-c`
 
-Baza z tury 1: **GEBCO 2024** (15″, okno = 5760 × 3360 komórek, min −739 m w Rowie Norweskim). Ulepszenia, gdy licencje zostaną potwierdzone: EMODnet DTM 2024 na dno, Copernicus DEM na ląd.
+Baza: **GEBCO 2024** (15″; okno Bałtyku = 5760 × 3360 komórek, min −739 m w Rowie Norweskim). Dwie siatki wyjściowe:
+- **okno Bałtyku** (9–33°E / 53–67°N) w rozdzielczości roboczej do flood-fill i metryk, plus wersja ~0,04° do `grid/dem-baltic`;
+- **domena RSL** (10°W–70°E / 45–85°N) w ~0,1° do `grid/dem-europe` — tło paleo na globie. Wymaga kafla GEBCO 90°W–0 (tura 2).
+
+EMODnet DTM 2024 tylko po potwierdzeniu licencji (`0-03`).
 
 **Zakres**
-- GEBCO 2024 jako baza dla całego okna.
-- EMODnet Digital Bathymetry **DTM 2024** (1/16′ ≈ 115 m, 59 kafli) na dno Bałtyku, Cieśnin Duńskich i Kattegatu — po rozstrzygnięciu licencji (`0-03`).
-- Przetwarzanie w **EPSG:3035** (ETRS89-LAEA, konwencja HELCOM), eksport w EPSG:4326.
-- Kontrola wobec BSBD (BSHC) i IOWTOPO2.
+- Przycięcie, resampling, przetwarzanie w **EPSG:3035**, eksport w EPSG:4326.
+- Kontrola wobec BSBD / IOWTOPO2 tylko jeśli ✅.
 
 **DoD**
-- [ ] Mozaika bez szwów i dziur w całym oknie
+- [ ] Mozaika bez szwów i dziur w oknie Bałtyku i w domenie RSL
 - [ ] Raport pokrycia i rozdzielczości per źródło
-- [ ] Udokumentowana metoda łączenia na linii brzegowej
+- [ ] Udokumentowana metoda łączenia (jeśli więcej niż jedno źródło)
 
 **Plan:** §3.3, §4.1
 
 ## `C-02` Integrate great-lake bathymetry (Ladoga, Onega, Vänern, Vättern)
 
-**Epik:** C · **Zależy od:** `C-01` · **Blokuje:** `C-03` · **Labels:** `data-pipeline`, `regime-c`
+**Epik:** C · **Zależy od:** `C-01` · **Blokuje:** `C-14` · **Labels:** `data-pipeline`, `regime-c`
 
-Batymetria wielkich jezior nie jest dodatkiem. **Vänern i Vättern leżą na trasie Rzeki Svea i korytarza Billingen**, Ładoga była częścią basenu w kilku fazach. Bez nich drenaży nie da się zamodelować — pipeline wygeneruje jeziora bez odpływu. **To jedyne dane na ścieżce krytycznej bez wskazanego zbioru** — źródła ustalić równolegle z M2.
+**GEBCO 2024 ma dla tych jezior tylko powierzchnię wody** (sprawdzone na danych z tury 1: Vänern płasko 44 m, Vättern 88 m, Onega ~23 m, Ładoga ~1 m). Onega (~35,5°E) leży **poza oknem Bałtyku** (9–33°E) — trafia tylko do siatki domeny RSL (`dem-europe`); okno trzeba poszerzyć, jeśli Onega ma brać udział w flood-fill. Vänern i Vättern leżą na trasie Rzeki Svea i korytarza Billingen, a Ładoga była częścią basenu w kilku fazach — bez batymetrii fazy jeziorne nie dostaną odpływów.
 
-**Zakres**
-- Krajowe batymetrie jeziorne dla Ładogi, Onegi, Vänern, Vättern.
-- Wtopienie w mozaikę `C-01` ze spójnym datum.
+Dotyczy tylko **faz jeziornych** (`C-14`) — paleo-DEM faz morskich (`C-03`) nie czeka na to zadanie.
+
+**Źródła bez zapytań, w kolejności:**
+1. **GLOBathy** (Khazaei i in. 2022) — globalna batymetria jezior, CC BY 4.0 do potwierdzenia w `0-03`.
+2. Otwarte dane krajowe (Szwecja: Vänern, Vättern) — tylko jeśli licencja otwarta.
+3. Fallback: **parametryczna misa** z opublikowanych głębokości maks. i średnich (fakty z literatury), `dataQuality: "modelled"`.
 
 **DoD**
-- [ ] Cztery batymetrie w mozaice
+- [ ] Cztery jeziora z batymetrią w mozaice, źródło i `dataQuality` per jezioro
 - [ ] Progi odpływowe widoczne w profilu wysokościowym
-- [ ] Licencje per jezioro w `SOURCES.md`
+- [ ] Licencje per jezioro w `SOURCES.md` (✅ albo literatura)
 
 **Plan:** §3.3
 
 ## `C-03` Compute GIA paleo-DEM frames
 
-**Epik:** C · **Zależy od:** `0-02`, `0-06`, `C-02` · **Blokuje:** `C-04`, `V-02`, `V-03`, `V-08` · **Labels:** `data-pipeline`, `regime-c`, `blocker`
-
-Obowiązuje formuła zależna od źródła (decyzja `0-02`):
+**Epik:** C · **Zależy od:** `0-06`, `C-01` · **Blokuje:** `C-04`, `V-02`, `V-03`, `V-08` · **Labels:** `data-pipeline`, `regime-c`, `blocker`
 
 ```
-H_paleo(x,y,t) = H_now(x,y) − RSL(x,y,t)               # Steffen & Kaufmann 2025, start
-H_paleo(x,y,t) = H_now(x,y) + [Topo(t) − Topo(0)]       # ICE-6G_C / GLAC-1D, po zgodzie
+H_paleo(x,y,t) = H_now(x,y) − RSL(x,y,t)        # Steffen & Kaufmann 2025, jedyny model GIA (0-02)
 ```
 
-**Bez osobnego członu eustatycznego.** Plan wejściowy podawał `+ ΔGIA − ΔEustatic`, co liczy eustatykę drugi raz — na dziesiątki metrów — bo zarówno RSL, jak i `Topo` są już wyrażone względem współczesnej sobie powierzchni morza. Znak przy `ΔGIA` był dodatkowo dwuznaczny.
+**Bez osobnego członu eustatycznego** — RSL zawiera już składnik eustatyczny i geoidalny. Plan wejściowy podawał `+ ΔGIA − ΔEustatic`, co liczy eustatykę drugi raz, na dziesiątki metrów.
 
-Kontrola punktowa na danych z tury 1 (model `sk1`): Umeå ~282 m przy 11,3 ka (najwyższa linia brzegowa ~286 m); Gdańsk −25 m przy 8,9 ka i −14 m przy 7,8 ka.
+Kontrola punktowa na danych z tury 1 (model `sk1`, **najbliższa komórka 1°**): Umeå ~282 m przy 11,3 ka (najwyższa linia brzegowa ~286 m); Gdańsk −25 m przy 8,9 ka i −14 m przy 7,8 ka. Interpolacja dwuliniowa w tych samych punktach daje 274 / −23,7 / −11,9 m — wybór metody przestrzennej ma znaczenie rzędu 10 m.
+
+Rozrzut 8 modeli Ziemi jest duży: maksimum RSL w Umeå od **195 m** (`j88`) do **274 m** (`sk1`, `sk3`). Wybór modelu wiodącego to decyzja merytoryczna, nie formalność.
 
 **Zakres**
 - Odczyt `RSL(time, lat, lon)` z `rsl_SK05_skan_<model>.nc` (1°, 19 nierównych kroków 21,4 ka → 0).
-- Wybór wiodącego modelu Ziemi spośród 8 wariantów; pozostałe jako pas niepewności lub kontrola.
-- Resampling 1° → siatka robocza, metoda udokumentowana.
-- 41 klatek 20–0 ka co 500 lat + 6 przekrojów zdarzeniowych — interpolacja w czasie między krokami modelu.
+- **21 klatek co 1000 lat** (20 → 0 ka) + ~6 przekrojów zdarzeniowych; interpolacja liniowa w czasie między krokami modelu.
+- Wybór wiodącego modelu Ziemi spośród 8 wariantów (uzasadnienie w `V-03`); pozostałe jako pas niepewności poziomu.
+- Resampling 1° → siatka robocza okna Bałtyku i ~0,1° domeny RSL; **ta sama metoda interpolacji przestrzennej** w pipeline'ie i w aplikacji (warunek ≤ 1 m z `I-01`).
+- **Maskowanie lodem:** pod zasięgiem DATED-1 (`C-07`) paleo-DEM nie jest powierzchnią terenu (RSL rośnie pod lądolodem, np. Umeå 21 → 11 ka) — komórki pod lodem oznaczone, nie interpretowane jako ląd ani morze.
+- **Prototyp oglądany na globie `I-05`** (tylko glob i relief z El Niño), nie na osobnej mapie 2D.
 
 **DoD**
-- [ ] 41 klatek + 6 przekrojów zdarzeniowych z `datum: "contemporaneous-geoid"`
+- [ ] 21 klatek + przekroje zdarzeniowe z `datum: "contemporaneous-geoid"`
 - [ ] Klatki poza krokami modelu z `dataQuality: "interpolated"`
 - [ ] `gia.source` i `gia.earthModel` w każdej klatce
-- [ ] Nazwa pliku i zmiennej GIA zapisana w `paleo-reconstruction-methodology.md`
+- [ ] Nazwa pliku i zmiennej zapisana w metodyce
 - [ ] Zero wystąpień osobnego członu eustatycznego w kodzie
+- [ ] Komórki pod lądolodem (DATED-1 `mc`) oznaczone w każdej klatce ≥ 10 ka
+- [ ] Metoda interpolacji przestrzennej zapisana w `manifest.json` i w metodyce
 
 **Plan:** §0.1, §1, §4.1
 
@@ -277,7 +297,7 @@ Kontrola punktowa na danych z tury 1 (model `sk1`): Umeå ~282 m przy 11,3 ka (n
 
 **Epik:** C · **Zależy od:** `C-03` · **Blokuje:** `C-11`, `C-13`, `C-14` · **Labels:** `data-pipeline`, `regime-c`, `blocker`
 
-Prosty próg `H < poziom` tworzy fałszywe jeziora w każdym zamkniętym obniżeniu terenu. Zbiornik musi być **hydrologicznie połączony z odpływem** — analiza spójnych składowych z zasiewem. Przy ~47 przekrojach to krok obowiązkowy, nie optymalizacja.
+Prosty próg `H < poziom` tworzy fałszywe jeziora w każdym zamkniętym obniżeniu terenu. Zbiornik musi być **hydrologicznie połączony z odpływem** — analiza spójnych składowych z zasiewem. Przy ~27 przekrojach to krok obowiązkowy, nie optymalizacja.
 
 ```python
 water_mask(t) = flood_fill(paleo_dem(t), level(t), seed=active_outlet(t))
@@ -302,7 +322,9 @@ Ten etap obejmuje **fazy morskie** (Yoldia, Mastogloia, Littorina, post-Littorin
 
 Katalog progów: współrzędne, rzędne progowe, okresy aktywności. **Billingen** (58,4°N 13,8°E), **Närke** (59,1°N 15,0°E), **Svea / Degerfors**, **Dana / Wielki Bełt**, **Darss**, **Drogden / Øresund**. Przesmyk karelsko-białomorski oznaczony jako *hipoteza historyczna, nie konsensus*.
 
-Rzędne progów **Närke i Billingen** brać z **SGU Strandförskjutningsmodell** — baza Rosentaua ma lukę właśnie w Szwecji. Jeśli `V-02` / `V-03` wykażą problem w fazach jeziornych, pierwszym podejrzanym jest ta część katalogu.
+Rzędne progów **Närke i Billingen**: z **SGU Strandförskjutningsmodell**, jeśli licencja okaże się otwarta (`0-03`), inaczej **wartości z publikacji** (fakty z cytowaniem) — bez zapytań. Baza Rosentaua ma lukę właśnie w Szwecji, więc przy problemach w `V-02` / `V-03` pierwszym podejrzanym jest ta część katalogu.
+
+Badanie literatury do katalogu (współrzędne, rzędne, okresy aktywności) może zacząć się od razu; zapis do `sills.json` wymaga schematu z `0-06`.
 
 > **Uwaga do kolejności z §6.** `C-14` potrzebuje zasiewu w aktywnej cieśninie, `C-06` rzędnych progowych, a `C-10` stanów progów (zasolenie w klatkach M3). Ten plik powstaje **razem z `C-03`** (M2), nie po nim.
 
@@ -335,21 +357,21 @@ BIL **+25 m**, Ancylus **+10 m** — poprawne tylko względem geoidy współczes
 
 ## `C-07` Assemble ice-sheet layer with uncertainty band
 
-**Epik:** C · **Zależy od:** `0-05` · **Blokuje:** `C-11` · **Labels:** `data-pipeline`, `regime-c`
+**Epik:** C · **Zależy od:** `0-05` · **Blokuje:** `C-11`, `I-05` · **Labels:** `data-pipeline`, `regime-c`
 
-**DATED-1** (Hughes i in. 2016, CC BY 3.0) jako **geometria wiodąca** (wariant `mc`) i jednocześnie pas min. / maks. przeniesiony **do danych**, nie do opisu. Dane z tury 1: `DATED-1_TimeSlices_shp.zip`, 58 × `TS<ka>_{min,mc,max}.shp`.
+**DATED-1** (Hughes i in. 2016, CC BY 3.0) to **jedyna geometria lądolodu**: wariant `mc` jako zasięg, `min` / `max` jako pas niepewności przeniesiony **do danych**. Dane z tury 1: 25 → 10 ka **co 1 ka** (`TS<ka>_{min,mc,max}.shp`), więc klatki 20 → 10 ka trafiają dokładnie w przekroje źródłowe — `ice.interpolated: false`. Interpolowane są tylko przekroje zdarzeniowe (np. 11 750 / 11 650). DATED-1 obejmuje też lądolody brytyjsko-irlandzki i barencki, widoczne na globie.
 
-**⛔ Stroeven i in. 2016** (izochrony 22,0–9,7 ka cal BP, gęstsze i dokładniejsze w niecce bałtyckiej) ma licencję **CC BY-NC-ND 4.0** — klauzula ND zakazuje publikacji uproszczonej, interpolowanej geometrii. Do czasu zgody autorów (`licensing-inquiries.md` #4) Stroeven jest **wyłącznie wewnętrzną kontrolą** w `validate.py`. Po zgodzie wchodzi jako geometria wiodąca, a DATED-1 zostaje pasem.
+Stroeven 2016 nie jest używany (CC BY-NC-ND, `0-02`).
 
-Grubość lodu (kopuła 2500–3000 m → 0 m na czole) tylko z ICE-6G_C lub GLAC-1D, czyli po zgodzie z `0-02`. Do tego czasu warstwa bez grubości.
+Archiwum zawiera 58 shapefile'i (sprawdzone 2026-10-31). Do ich odczytu trzeba dodać `pyogrio` (lub `geopandas`) do `tools/data/requirements.in` i `requirements.txt` — dziś ich tam nie ma. DATED-1 kończy się na 10 ka, a resztki lądolodu w Skandynawii przetrwały do ~9,7 ka; klatka 9 ka z `ice: null` jest uproszczeniem, które trzeba opisać w metodyce.
 
-Zasięg danych: DATED-1 kończy się na **10 ka**. Klatki młodsze nie mają lądolodu — `ice: null` (`0-06`), nie pusta geometria.
+**Grubość lodu** (rzeźba 3D na globie, tooltip): **profil plastyczny** od krawędzi `mc`: `h(d) = √(2·τ₀·d / (ρ_i·g))`, τ₀ ≈ 100 kPa → ~3000 m przy ~400 km od czoła. `ice.thickness: "plastic-profile"`, `dataQuality: "modelled"`, opis w UI jako schemat. Nie wchodzi do paleo-DEM-u (RSL zawiera już obciążenie lodem).
 
 **DoD**
-- [ ] Warstwa `ice` w każdej klatce ≥ 10 ka; `ice: null` w klatkach bez lądolodu
-- [ ] `ice.interpolated: true` na każdej klatce interpolowanej między przekrojami DATED-1
-- [ ] `ice.band: "dated1"` z geometrią min. / maks. (25–10 ka)
-- [ ] `ice.source: "dated1"` do czasu zgody na Stroevena; zero geometrii Stroevena w `src/assets/data/`
+- [ ] Warstwa `ice` (mc + min / max) w każdej klatce ≥ 10 ka; `ice: null` w młodszych
+- [ ] `ice.interpolated: false` w klatkach co 1 ka, `true` w przekrojach zdarzeniowych
+- [ ] Siatka grubości z profilu plastycznego, parametr τ₀ w `manifest.json`
+- [ ] `ice.source: "dated1"`
 
 **Plan:** §3.1, §4.1
 
@@ -403,34 +425,35 @@ Klasa reżimu (słodki / słonawy / morski) per faza z **IODP Exp. 347, Site M00
 
 **Epik:** C · **Zależy od:** `C-04`, `C-07`, `C-08`, `C-10` · **Blokuje:** `I-01`, `C-15` · **Labels:** `data-pipeline`, `regime-c`
 
-Jednolite **500 lat dla całego 20–0 ka** (41 klatek). Plan wejściowy proponował 1000 lat dla 8–0 ka — odrzucone, bo transgresja littorynowa, formowanie mierzei i jezior przybrzeżnych mieszczą się właśnie w 8–0 ka.
-
-Ten etap emituje klatki **faz morskich** (Yoldia, Mastogloia, Littorina, post-Littorina) plus przekroje zdarzeniowe littorynowe (początek ingresji, maksimum). To wystarcza do M3 — pierwszej działającej aplikacji. Fazy jeziorne i pozostałe przekroje to `C-15`.
+Krok **1000 lat** (§1): klatki 0 → 11 ka faz morskich (Yoldia, Mastogloia, Littorina, post-Littorina) plus przekroje zdarzeniowe littorynowe (początek ingresji ~8 350, maksimum ~6 750). Szybkie zdarzenia, których krok 1 ka nie złapie, niosą przekroje zdarzeniowe. To wystarcza do M3 — pierwszej działającej aplikacji. Fazy jeziorne i pozostałe przekroje to `C-15`.
 
 **DoD**
 - [ ] Klatki faz morskich w `frames/`, z kompletem pól kontraktu
 - [ ] `dataQuality` w każdej klatce
-- [ ] Zrealizowane w kolejności dziś → 8 ka, potem Yoldia (§6, Kolejność prac, p. 2)
+- [ ] Zrealizowane w kolejności dziś → 8 ka, potem Yoldia
+- [ ] `eslM` (eustatyka z `curves/esl`) w każdej klatce — tylko do odczytu w UI
 
 **Plan:** §1, §2
 
-## `C-12` curves.py — RSL sites and NKG uplift
+## `C-12` curves.py — RSL sites, eustatic curve and uplift
 
-**Epik:** C · **Zależy od:** `0-05` · **Blokuje:** `V-03`, `V-08` · **Labels:** `data-pipeline`, `regime-c`
+**Epik:** C · **Zależy od:** `0-05` · **Blokuje:** `V-03`, `V-08`, `C-11` · **Labels:** `data-pipeline`, `regime-c`
 
-Pliki w `curves/` pochodzące wprost ze źródeł — **nie zależą od paleo-DEM-u ani od licencji GIA**, więc mogą powstać zaraz po `0-05`:
+Pliki w `curves/` pochodzące wprost ze źródeł — **nie zależą od paleo-DEM-u**:
 
 | Plik | Źródło |
 | :-- | :-- |
-| `rsl-sites` | Rosentau i in. 2021 — 1099 wskaźników RSL, format HOLSEA, 3 klastry (regresja / transgresja / przejściowe) |
-| `uplift-nkg` | NKG2016LU, Vestøl i in. 2019 — po rozstrzygnięciu licencji siatek (`0-03`) |
+| `rsl-sites` | Rosentau i in. 2021 — 1099 wskaźników RSL, HOLSEA, 3 klastry (CC BY 4.0) |
+| `esl` | eustatyka co 1 ka — **wartości z literatury** (Lambeck i in. 2014, PNAS) z cytowaniem; linia „ocean” na wykresie krzywych i odczyt „ocean −X m” w karcie fazy |
+| `uplift` | NKG2016LU, jeśli licencja siatek ✅ (`0-03`); inaczej wartości punktowe z artykułu (CC BY) |
 
 `basin-metrics` powstaje w `C-13`.
 
 **DoD**
-- [ ] Dwa pliki w `curves/`
+- [ ] Trzy pliki w `curves/`
 - [ ] Klastry Rosentaua zachowane jako pole, nie spłaszczone
 - [ ] Daty w cal yr BP, z oryginalną datą ¹⁴C tam, gdzie baza ją podaje
+- [ ] `esl` z cytowaniem i opisem sposobu odczytu wartości
 
 **Plan:** §3.2, §5
 
@@ -448,7 +471,7 @@ Pliki w `curves/` pochodzące wprost ze źródeł — **nie zależą od paleo-DE
 
 ## `C-14` Extend water mask to lake phases with sill-seeded outlets
 
-**Epik:** C · **Zależy od:** `C-04`, `C-05`, `C-06` · **Blokuje:** `C-13`, `C-15`, `V-06` · **Labels:** `data-pipeline`, `regime-c`, `blocker`
+**Epik:** C · **Zależy od:** `C-02`, `C-04`, `C-05`, `C-06` · **Blokuje:** `C-13`, `C-15`, `V-06` · **Labels:** `data-pipeline`, `regime-c`, `blocker`
 
 Fazy jeziorne (BIL, Ancylus) i `deglaciation`: zasiew w **aktywnym progu** z `sills.json`, poziom z rzędnej progu (`C-06`). Rozstrzyganie przypadków z wieloma aktywnymi odpływami jednocześnie (np. Svea → Dana).
 
@@ -463,10 +486,10 @@ Fazy jeziorne (BIL, Ancylus) i `deglaciation`: zasiew w **aktywnym progu** z `si
 
 **Epik:** C · **Zależy od:** `C-11`, `C-14` · **Blokuje:** `V-12` · **Labels:** `data-pipeline`, `regime-c`
 
-Klatki faz `deglaciation`, `bil`, `ancylus` oraz przekroje zdarzeniowe: przed i po drenażu Billingen, maksimum ancylusowe, próg regresji ancylusowej. Razem z `C-11` daje komplet 47 klatek.
+Klatki faz `deglaciation`, `bil`, `ancylus` (12 → 20 ka co 1 ka) oraz przekroje zdarzeniowe: przed i po drenażu Billingen, maksimum ancylusowe, próg regresji ancylusowej. Razem z `C-11` daje komplet: 21 klatek + ~6 zdarzeniowych.
 
 **DoD**
-- [ ] 47 klatek w `frames/` łącznie z `C-11`
+- [ ] 21 klatek + przekroje zdarzeniowe w `frames/` łącznie z `C-11`
 - [ ] `water.type: "lake"` + `water.outlet` w każdej klatce fazy jeziornej
 - [ ] `dataQuality` w każdej klatce
 
@@ -517,6 +540,7 @@ Policzony poziom w punktach bazy Rosentau i in. 2021 (1099 wskaźników, GFZ `10
 - [ ] Ustalony i uzasadniony próg akceptacji
 - [ ] Rozkład reszt, nie tylko liczba zbiorcza
 - [ ] RMSE dla każdego z 8 modeli Ziemi Steffena i Kaufmanna — uzasadnia wybór wiodącego w `C-03`
+- [ ] Porównanie z polem południowobałtyckim (`steffen2025_rsl_sbaltic`) na wybrzeżu PL/DE
 
 **Plan:** §7
 
@@ -553,7 +577,7 @@ Gatunki wskaźnikowe jako **niezależna kontrola** rekonstrukcji: *Portlandia (Y
 
 **Epik:** V · **Zależy od:** `V-01`, `C-03`, `C-12` · **Labels:** `validation`
 
-Wymaga **pola współczesnej prędkości wypiętrzania** z modelu GIA — to osobny produkt, nie `Topo` ani RSL; źródło ustalane w `0-02`. Przy samym Steffenie i Kaufmannie można je przybliżyć gradientem RSL między krokami 0,9 ka i 0 — z jawną adnotacją, że to przybliżenie.
+Steffen i Kaufmann nie publikują pola współczesnej prędkości wypiętrzania, a modele, które je mają (ICE-6G_C), są wykluczone (`0-02`). Prędkość przybliżamy **gradientem RSL między krokami 0,9 ka i 0**, z jawną adnotacją, że to średnia z ostatnich ~900 lat, nie prędkość chwilowa. Odniesienie: NKG2016LU (jeśli ✅) albo wartości z artykułu.
 
 Gradient z modelu GIA vs NKG2016LU: maks. **~10,3 mm/rok przy Umeå**, **linia zerowa na wybrzeżu Niemiec i Polski**.
 
@@ -584,7 +608,7 @@ Deploy idzie na GitHub Pages (`npm run build:gh-pages`), więc rozmiar jest real
 
 **Epik:** V · **Zależy od:** `V-01`, `C-08`, `C-15` · **Labels:** `validation`
 
-Nałożenie klatek na mapy etapów z **Björcka 1995 / Andréna i in. 2011** dla 11,7 / 11,1 / 10,5 ka BP oraz na paleo-DEM-y z **ESD 16, 585 (2025)** — niezależną implementację tej samej metody (paleo-DEM-y co 500 lat na GEBCO_2023 z korektą ancylusową za Uścinowiczem, CC BY). ESD obejmuje tylko **11,7–0 ka** — dla BIL i deglacjacji zostają mapy Björcka / Andréna.
+Nałożenie klatek na mapy etapów z **Björcka 1995 / Andréna i in. 2011** dla przekrojów najbliższych 11,7 / 11,1 / 10,5 ka BP oraz na paleo-DEM-y z **ESD 16, 585 (2025)** — niezależną implementację tej samej metody (paleo-DEM-y co 500 lat na GEBCO_2023 z korektą ancylusową za Uścinowiczem, CC BY). ESD obejmuje tylko **11,7–0 ka** — dla BIL i deglacjacji zostają mapy Björcka / Andréna.
 
 > Skoro ESD 2025 to ta sama metoda liczona niezależnie, **rozbieżność linii brzegowej większa niż kilka kilometrów oznacza błąd u nas.**
 
@@ -602,38 +626,49 @@ Nałożenie klatek na mapy etapów z **Björcka 1995 / Andréna i in. 2011** dla
 
 # EPIC I · Kontrakt, emisja, integracja
 
-## `I-01` emit.py — TopoJSON, not rasters
+## `I-01` emit.py — grids, RSL cube and vector frames
 
 **Epik:** I · **Zależy od:** `C-11` · **Blokuje:** `I-02`, `V-11` · **Labels:** `data-pipeline`, `contract`
 
-Plan wejściowy proponował wystawić rastrowe „Paleo-DEM Time Slices / Delta Grids" jako artefakt runtime'owy. W zakresie 9–33°E / 53–67°N przy rozdzielczości EMODnet (~115 m) to siatka rzędu **20 000 × 15 000 komórek na przekrój** — przy ~47 przekrojach to nie jest aplikacja webowa.
+**Emisja hybrydowa** (§5, decyzja z 2026-10-31). Pełnorozdzielczy raster per klatka byłby za duży (20 000 × 15 000 komórek przy ~115 m), ale makieta potrzebuje wysokości w każdym punkcie: rzeźba 3D na globie, przekrój Umeå → Gdańsk, tooltip, krzywa RSL dla klikniętego punktu. Rozwiązanie: **jedna siatka dziś + kostka RSL**, z których aplikacja liczy `H_now − RSL(t)` sama, oraz **wektory** z wynikami, które wymagają flood-fill i walidacji.
 
-Obowiązuje: warstwy `land` / `water` / `ice` / `lake` / `rivers` jako **kwantyzowany, uproszczony TopoJSON**; raster (hipsometria) tylko jako opcjonalny, leniwy chunk w obniżonej rozdzielczości. Eksport w EPSG:4326.
+| Plik | Zawartość | Szacunek |
+| :-- | :-- | :-- |
+| `grid/dem-baltic.bin.gz` | H_now, okno Bałtyku, ~0,04°, int16 | ~200–400 KB |
+| `grid/dem-europe.bin.gz` | H_now, domena RSL, ~0,1°, int16 | ~400–600 KB |
+| `grid/rsl.bin.gz` | RSL wiodącego modelu, 1°, 19 kroków, float16 | ~30 KB |
+| `grid/ice-h-<tBP>.bin.gz` | grubość lodu z profilu plastycznego (≥ 10 ka) | małe, tylko klatki z lodem |
+| `frames/f-<tBP>.topo.json` | `water` / `lake` / `ice` (mc, min, max) / `coast`, kwantyzowany TopoJSON | ~100–200 KB / klatkę |
+| `frames/f-<tBP>.json` | poziom, odpływ, stany progów, zasolenie per basen, metryki | < 5 KB |
 
 **DoD**
-- [ ] Kwantyzacja i uproszczenie z parametrami w `manifest.json`
-- [ ] Brak rastrów w ścieżce krytycznej ładowania
-- [ ] `emit.py` sprawdza topologię po uproszczeniu lokalnie (bramka CI to `V-11`, które zależy od tego zadania)
+- [ ] Format siatek zgodny z `0-06`, parametry kwantyzacji i uproszczenia w `manifest.json`
+- [ ] Aplikacja odtwarza `H_paleo` z siatki i kostki RSL z błędem ≤ 1 m wobec pipeline'u (test)
+- [ ] `emit.py` sprawdza topologię po uproszczeniu lokalnie (bramka CI to `V-11`)
+- [ ] Pierwsze wejście ≤ 4 MB
 
 **Plan:** §5
 
-## `I-02` Wire src/assets/data into the app with lazy per-phase chunks
+## `I-02` Wire src/assets/data into the app with lazy per-frame loading
 
-**Epik:** I · **Zależy od:** `I-01` · **Labels:** `app`
+**Epik:** I · **Zależy od:** `I-01`, `I-05` · **Labels:** `app`
 
-Katalog `src/assets/data/` jest objęty `assets` w `angular.json`. Chunki **per faza**, ładowane leniwie — na starcie wystarczy klatka bieżąca i jej sąsiedzi na osi czasu.
+Siatki i kostka RSL ładowane na starcie (potrzebne do każdej klatki); klatki wektorowe leniwie — bieżąca i sąsiednie na osi czasu.
 
 **Zakres**
-- Serwis ładujący reaktywnie (sygnały), z mapą chunków z `manifest.json`.
-- Kontrola `schemaVersion` przy starcie.
-- Zgodność z układem HUD z `AGENTS.md` §2: suwak osi czasu 20 ka → 0 w dolnym docku (`.dock-wrap`, `app-timeline-slider` z markerami faz), przełącznik widoków (np. warstwy / zasolenie / lód) w prawym górnym (`app-dropdown align="right"`).
+- Serwis danych reaktywny (sygnały), z mapą plików z `manifest.json`, kontrolą `schemaVersion`.
+- Oś czasu w dolnym docku (`app-timeline-slider`): 20 ka → 0 co 1 ka, markery przekrojów zdarzeniowych, pasma faz, play / kroki — jak w makiecie.
+- Panele z makiety: **Faza** (nazwa, typ wody, PSU, `dataQuality`, `datum`, sporne, poziom model vs literatura, odpływ, powierzchnia, objętość, ocean −X m), **Przekrój** Umeå → Gdańsk, **Krzywe** (RSL w Umeå, Sztokholmie, Gdańsku + kliknięty punkt + ocean).
+- Tooltip: współrzędne, typ wody, PSU, grubość lodu, wysokość wzgl. ówczesnego oceanu i dziś; progi ze stanem.
+- Chipy warstw: lądolód, pas niepewności, brzeg dziś, brzeg −1000 lat, progi, linia przekroju, nazwy.
 
 **DoD**
 - [ ] Pierwsze wejście ładuje ≤ 4 MB
-- [ ] Przewinięcie osi czasu do innej fazy dociąga chunk bez blokowania wizualizacji
+- [ ] Przewinięcie osi czasu dociąga klatkę bez blokowania wizualizacji
 - [ ] Niezgodny `schemaVersion` daje czytelny błąd, nie pustą scenę
+- [ ] Wszystkie panele i tooltip z makiety działają na danych z `src/assets/data/`
 
-**Plan:** §5
+**Plan:** §5, §5.1
 
 ## `I-03` i18n — ids in data, long-form content in assets/content/{en,pl}
 
@@ -666,11 +701,36 @@ Zakres językowy: `Lang = 'en' | 'pl'` (stan `i18n.types.ts`). `AGENTS.md` dopus
 - Odsyłacze z kart `events.json` do pozycji źródłowych.
 
 **DoD**
-- [ ] Każda pozycja z `SOURCES.md` użyta w opublikowanych danych obecna w panelu z pełną atrybucją
+- [ ] Każda pozycja z `SOURCES.md` użyta w opublikowanych danych (w tym tło globu: GEBCO, ETOPO2, Natural Earth) obecna w panelu z pełną atrybucją
 - [ ] Każda karta zdarzenia linkuje do co najmniej jednego źródła
 - [ ] Test: żadne `sources: []` w kontrakcie
 
 **Plan:** §5, §9
+
+## `I-05` Globe scene ported from el-nino, centred on the Baltic
+
+**Epik:** I · **Zależy od:** `0-01`, `0-06` · **Blokuje:** `I-02` · **Labels:** `app`
+
+Decyzja z 2026-10-31: scena to **glob z `kmd-labs/el-nino` — tylko glob i relief, cała reszta pominięta**. Widok jest zbliżony na obszar zainteresowania, a próba obrócenia globu kończy się powrotem kamery na Bałtyk.
+
+**Zakres**
+- **Bierzemy z El Niño** (`src/app/components/globe/globe.component.ts`): renderer, scena, kamera i `OrbitControls`; sfera z teksturą lądu malowaną na płótnie equirectangular (`d3-geo`, `topojson-client`); `displacementMap` (`loadElevation`); cieniowanie reliefu (`reliefLayer`); poświata; kolory z `ThemeService.getTokenColor()`, napisy przez `i18n.t()` i `ThemeService.getFontFamily()`.
+- **Pomijamy:** pole SST i `recolorTexture`, `CurrentWeatherLayer`, regiony wpływu i `ImpactModalComponent`, bokeh, autoobrót, `EnsoStateService` / `EnsoMathService` (poza potrzebną matematyką sfery), `AnalyticsService`, tooltipy ENSO.
+- **Kamera:** start zbliżony na okno Bałtyku (~20°E / 58°N); `enablePan = false`; bez autoobrotu; zoom w zakresie „okno Bałtyku” ↔ „cała Europa”; **azymut i biegun ograniczone** (`minAzimuthAngle` / `maxAzimuthAngle`, `minPolarAngle` / `maxPolarAngle`) — przeciągnięcie daje lekkie przechylenie, a po puszczeniu kamera sprężyście wraca i **centruje się na Bałtyku**. Obrót globu poza Europę jest niemożliwy.
+- **Tło:** ETOPO2v2c (`displacementMap`, `scripts/fetch-elevation.mjs`), Natural Earth SR_50M (cieniowanie, `scripts/fetch-relief.mjs`), `world-atlas` land-50m — domena publiczna, jak w El Niño; poza domeną RSL przygaszone.
+- **Najpierw prototyp:** glob z reliefem na danych „dziś” służy od razu do oglądania prototypu `C-03` (paleo-DEM `H_now − RSL(t)` jako podmieniana tekstura / przemieszczenie w oknie Bałtyku).
+- **Paleo:** w domenie RSL tekstura i przemieszczenie generowane per klatka z `grid/dem-*` − RSL(t), z maską wody, lodu i zasoleniem z klatki; przewyższenie regulowane suwakiem.
+- Tryb 2D z makiety — do decyzji; domyślnie tylko glob.
+- Dropdown w prawym górnym rogu (`AGENTS.md` §2) — **do rozstrzygnięcia**; propozycja: Paleogeografia / Zasolenie / Lądolód.
+
+**DoD**
+- [ ] Glob działa na danych dziś (klatka 0) zanim powstaną klatki paleo
+- [ ] Start zbliżony na Bałtyk; nie da się obrócić globu poza Europę — próba daje przechylenie, a po puszczeniu kamera wraca i centruje się na Bałtyku
+- [ ] Z El Niño przeniesione tylko glob i relief — żadnych warstw SST, pogody, wpływów ani bokehu
+- [ ] Zmiana klatki podmienia teksturę i przemieszczenie bez przeładowania sceny
+- [ ] Desktop i mobile (`BreakpointService`) — tekstury 2k na mobile jak w El Niño
+
+**Plan:** §5.1
 
 ---
 
@@ -680,53 +740,54 @@ Zakres językowy: `Lang = 'en' | 'pl'` (stan `i18n.types.ts`). `AGENTS.md` dopus
 
 | Tor | Zadania | Warunek wejścia |
 | :-- | :-- | :-- |
-| **Fazy morskie** | `C-01` → `C-02` → `C-03` → `C-04` → `C-11` | `0-02` (ścieżka Steffena odblokowana), `0-06` |
-| **Fazy jeziorne** | `C-05` → `C-06` → `C-14` → `C-15` → `C-13` | `C-05` startuje razem z `C-03` |
+| **Fazy morskie** | `C-01` → `C-03` → `C-04` → `C-11` | `0-06`; dane z tury 1 już lokalnie |
+| **Fazy jeziorne** | `C-05` → `C-06` → `C-14` → `C-15` → `C-13` | `C-02` i `C-05`; research literatury od razu |
 | **Lądolód** | `C-07` | tylko `0-05`; DATED-1 już pobrany |
-| **Krzywe** | `C-12` | tylko `0-05`; nie zależy od paleo-DEM-u ani licencji GIA |
-| **Dokumentacja** | `0-03`, `0-07` | nic — można pisać od pierwszego dnia |
-| **i18n** | `I-03` | `0-06`; **musi startować najwcześniej**, nie najpóźniej |
+| **Krzywe** | `C-12` | tura 2 w `0-05` |
+| **Glob** | `I-05` | `0-01`, `0-06`; działa na klatce „dziś” przed paleo |
+| **Dokumentacja i licencje** | `0-03`, `0-07` | nic |
+| **i18n** | `I-03` | `0-06`; **musi startować najwcześniej** |
 | **CI** | `0-08` | `0-01`, `0-06` |
-| **Batymetria jezior** | research źródeł do `C-02` | nic — jedyne dane na ścieżce krytycznej bez wskazanego zbioru |
+| **Batymetria jezior** | `C-02` | research od razu; integracja po `C-01` |
 
 ## Co jest sztywno sekwencyjne
 
 ```
-0-01 ──> 0-04 ──> 0-05 ──> C-01 ──> C-02 ──> C-03 ──> C-04 ──> C-11 ──> I-01 ──> I-02
-                                               ▲        │        ▲
-0-02 ──────────────────────────────────────────┤        │   C-07, C-08, C-10
-0-06 ──────────────────────────────────────────┘        ▼
-                                  C-05 ──> C-06 ──> C-14 ──> C-15
-                                             └────> V-02
+0-01 ──> 0-04 ──> 0-05 ──> C-01 ──> C-03 ──> C-04 ──> C-11 ──> I-01 ──> I-02
+                                      ▲                 ▲                 ▲
+0-06 ─────────────────────────────────┘          C-07, C-08, C-10     I-05
+                      C-01 ──> C-02 ──────────────────┐
+                               C-05 ──> C-06 ──> C-14 ──> C-15
+                                          └────> V-02
 ```
 
 - `0-01` przed czymkolwiek — bez submodułu nie ma builda.
-- `0-02` przed `C-03` — źródło GIA musi być wybrane i wpisane, zanim pochodne wejdą do repo.
-- `0-06` przed każdą emisją klatek — `datum` jest w kontrakcie, nie w komentarzu.
-- `C-05` przed `C-06`, `C-10` i `C-14` — flood-fill faz jeziornych potrzebuje zasiewu w progu, poziom jeziorny rzędnej progu, zasolenie stanów progów.
-- `C-09` przed `C-08` — granice faz podaje się w cal yr BP, więc kalibracja jest wcześniej niż oś czasu.
+- `0-06` przed każdą emisją i przed `I-05` — format siatek i `datum` są w kontrakcie.
+- `C-02` przed `C-14` — fazy jeziorne bez batymetrii jezior nie mają odpływów.
+- `C-05` przed `C-06`, `C-10` i `C-14`.
+- `C-09` przed `C-08`.
 - `V-01` przed resztą epiku V.
-- `I-01` przed `I-02` i `V-11` — budżet 25/4 MB liczy się na wyjściu `emit.py`.
+- `I-01` przed `I-02` i `V-11`.
 
 ## Ryzyka sprzęgnięć
 
 | Sprzęgnięcie | Dlaczego boli | Reakcja |
 | :-- | :-- | :-- |
-| `C-05` ↔ SGU | rzędne Närke i Billingen z SGU, gdzie baza Rosentaua ma lukę | jeśli `V-02`/`V-03` padną na fazach jeziornych, najpierw zweryfikować rzędne SGU |
-| `C-05` vs kolejność z §6 | `C-10` i `C-14` potrzebują progów w kroku 2 | `C-05` w M2, w pakiecie z `C-03` |
+| `C-03` ↔ jeden model GIA | Steffen & Kaufmann (ANU-ICE 1998, 1°) to jedyny dozwolony model | 8 modeli Ziemi jako pas niepewności; `V-03` i ESD 2025 jako kontrola |
+| `C-05` ↔ SGU | rzędne Närke i Billingen; luka Rosentaua w Szwecji | SGU tylko jeśli ✅, inaczej liczby z publikacji |
+| `C-02` ↔ licencje jezior | GLOBathy / dane krajowe mogą okazać się ❓ | parametryczna misa z literatury |
+| `I-05` ↔ `I-01` | glob potrzebuje formatu siatek | format w `0-06` przed obydwoma |
 | `I-03` vs cały content | karty bez równoległości EN/PL = przepisywanie | `content/{lang}/` od pierwszego commita |
-| `0-02` vs start C | odmowa licencji ICE-6G_C / GLAC-1D | start na Steffenie i Kaufmannie (CC BY); podmiana źródła bez zmiany kontraktu |
-| `C-07` ↔ Stroeven | ND zakazuje publikacji pochodnej geometrii | DATED-1 wiodący; Stroeven tylko w `validate.py` |
 
 ## Kamienie milowe
 
 | | Kamień | Zadania | Bramka |
 | :-- | :-- | :-- | :-- |
 | **M1** | Pipeline stoi | `0-01`…`0-08` | `npm run data:build` przechodzi na puste wyjście, CI na PR-ach działa |
-| **M2** | Dziś → 8 ka | `C-01`, `C-02`, `C-03`, `C-05`, `C-07`, `C-08`, `C-09` | paleo-DEM-y z `datum`, oś czasu w cal yr BP |
-| **M3** | ★ **Pierwsza działająca aplikacja** | `C-04`, `C-10`, `C-11`, `I-01`, `I-02`, `I-03` | oś czasu klikalna dla faz morskich, ≤ 4 MB przy wejściu |
-| **M4** | Fazy jeziorne | `C-06`, `C-14`, `C-15`, `C-13` | BIL i Ancylus z poziomem z progu, 47 klatek |
+| **M2** | Dziś → 8 ka | `C-01`, `C-02`, `C-03`, `C-05`, `C-07`, `C-08`, `C-09` | paleo-DEM-y co 1 ka z `datum`, lądolód z DATED-1, oś czasu w cal yr BP |
+| **M3** | ★ **Pierwsza działająca aplikacja** | `C-04`, `C-10`, `C-11`, `I-01`, `I-02`, `I-03`, `I-05` | glob z fazami morskimi, oś czasu klikalna, ≤ 4 MB przy wejściu |
+| **M4** | Fazy jeziorne | `C-06`, `C-14`, `C-15`, `C-13` | BIL i Ancylus z poziomem z progu, komplet klatek |
 | **M5** | Walidacja ilościowa | `C-12`, `V-01`, `V-02`, `V-03`, `V-11` | sill-check zielony, RMSE w progu |
 | **M6** | Domknięcie | `I-04`, `V-06`, `V-07`, `V-08`, `V-12` | panel źródeł, nakładki kontrolne |
 
-**M3 jest celem, nie etapem.** Kolejność prac z §6 jest dobrana tak, by działająca aplikacja powstała **przed** ukończeniem całości — praca od końca ku początkowi istnieje właśnie po to. Dlatego maska wody i emisja są rozbite na etap morski (`C-04`, `C-11`) i jeziorny (`C-14`, `C-15`): M3 nie może zależeć od niczego z M4.
+**M3 jest celem, nie etapem.** Dlatego maska wody i emisja są rozbite na etap morski (`C-04`, `C-11`) i jeziorny (`C-14`, `C-15`), a batymetria jezior blokuje tylko M4.
