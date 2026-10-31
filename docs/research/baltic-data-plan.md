@@ -4,23 +4,22 @@
 
 ## Context
 
-W repozytorium stoi scaffold KMD (Angular 21): `AppComponent`, i18n EN/PL, submoduł design-systemu, a od `0-05` także `tools/data/fetch.py` z pierwszą turą danych. UI jest przesądzone przez `AGENTS.md` i **świadomie poza zakresem tego planu**. Plan odpowiada na jedno pytanie: skąd wziąć dane, jak je przetworzyć i w jakim kontrakcie wystawić aplikacji.
+W repozytorium stoi scaffold KMD (Angular 21): `AppComponent`, i18n EN/PL, submoduł design-systemu, a od `0-05` także `tools/data/fetch.py` z pierwszą turą danych. Plan odpowiada na pytanie: skąd wziąć dane, jak je przetworzyć i w jakim kontrakcie wystawić aplikacji. Scenę aplikacji opisuje §5.1 tylko w zakresie, w jakim narzuca wymagania na dane.
 
-Dokument jest scaleniem dwóch planów: wcześniejszego (kontrakt danych, budżety) i zewnętrznego planu researchu (7 faz postglacjalnych, katalog progów, biostratygrafia, sill-check). Z obu wzięte są mocne strony; z drugiego usunięty jest błąd w formule paleo-DEM (§0).
+Dokument jest scaleniem dwóch planów: wcześniejszego (kontrakt danych, budżety) i zewnętrznego planu researchu (7 faz postglacjalnych, katalog progów, biostratygrafia, sill-check). Z drugiego usunięty jest błąd w formule paleo-DEM (§0).
 
-**Ustalenia zakresowe:**
-- Zakres czasowy: **wyłącznie postglacjał, 20 ka → dziś**. *(Decyzja z 2026-10-31: wcześniejsze reżimy fanerozoiczny (541–2,6 Ma) i czwartorzędowy (2,6 Ma–20 ka) oraz mikroskala czterech wybrzeży na krajowym LiDAR-ze zostały usunięte z zakresu, razem z ich zadaniami.)*
-- Paleogeografia: **hybrydowo** — policzony paleo-DEM weryfikowany literaturą.
+**Ustalenia zakresowe** (stan na 2026-10-31):
+- Zakres czasowy: **wyłącznie postglacjał, 20 ka → dziś**. Fanerozoik, czwartorzęd i mikroskala czterech wybrzeży są poza zakresem.
+- **Wyłącznie zbiory, które nie wymagają zapytania o licencję** — licencja otwarta (CC BY, CC0, domena publiczna) zweryfikowana u źródła albo liczby z literatury z cytowaniem. Zbiory bez licencji lub z klauzulą ND (ICE-6G_C, GLAC-1D, ANU-ICE, Stroeven 2016) **nie są używane w żadnej postaci**, także do walidacji. Zapytania licencyjne nie są wysyłane.
+- Krok czasowy: **1000 lat** (21 klatek 20 → 0 ka) plus ~6 przekrojów zdarzeniowych.
+- Scena: **glob 3D z rzeźbą terenu i batymetrią**, jak w `kmd-labs/el-nino`, zbliżony na Europę, bez obrotu w poziomie (§5.1).
+- Dane runtime: **hybrydowo** — pipeline liczy maski, progi, metryki i walidację; aplikacja dostaje siatkę wysokości dziś + kostkę RSL (do rzeźby 3D, przekroju i sondy punktowej) oraz wektory i JSON-y per klatka (§5).
+- Paleogeografia: policzony paleo-DEM weryfikowany literaturą.
 - Warstwy: **lądolód**, **zasolenie i połączenie z oceanem**, **krzywe poziomu wody i wypiętrzania**. Archeologia i paleoklimat — poza zakresem.
-- Rozdzielczość: **500 lat** na jednej siatce dla całego Bałtyku (okno 9–33°E / 53–67°N).
-
-Kolejność prac w §6 jest dobrana tak, by działająca aplikacja (fazy morskie) powstała przed fazami jeziornymi.
 
 ---
 
 ## 0. Poprawki blokujące wobec planu wejściowego
-
-Trzy rzeczy do naprawienia, zanim powstanie pierwsza linia kodu ETL.
 
 ### 0.1 Formuła paleo-DEM podwójnie liczy eustatykę
 
@@ -30,24 +29,23 @@ Plan wejściowy podaje:
 H_paleo(x,y,t) = H_now(x,y) + ΔGIA(x,y,t) − ΔEustatic(t)        ← BŁĘDNE
 ```
 
-Formuła nie nazywa pola modelu GIA, które konsumuje. Przy najbardziej naturalnym odczycie — `Topo` z ICE-6G_C — paleotopografia jest podana **względem współczesnej sobie powierzchni morza**, czyli już zawiera składnik eustatyczny i geoidalny. Odjęcie `ΔEustatic(t)` liczy ten sam sygnał drugi raz, na dziesiątki metrów. Znak przy `ΔGIA` jest dodatkowo dwuznaczny: jeśli to wypiętrzenie od czasu *t*, cofając się w czasie trzeba je odjąć, nie dodać.
+Formuła nie nazywa pola modelu GIA, które konsumuje. Pola RSL i paleotopografii z modeli GIA są podane **względem współczesnej sobie powierzchni morza**, czyli już zawierają składnik eustatyczny i geoidalny. Odjęcie `ΔEustatic(t)` liczy ten sam sygnał drugi raz, na dziesiątki metrów.
 
-Obowiązuje — w zależności od źródła GIA (§3.2, decyzja `0-02`):
+Obowiązuje:
 
 ```
-H_paleo(x,y,t) = H_now(x,y) − RSL(x,y,t)                       ← Steffen & Kaufmann 2025, zmienna RSL
-H_paleo(x,y,t) = H_now(x,y) + [Topo(t) − Topo(0)]               ← ICE-6G_C `Topo` / GLAC-1D `HDC`
+H_paleo(x,y,t) = H_now(x,y) − RSL(x,y,t)        ← Steffen & Kaufmann 2025, zmienna RSL w rsl_SK05_skan_<model>.nc
 ```
 
-W obu wariantach **nie ma osobnego członu eustatycznego**: RSL i `Topo` są już wyrażone względem współczesnego sobie poziomu morza. RSL Steffena i Kaufmanna jest w metrach względem 1950, **dodatnie = morze wyżej niż dziś**. Osobny człon eustatyczny byłby uprawniony **tylko** przy czystym polu odkształcenia bez członu oceanicznego. W `paleo-reconstruction-methodology.md` (§9) formuła musi wskazywać **plik i nazwę zmiennej**, nie pojęcie.
+RSL jest w metrach względem 1950, **dodatnie = morze wyżej niż dziś**. **Nie ma osobnego członu eustatycznego.** Krzywa eustatyczna (§3.2) służy wyłącznie do odczytu „ocean −X m względem dziś” w UI, nigdy do liczenia paleo-DEM-u. W `paleo-reconstruction-methodology.md` formuła musi wskazywać **plik i nazwę zmiennej**, nie pojęcie.
 
 ### 0.2 Datum wyniku musi być zapisany w kontrakcie
 
-Poziomy faz jeziornych (+25 m BIL, +10 m Ancylus) jako skalary są poprawne **wyłącznie** dla paleo-DEM-u wyrażonego względem współczesnej sobie geoidy — powierzchnia jeziora jest wtedy powierzchnią ekwipotencjalną, czyli stałą. Zalanie DEM-u w **dzisiejszym** układzie wysokościowym tą samą liczbą daje wynik jawnie fałszywy, bo rebound jest silnie zróżnicowany przestrzennie (>285 m w Zatoce Botnickiej vs ~0 na wybrzeżu Polski). Pole `datum` jest obowiązkowe w `manifest.json` i w każdej klatce; klatki mają `contemporaneous-geoid`. Porównania z obserwacjami RSL (wyrażonymi względem dzisiejszego poziomu, `V-03`) wymagają jawnej transformacji, opisanej w `paleo-reconstruction-methodology.md`.
+Poziomy faz jeziornych (+25 m BIL, +10 m Ancylus) jako skalary są poprawne **wyłącznie** dla paleo-DEM-u wyrażonego względem współczesnej sobie geoidy — powierzchnia jeziora jest wtedy ekwipotencjalna, czyli stała. Zalanie DEM-u w **dzisiejszym** układzie tą samą liczbą daje wynik jawnie fałszywy, bo rebound jest silnie zróżnicowany przestrzennie (>285 m w Zatoce Botnickiej vs ~0 na wybrzeżu Polski). Pole `datum` jest obowiązkowe w `manifest.json` i w każdej klatce; klatki mają `contemporaneous-geoid`. Porównania z obserwacjami RSL (`V-03`) wymagają jawnej transformacji, opisanej w metodyce.
 
 ### 0.3 Maska wody wymaga flood-fill, nie progu
 
-Prosty próg `H < poziom` tworzy fałszywe jeziora w każdym zamkniętym obniżeniu terenu. Zbiornik musi być **hydrologicznie połączony z progiem odpływu** — analiza spójnych składowych z zasiewem w cieśninie aktywnej dla danego *t*. Przy ~47 przekrojach to krok obowiązkowy, nie optymalizacja.
+Prosty próg `H < poziom` tworzy fałszywe jeziora w każdym zamkniętym obniżeniu terenu. Zbiornik musi być **hydrologicznie połączony z progiem odpływu** — analiza spójnych składowych z zasiewem w cieśninie aktywnej dla danego *t*.
 
 ---
 
@@ -55,158 +53,171 @@ Prosty próg `H < poziom` tworzy fałszywe jeziora w każdym zamkniętym obniże
 
 | Czas | Krok | Klatki | Charakter |
 | :-- | :-- | :-- | :-- |
-| 20 ka → 0 | 500 lat | 41 + ~6 zdarzeniowych | własny paleo-DEM z modelu GIA, lądolód, zasolenie |
+| 20 ka → 0 | 1000 lat | 21 + ~6 zdarzeniowych | paleo-DEM z RSL Steffena i Kaufmanna, lądolód DATED-1, zasolenie per basen |
 
-**Decyzja o kroku.** Plan wejściowy proponował 500 lat dla 20–8 ka i 1000 lat dla 8–0 ka. Odrzucone: transgresja littorynowa, formowanie mierzei i jezior przybrzeżnych mieszczą się w 8–0 ka. Obowiązuje **jednolite 500 lat dla 20–0 ka** (41 klatek) plus przekroje zdarzeniowe: przed i po drenażu Billingen, maksimum ancylusowe, próg regresji ancylusowej, początek ingresji littorynowej, maksimum littorynowe.
+**Decyzja o kroku: 1000 lat** (zmiana z 500 lat, 2026-10-31). Uzasadnienie:
+- **Lądolód przestaje być interpolowany.** DATED-1 ma przekroje dokładnie co 1 ka (25 → 10 ka), więc klatki 20 → 10 ka trafiają w dane źródłowe (`ice.interpolated: false`).
+- **Rozdzielczość źródła RSL** to 19 nierównych kroków (21,4; 20,2; 19,1; 17,9; 16,8; 15,6; 14,1; 13,0; 11,3; 10,2; 8,9; 7,8; 6,8; 5,7; 4,4; 3,2; 2,0; 0,9; 0 ka), średnio ~1,1 ka. Krok 500 lat sugerowałby precyzję, której model nie ma. Klatki RSL nadal są interpolowane w czasie (`dataQuality: "interpolated"` poza 0 ka).
+- Mniej klatek = mniejszy budżet i szybsza walidacja.
 
-**Klatki gęstsze niż model są interpolowane.** Pola RSL Steffena i Kaufmanna mają 19 **nierównych** kroków (21,4; 20,2; 19,1; 17,9; 16,8; 15,6; 14,1; 13,0; 11,3; 10,2; 8,9; 7,8; 6,8; 5,7; 4,4; 3,2; 2,0; 0,9; 0 ka), więc niemal każda klatka 500-letnia powstaje z interpolacji w czasie i dostaje `dataQuality: "interpolated"`. ICE-6G_C (0–21 ka co 500 lat) albo GLAC-1D (co 100 lat) usunęłyby ten problem — po uzyskaniu zgody (`0-02`).
+**Koszt:** transgresja littorynowa i drenaż Billingen dzieją się szybciej niż 1 ka. Dlatego zostają **przekroje zdarzeniowe**: przed i po drenażu Billingen (~11 750 / 11 650), maksimum ancylusowe (~10 300), próg regresji ancylusowej (~10 050), początek ingresji littorynowej (~8 350), maksimum littorynowe (~6 750). Te przekroje mają lód interpolowany między przekrojami DATED-1 albo `ice: null`.
 
-**Uczciwość wobec niepewności jest wymogiem, nie ozdobą.** Flaga `dataQuality` i pas min./maks. lądolodu są w danych, nie tylko w opisie — inaczej aplikacja sugeruje precyzję, której źródła nie mają.
+**Uczciwość wobec niepewności jest wymogiem, nie ozdobą.** Flaga `dataQuality` i pas min./maks. lądolodu są w danych, nie tylko w opisie.
 
 ---
 
 ## 2. Chronologia: siedem faz
 
-Osnowa: **cal yr BP** (Present = 1950). Wszystkie daty ¹⁴C ze starszej literatury kalibrowane **IntCal20** — bez tego daty z Björcka 1995 przesuwają się o ~1000–1500 lat w późnym glacjale. W `timeline.json` trzymamy obie wartości plus użytą krzywą.
+Osnowa: **cal yr BP** (Present = 1950). Wszystkie daty ¹⁴C ze starszej literatury kalibrowane **IntCal20**. W `timeline.json` trzymamy obie wartości plus użytą krzywą.
 
 | ID | Faza | cal yr BP | Zbiornik | Procesy |
 | :-- | :-- | :-- | :-- | :-- |
-| `deglaciation` | Maksimum zlodowacenia i recesja SIS | ~20 000 – 16 000 | lądolód / zastoiska | wycofywanie lądolodu skandynawskiego (fazy pomorska, gardzieńska), pierwsze zastoiska marginalne |
-| `bil` | Bałtyckie Jezioro Lodowe | ~16 000 – 11 700 | słodkowodny zaporowy | spiętrzenie do **+25 m** nad ówczesnym oceanem; **dwa** drenaże w rejonie Billingen — pierwszy ~13 000 BP (~10 m), ponowne zatamowanie w młodszym dryasie, finalny ~11 620–11 700 BP ze spadkiem **25–28 m** |
-| `yoldia` | Morze Yoldiowe | ~11 700 – 10 700 | słonawy (krótka faza) → słodki | połączenie przez Cieśninę Närke w środkowej Szwecji; napływ zimnych wód słonych tylko w ~11 700–11 100; wypiętrzanie izostatyczne zamyka cieśninę |
-| `ancylus` | Jezioro Ancylusowe | ~10 700 – 9 800 | słodkowodny | izolacja wskutek wypiętrzania; poziom **+10 m**; transgresja na południu; odpływ najpierw **Rzeką Svea** (Degerfors), potem **Rzeką Dana** przez Cieśniny Duńskie → regresja |
-| `mastogloia` | Morze Mastogloiowe (initial Littorina) | ~9 800 – 8 500 | przejściowy słonawy | eustatyczny wzrost oceanu przekracza progi Wielkiego Bełtu i Øresundu; powolna ingresja |
-| `littorina` | Morze Litorynowe | ~8 500 – 4 000 | morski (optimum) | maksymalna transgresja; zasolenie wyraźnie wyższe niż dziś; zatopienie równin południowych przy jednoczesnym wynurzaniu Zatoki Botnickiej |
-| `post-littorina` | Morze Limneowe i Myowe → Bałtyk współczesny | ~4 000 – 0 | słonawy | wypłycenie Cieśnin Duńskich ogranicza wlewy; spadek zasolenia do stanu obecnego |
+| `deglaciation` | Maksimum zlodowacenia i recesja SIS | ~20 000 – 16 000 | lądolód / zastoiska | wycofywanie lądolodu skandynawskiego, pierwsze zastoiska marginalne |
+| `bil` | Bałtyckie Jezioro Lodowe | ~16 000 – 11 700 | słodkowodny zaporowy | spiętrzenie do **+25 m** nad ówczesnym oceanem; **dwa** drenaże w rejonie Billingen — pierwszy ~13 000 BP (~10 m), finalny ~11 620–11 700 BP ze spadkiem **25–28 m** |
+| `yoldia` | Morze Yoldiowe | ~11 700 – 10 700 | słonawy (krótko) → słodki | połączenie przez Cieśninę Närke; napływ słonych wód tylko w ~11 700–11 100 |
+| `ancylus` | Jezioro Ancylusowe | ~10 700 – 9 800 | słodkowodny | izolacja wskutek wypiętrzania; poziom **+10 m**; odpływ **Rzeką Svea**, potem **Rzeką Dana** → regresja |
+| `mastogloia` | Morze Mastogloiowe (initial Littorina) | ~9 800 – 8 500 | przejściowy słonawy | eustatyczny wzrost oceanu przekracza progi Wielkiego Bełtu i Øresundu |
+| `littorina` | Morze Litorynowe | ~8 500 – 4 000 | morski (optimum) | maksymalna transgresja; zasolenie wyższe niż dziś |
+| `post-littorina` | Morze Limneowe i Myowe → Bałtyk współczesny | ~4 000 – 0 | słonawy | wypłycenie Cieśnin Duńskich ogranicza wlewy |
 
-**Granice faz do rozstrzygnięcia jednym źródłem.** Koniec fazy ancylusowej jest podawany jako 9 800 albo 9 500 cal BP w zależności od autora. Przyjmujemy wartości za **Andrén i in. 2011** i zapisujemy odstępstwa innych syntez w `baltic-data-catalog.md` — nie uśredniamy.
+**Granice faz jednym źródłem:** **Andrén i in. 2011**; odstępstwa innych syntez w `baltic-data-catalog.md`, bez uśredniania.
 
-**Dane do oznaczenia jako sporne, nie jako fakt:**
-- czas trwania finalnego drenażu Billingen — „1–2 lata" to jedno z oszacowań, nie konsensus;
-- zawleczenie *Mya arenaria* — datowania muszli z Danii wskazują ~1245–1295 n.e. (hipoteza nordycka), nie XVI/XVII w.;
-- zasolenie littorynowe — „12–18 PSU" to górna granica publikowanych wartości dla Bałtyku właściwego; wymaga rozbicia na baseny.
+**Sporne, nie fakt:** czas trwania finalnego drenażu Billingen („1–2 lata” to jedno oszacowanie); zawleczenie *Mya arenaria* (~1245–1295 n.e. vs XVI/XVII w.); zasolenie littorynowe „12–18 PSU” to górna granica dla Bałtyku właściwego — rozbijać na baseny.
 
 ---
 
 ## 3. Rejestr źródeł
 
-Licencje i statusy: [`SOURCES.md`](../../SOURCES.md) (źródło prawdy). Tu tylko rola każdego zbioru w planie.
+Licencje i statusy: [`SOURCES.md`](../../SOURCES.md) (źródło prawdy). **Reguła:** zbiór wchodzi do pipeline'u tylko ze statusem ✅. Status ❓ oznacza „licencja do sprawdzenia na stronie źródła”; jeśli okaże się, że wymaga zapytania albo ma klauzulę ND — zbiór wypada.
 
 ### 3.1 Lądolód
 
 | Dane | Źródło | Rola |
 | :-- | :-- | :-- |
-| Zasięg SIS 25–10 ka co 1000 lat, warianty min. / najbardziej prawdopodobny / maks. | DATED-1, Hughes i in. 2016, PANGAEA `10.1594/PANGAEA.848117` (CC BY 3.0) | **geometria wiodąca** + pas niepewności |
-| Izochrony deglacjacji Fennoskandii, 22,0–9,7 ka cal BP | Stroeven i in. 2016, *QSR* (**CC BY-NC-ND 4.0** ⛔) | gęstsze i dokładniejsze w niecce bałtyckiej (moment otwarcia Billingen), ale klauzula ND zakazuje publikacji pochodnych — **tylko wewnętrzna kontrola** w `validate.py`, dopóki autorzy nie wyrażą zgody |
-| Grubość lodu | ICE-6G_C / GLAC-1D (po zgodzie, `0-02`) | kopuła 2500–3000 m w centrum → 0 m na czole; bez zgody warstwa bez grubości |
+| Zasięg SIS i innych lądolodów eurazjatyckich, 25–10 ka co 1000 lat, warianty min. / mc / maks. | DATED-1, Hughes i in. 2016, PANGAEA `10.1594/PANGAEA.848117` (CC BY 3.0) ✅ | **jedyna geometria lądolodu** + pas niepewności; obejmuje też lądolód brytyjsko-irlandzki i barencki, widoczne na globie |
+| Grubość lodu | **profil plastyczny** liczony od krawędzi DATED-1: `h(d) = √(2·τ₀·d / (ρ_i·g))`, τ₀ ≈ 100 kPa | kopuła ~3000 m przy ~400 km od czoła; `dataQuality: "modelled"`, oznaczona jako schematyczna. Służy wyłącznie do rzeźby 3D i tooltipa — nie wchodzi do paleo-DEM-u (RSL zawiera już obciążenie) |
 
-### 3.2 Model GIA i poziom wody
+### 3.2 Model GIA, poziom wody, krzywe
 
 | Dane | Źródło | Rola |
 | :-- | :-- | :-- |
-| Pola RSL, 1°, 10°W–70°E / 45–85°N, 21,4 ka → 0, 8 modeli Ziemi | **Steffen & Kaufmann 2025**, Zenodo `10.5281/zenodo.15481755` (CC BY 4.0) | **podstawa paleo-DEM-u bez czekania na licencje**; ANU-ICE (1998) |
-| Paleotopografia `Topo`, siatka 10′, 0–21 ka co 500 lat | ICE-6G_C (VM5a), Peltier i in. 2015 — dystrybucja PMIP4 | ulepszenie jakości po zgodzie; także pole współczesnej prędkości wypiętrzania do `V-08` |
-| `HDC` + `ICEM`, 0,5°, 26 ka → 0 co 100 lat | GLAC-1D, Tarasov i in. — PMIP4 | ulepszenie po zgodzie; krok 100 lat usuwa interpolację przekrojów zdarzeniowych |
-| Paleo-DEM-y 0,01°, 11,7–0 ka | ESD 16, 585 (2025), Miluch i in. (CC BY 4.0) | **tylko kontrola** (`V-12`) — nie obejmuje BIL ani deglacjacji, SELEN napędzany ICE-5G |
-| Rekonstrukcje linii brzegowych Szwecji | SGU Strandförskjutningsmodell | rzędne progów Närke i Billingen do `sills.json` — luka bazy Rosentaua jest właśnie w Szwecji |
-| Walidacja ilościowa (1099 wskaźników RSL) | **Rosentau i in. 2021**, GFZ `10.5880/GFZ.1.3.2020.003` | format HOLSEA; klastry: regresja / transgresja / przejściowe |
-| Współczesne wypiętrzanie | NKG2016LU, Vestøl i in. 2019 | maks. 10,3 mm/rok przy Umeå; linia zerowa na wybrzeżu DE/PL |
-| Projekt SINCOS | RSL dla SW Bałtyku | uzupełnienie dla strefy niemieckiej |
+| Pola RSL, 1°, 10°W–70°E / 45–85°N, 21,4 ka → 0, 8 modeli Ziemi | **Steffen & Kaufmann 2025**, Zenodo `10.5281/zenodo.15481755` (CC BY 4.0) ✅ | **jedyny model GIA**; obejmuje niemal całą widoczną na globie Europę |
+| RSL południowego Bałtyku, 5–25°E / 52–60°N | Steffen & Kaufmann 2025, `10.5281/zenodo.15488259` (CC BY 4.0) ✅ | kontrola zgodności z polem głównym na południowym wybrzeżu |
+| Paleo-DEM-y 0,01°, 11,7–0 ka | ESD 16, 585 (2025), Miluch i in. (CC BY 4.0) ✅ | **kontrola** (`V-12`) |
+| Walidacja ilościowa (1099 wskaźników RSL) | Rosentau i in. 2021, GFZ `10.5880/GFZ.1.3.2020.003` (CC BY 4.0) ✅ | `V-03`, wybór wiodącego modelu Ziemi |
+| Globalny poziom oceanu (eustatyka) co 1 ka | **liczby z literatury**: Lambeck i in. 2014, PNAS 111, 15296 — wartości ESL odczytane z tabeli/wykresu, z cytowaniem | tylko odczyt „ocean −X m” w karcie fazy i linia „ocean” na wykresie krzywych |
+| Współczesne wypiętrzanie | NKG2016LU, Vestøl i in. 2019 — licencja siatek ❓ do sprawdzenia u Lantmäteriet | `V-08`; jeśli wymaga zapytania, `V-08` porównuje z wartościami z artykułu (CC BY) |
+| Rzędne progów Närke i Billingen | SGU Strandförskjutningsmodell ❓ albo wartości z literatury | `sills.json`; jeśli licencja SGU wymaga zapytania — tylko liczby z publikacji |
 
-**Kolejność fallbacków GIA:** ICE-6G_C → GLAC-1D → **Steffen & Kaufmann 2025** → ESD 2025 (tylko 11,7–0 ka). Ponieważ ICE-6G_C, GLAC-1D i ANU-ICE nie mają licencji (tylko prośbę o cytowanie), **praca startuje na Steffenie i Kaufmannie**, a lepsze modele wchodzą jako podmiana źródła, gdy przyjdzie zgoda.
+**Odrzucone (wymagają zapytania lub mają ND):** ICE-6G_C, GLAC-1D, ANU-ICE (brak licencji), Stroeven i in. 2016 (CC BY-NC-ND). Konsekwencje: brak grubości lodu z modelu (zastąpiona profilem plastycznym), brak pola współczesnej prędkości wypiętrzania (przybliżenie gradientem RSL 0,9 ka → 0), izochrony deglacjacji tylko co 1 ka.
 
-### 3.3 Batymetria i topografia bazowa — zakres **9°E–33°E, 53°N–67°N**
+### 3.3 Batymetria, topografia i tło globu
 
-| Dane | Źródło | Rozdz. |
+| Dane | Źródło | Rola |
 | :-- | :-- | :-- |
-| Ląd i dno — baza | GEBCO 2024 (pobrane, tura 1) | 15″ |
-| Dno Bałtyku, Cieśnin Duńskich, Kattegatu — ulepszenie | EMODnet Digital Bathymetry **DTM 2024** (licencja do potwierdzenia) | 1/16′ ≈ 115 m, 59 kafli |
-| Ląd — ulepszenie | Copernicus DEM GLO-30 | 30 m |
-| **Ładoga, Onega, Vänern, Vättern** | krajowe batymetrie jeziorne — **źródła nieustalone** | — |
-| Kontrola | BSBD (BSHC) `bshc.pro/data`; IOWTOPO2 | 500 m |
-
-> Batymetria wielkich jezior nie jest dodatkiem. Vänern i Vättern leżą na trasie Rzeki Svea i korytarza Billingen, Ładoga była częścią basenu w kilku fazach. Bez nich drenaży nie da się zamodelować — pipeline wygeneruje jeziora bez odpływu.
+| Ląd i dno, okno Bałtyku i domena RSL | GEBCO 2024, 15″ (domena publiczna z atrybucją) ✅ — kafle 0–90°N / 0–90°E (pobrany) i **0–90°N / 90°W–0** (do pobrania, dla 10°W–0) | `H_now` paleo-DEM-u |
+| Dno Bałtyku — ulepszenie | EMODnet DTM 2024, 1/16′ ❓ (DataCite nie podaje licencji; sprawdzić na portalu EMODnet) | tylko jeśli licencja otwarta potwierdzi się na stronie |
+| Tło globu poza domeną RSL | jak w El Niño: ETOPO2v2c (NOAA, domena publiczna) jako `displacementMap`, Natural Earth SR_50M (domena publiczna) jako cieniowanie, `world-atlas` land-50m (Natural Earth) jako kontur lądu | współczesna Ziemia, przygaszona poza domeną paleo |
+| **Ładoga, Onega, Vänern, Vättern** | **GEBCO ma tylko powierzchnię jezior** (sprawdzone: Vänern płasko 44 m, Vättern 88 m). Kandydaci bez zapytania: GLOBathy (Khazaei i in. 2022, CC BY 4.0 — do potwierdzenia), krajowe dane otwarte (Szwecja). Fallback: **parametryczna misa** z opublikowanych głębokości maks./średnich (fakty z literatury), `dataQuality: "modelled"` | progi i odpływy faz jeziornych |
+| Kontrola | BSBD (BSHC) ❓ CC BY 3.0 z ograniczeniami; IOWTOPO2 ❓ | tylko jeśli ograniczenia nie wymagają zapytania |
 
 ### 3.4 Zasolenie i cieśniny
 
 | Dane | Źródło |
 | :-- | :-- |
-| Proxy zasolenia i temperatury | **IODP Exp. 347, Site M0059** — Kotthoff i in. 2022, PANGAEA `10.1594/PANGAEA.943832` (okrzemki, palinomorfy, geochemia); przejście do Littoriny w ~200 lat około 7,4 ka cal BP |
-| Katalog progów i cieśnin | współrzędne + rzędne progowe + okresy aktywności: **Billingen** (58,4°N 13,8°E), **Närke** (59,1°N 15,0°E), **Svea / Degerfors**, **Dana / Wielki Bełt**, **Darss**, **Drogden / Øresund**; przesmyk karelsko-białomorski oznaczony jako *hipoteza historyczna, nie konsensus* |
-| Gatunki wskaźnikowe | *Portlandia (Yoldia) arctica*, *Ancylus fluviatilis*, okrzemki *Mastogloia*, *Littorina littorea*, *Limnaea (Radix) balthica*, *Mya arenaria* — tolerancja zasolenia i temperatury jako **niezależna kontrola** rekonstrukcji |
-| Zlewnia i podział na baseny | HELCOM `metadata.helcom.fi` (ETRS89-LAEA) |
+| Proxy zasolenia i temperatury | IODP Exp. 347, Site M0059 — Kotthoff i in. 2022, PANGAEA `10.1594/PANGAEA.943832` (CC BY 4.0) ✅ |
+| Katalog progów | Billingen (58,4°N 13,8°E), Närke (59,1°N 15,0°E), Svea / Degerfors, Dana / Wielki Bełt, Darss, Drogden / Øresund — współrzędne i rzędne z literatury; przesmyk karelsko-białomorski jako hipoteza |
+| Gatunki wskaźnikowe | *Portlandia (Yoldia) arctica*, *Ancylus fluviatilis*, *Mastogloia*, *Littorina littorea*, *Limnaea (Radix) balthica*, *Mya arenaria* — tolerancje z literatury |
+| Podział na baseny | HELCOM ❓ (sprawdzić licencję na `metadata.helcom.fi`); fallback: własne poligony basenów narysowane z GEBCO |
+
+**Zasolenie jest klasą per basen, nie ciągłym polem.** Makieta koloruje wodę ciągłym gradientem PSU — takiego pola nie ma w żadnym źródle. Aplikacja koloruje wodę klasą basenu (słodki / słonawy / morski) z zakresem `psuRange`, a gradient może być co najwyżej schematycznym przejściem między basenami z flagą `qualitative`.
 
 ---
 
 ## 4. Metoda
 
-### 4.1 Paleo-DEM co 500 lat
+### 4.1 Paleo-DEM co 1000 lat
 
 ```python
-paleo_dem(t)   = modern_dem − resample(interp_t(RSL, t))         # §0.1, Steffen & Kaufmann; datum: geoida współczesna t
-               # | modern_dem + resample(Topo(t) − Topo(0))      # wariant ICE-6G_C / GLAC-1D po zgodzie
-level(t)       = sill_elevation(active_outlet(t), t)            # fazy jeziorne
-               | 0                                              # fazy morskie: paleo-DEM jest już względem morza w t
-water_mask(t)  = flood_fill(paleo_dem(t), level(t),
-                            seed=active_outlet(t))              # §0.3, nie próg
+rsl_t          = interp_time(RSL[model], t)                     # liniowo między nierównymi krokami modelu
+paleo_dem(t)   = H_now − resample(rsl_t)                        # §0.1; datum: geoida współczesna t
+level(t)       = sill_elevation(active_outlet(t), t)            # fazy jeziorne (BIL, Ancylus)
+               | 0                                              # fazy morskie: paleo-DEM już względem morza w t
+water_mask(t)  = flood_fill(paleo_dem(t), level(t), seed=active_outlet(t))   # §0.3
+ice(t)         = DATED1[t] (mc + min/max)                       # 20–10 ka; młodsze: null
+ice_h(t)       = plastic_profile(distance_to_margin(ice(t)))    # tylko do wizualizacji
 ```
 
-Sedno poprawności: w fazach jeziornych powierzchnia wody **nie jest** globalnym poziomem morza — wyznaczał ją próg odpływu. Fazy morskie (Yoldia, Mastogloia, Littorina, współczesna) → poziom morza z modelu GIA. Fazy jeziorne (BIL, Ancylus) → rzędna progu w ramie `t` + wartości z literatury.
+Wybór wiodącego modelu Ziemi spośród 8 wariantów Steffena i Kaufmanna — na podstawie RMSE wobec Rosentaua (`V-03`). Pozostałe warianty mogą dać pas niepewności poziomu wody.
 
-Lądolód: DATED-1 jako geometria wiodąca (wariant `mc`) z pasem min./maks. przeniesionym **do danych**. Każda klatka interpolowana między przekrojami DATED-1 dostaje `ice.interpolated: true`. DATED-1 kończy się na 10 ka — klatki młodsze mają `ice: null`. Gdy Stroeven dostanie zgodę, zostaje geometrią wiodącą (gęstsze kroki 11,6–9,7 ka), a DATED-1 pasem.
+**Domena przestrzenna:** paleo-DEM liczony dla **całej domeny RSL** (10°W–70°E / 45–85°N) w niskiej rozdzielczości (tło globu: Morze Północne jako Doggerland, lądolód brytyjski) i dla **okna Bałtyku** (9–33°E / 53–67°N) w rozdzielczości roboczej. Maska wody, progi, metryki i walidacja — tylko w oknie Bałtyku.
 
-Zasolenie: klasa reżimu (słodki / słonawy / morski) per faza z IODP 347 i okrzemek, plus **stan każdego progu** (otwarty/zamknięty) i profil przestrzenny Cieśniny Duńskie → Basen Gotlandzki → Zatoka Botnicka.
-
-**Projekcje:** przetwarzanie w EPSG:3035 (ETRS89-LAEA, konwencja HELCOM), eksport w EPSG:4326.
+**Projekcje:** przetwarzanie w EPSG:3035 (ETRS89-LAEA), eksport w EPSG:4326.
 
 ### 4.2 Metryki bilansowe
 
-Z maski wody policzyć dla każdego przekroju: **powierzchnię** (km²), **objętość** (km³), średnią i maksymalną głębokość, oraz szacowany **czas wymiany wód**. Niemal darmowe, a dają cztery dodatkowe krzywe i kontrolę sensowności.
+Dla każdego przekroju z maski wody: **powierzchnia** (km²), **objętość** (km³), średnia i maksymalna głębokość, szacowany **czas wymiany wód**.
 
 ---
 
-## 5. Kontrakt danych
+## 5. Kontrakt danych (hybrydowy)
 
-Katalog `src/assets/data/` (objęty `assets` w `angular.json`), wersjonowany polem `schemaVersion`:
+Pipeline liczy wszystko, co ma wynik binarny lub wymaga walidacji (maski, progi, metryki). Aplikacja dostaje dodatkowo siatkę wysokości i kostkę RSL, żeby bez kolejnych plików liczyć rzeźbę 3D, przekrój Umeå → Gdańsk, wysokość w tooltipie i krzywą RSL dla klikniętego punktu.
 
 ```
 src/assets/data/
-  manifest.json          # schemaVersion, datum, budżety, sumy kontrolne, mapa chunków
-  timeline.json          # 7 faz — szkielet całej aplikacji
-  sources.json           # rejestr źródeł: DOI, licencja, tekst atrybucji
-  events.json            # karty zdarzeń → odsyłacze do sources.json
-  sills.json             # katalog progów: współrzędne, rzędne, okresy aktywności
-  taxa.json              # gatunki wskaźnikowe: tolerancja zasolenia i temperatury
-  curves/                # rsl-sites, uplift-nkg, basin-metrics
-  frames/                # 41 + ~6 zdarzeniowych, krok 500 lat
+  manifest.json          # schemaVersion, datum, budżety, sumy kontrolne, siatki, lista klatek
+  timeline.json          # 7 faz + przekroje zdarzeniowe
+  sources.json           # z SOURCES.md
+  events.json            # karty zdarzeń → sources.json
+  sills.json             # progi: współrzędne, rzędne, stan per klatka
+  taxa.json              # gatunki wskaźnikowe
+  grid/
+    dem-baltic.bin.gz    # H_now, okno Bałtyku, ~0,04° (~600 × 350, int16) — rzeźba, przekrój, tooltip
+    dem-europe.bin.gz    # H_now, domena RSL, ~0,1° — tło paleo na globie
+    rsl.bin.gz           # RSL wiodącego modelu, 1°, 19 kroków źródłowych (float16) — app interpoluje
+  curves/                # rsl-sites (Rosentau), esl (eustatyka), basin-metrics, uplift
+  frames/
+    f-<tBP>.json         # poziom, odpływ, stany progów, zasolenie per basen, metryki, dataQuality
+    f-<tBP>.topo.json    # water / lake / ice (mc, min, max) / coast — kwantyzowany TopoJSON
 ```
 
 ```jsonc
 {
-  "id": "ancylus-max",
-  "tBP": 10500,                        // cal yr BP
-  "t14C": 9300,                        // oryginalna data niekalibrowana, jeśli z literatury
+  "id": "f-11000",
+  "tBP": 11000,
   "calCurve": "IntCal20",
-  "datum": "contemporaneous-geoid",    // §0.2 — obowiązkowe
-  "stageId": "ancylus",
-  "water": { "type": "lake", "levelM": 10.0, "outlet": "svea" },
-  "salinity": { "class": "fresh", "psuRange": [0, 0.5] },
-  "ice": { "source": "dated1", "interpolated": true, "band": "dated1" },
+  "datum": "contemporaneous-geoid",
+  "stageId": "yoldia",
+  "water": { "type": "sea", "levelM": 0, "outlet": "narke" },
+  "salinity": [{ "basin": "gotland", "class": "brackish", "psuRange": [1, 5] }],
+  "sills": [{ "id": "billingen", "state": "open", "heightM": -12 }],
+  "ice": { "source": "dated1", "interpolated": false, "band": true, "thickness": "plastic-profile" },
   "gia": { "source": "steffen2025_rsl", "earthModel": "sk1" },
-  "metrics": { "areaKm2": 420000, "volumeKm3": 23000 },
-  "dataQuality": "interpolated",       // modelled | interpolated | qualitative
-  "frame": "frames/f-10500.topo.json",
-  "sources": ["bjorck1995", "andren2011", "rosentau2021", "dated1", "steffen2025_rsl"]
+  "eslM": -50,
+  "metrics": { "areaKm2": 380000, "volumeKm3": 21000 },
+  "dataQuality": "interpolated",
+  "frame": "frames/f-11000.topo.json",
+  "sources": ["andren2011", "dated1", "steffen2025_rsl", "lambeck2014"]
 }
 ```
 
-**Geometria: TopoJSON, nie rastry.** Plan wejściowy proponował wystawić rastrowe „Paleo-DEM Time Slices / Delta Grids" jako artefakt runtime'owy. W zakresie 9–33°E / 53–67°N przy rozdzielczości EMODnet (~115 m) to siatka rzędu 20 000 × 15 000 komórek **na przekrój** — przy ~47 przekrojach to nie jest aplikacja webowa. Obowiązuje: warstwy `land` / `water` / `ice` / `lake` / `rivers` jako kwantyzowany, uproszczony TopoJSON; raster (hipsometria) tylko jako opcjonalny, leniwy chunk w obniżonej rozdzielczości.
+**Budżet:** ≤ 25 MB całości, ≤ 4 MB przy pierwszym wejściu. Szacunek: siatki i kostka RSL < 1,5 MB, ~27 klatek wektorowych po ~100–200 KB — mieści się z zapasem. Siatki ładowane od razu (potrzebne do każdej klatki), klatki leniwie wokół bieżącej.
 
-**Budżet:** ≤ 25 MB całości, ≤ 4 MB przy pierwszym wejściu. Chunki per faza, ładowane leniwie — na starcie wystarczy klatka bieżąca i jej sąsiedzi. Deploy idzie na GitHub Pages (`npm run build:gh-pages`), więc rozmiar jest realnym ograniczeniem, pilnowanym w CI.
+**i18n.** Dane noszą wyłącznie identyfikatory; chrome UI w `Dict`, długie teksty w `src/assets/content/{en,pl}/*.json`. **Brak tłumaczenia = błąd builda.**
 
-**i18n.** `AGENTS.md` wymaga zera zahardkodowanych stringów i równoległości EN/PL. Przy kilkudziesięciu kartach zdarzeń, progów i taksonów trzymanie wszystkiego w `Dict` rozsadziłoby `en.ts`/`pl.ts`. Obowiązuje: **dane noszą wyłącznie identyfikatory**; chrome UI zostaje w `Dict` (`src/app/core/i18n/i18n.types.ts`, `en.ts`, `pl.ts` — rozszerzyć o klucze faz i warstw), a długie teksty idą do `src/assets/content/{en,pl}/*.json`, ładowane reaktywnie na podstawie sygnału `lang` z `I18nService`. **Brak tłumaczenia = błąd builda.**
+**`sources.json` jest obowiązkowy** — wymóg atrybucji CC BY i domeny publicznej GEBCO.
 
-**`sources.json` jest obowiązkowy, nie kosmetyczny** — niemal każdy zbiór to CC BY, co nakłada wymóg atrybucji. Ten plik napędza panel „Źródła" i jest warunkiem legalności publikacji.
+### 5.1 Scena: glob jak w El Niño — wymagania na dane
+
+Na podstawie makiety (`claude.ai/artifact/4mtm5Y44DWh7ufwyXKAKi5`) i decyzji z 2026-10-31.
+
+- **Glob three.js** przeniesiony z `kmd-labs/el-nino` (`GlobeComponent`: sfera, tekstura lądu na płótnie equirectangular, `displacementMap`, cieniowanie rzeźby, `ThemeService` do kolorów). Rzeźba terenu i oceany zostają.
+- **Kamera zablokowana na Europie:** start nad ~20°E / 58°N, zoom tylko w zakresie od „cała Europa” do „okno Bałtyku” (`minDistance` / `maxDistance`), `enablePan = false`, **azymut ograniczony** (`minAzimuthAngle` / `maxAzimuthAngle`) — próba przeciągnięcia w bok daje lekkie przechylenie i sprężynowy powrót, nie obrót globu.
+- **Paleo na globie:** w domenie RSL tekstura i `displacementMap` są generowane per klatka z `dem-europe` / `dem-baltic` − RSL(t), z maską wody i lodu z klatki; poza domeną — współczesna Ziemia, przygaszona.
+- **Z makiety zostaje:** dock z osią czasu (play, kroki, markery zdarzeń, pasma faz), karta fazy (nazwa, typ wody, PSU, `dataQuality`, `datum`, flaga „sporne”, poziom model vs literatura, odpływ, powierzchnia, objętość, ocean −X m), przekrój Umeå → Gdańsk, krzywe RSL (Umeå, Sztokholm, Gdańsk + kliknięty punkt + ocean), tooltip (współrzędne, typ wody, PSU, grubość lodu, wysokość wzgl. ówczesnego oceanu i dziś), progi z tooltipem stanu, przewyższenie 3D, słowniczek, źródła.
+- **Z makiety wypada:** widoki Fanerozoik / Czwartorzęd / Wybrzeża, warstwa „Zatopione lasy”, lista źródeł z ICE-6G_C, Stroevenem, LR04, PALEOMAP i PhanDA. „Brzeg −500 lat” → „Brzeg −1000 lat”.
+- **Do rozstrzygnięcia:** co przełącza dropdown w prawym górnym rogu (wymagany przez `AGENTS.md` §2). Propozycja: tryby kolorowania globu — Paleogeografia / Zasolenie / Lądolód.
 
 ---
 
@@ -214,57 +225,48 @@ src/assets/data/
 
 ```
 tools/data/
-  fetch.py             # pobieranie po DOI + weryfikacja sum kontrolnych   (gotowe, tura 1)
-  postglacial.py       # mozaika + jeziora + GIA → paleo-DEM → flood-fill → wektoryzacja
-  curves.py            # RSL (Rosentau), NKG2016LU, metryki basenu → curves/
-  calibrate.py         # IntCal20: ¹⁴C BP → cal yr BP dla dat z literatury
+  fetch.py             # pobieranie + sumy kontrolne (gotowe, tura 1)
+  postglacial.py       # mozaika + jeziora + RSL → paleo-DEM → flood-fill → wektoryzacja
+  ice.py               # DATED-1 → geometria per klatka + profil plastyczny grubości
+  curves.py            # Rosentau, eustatyka, NKG / gradient RSL, metryki → curves/
+  calibrate.py         # IntCal20: ¹⁴C BP → cal yr BP
   validate.py          # raport walidacyjny (§7)
-  emit.py              # TopoJSON, kwantyzacja, uproszczenie, manifest
-data/raw/              # .gitignore
-data/interim/          # .gitignore
-SOURCES.md             # pełne cytowania + licencje — źródło prawdy dla sources.json
+  emit.py              # siatki, kostka RSL, TopoJSON, manifest
 ```
 
-Stack: `xarray` + `netCDF4`, `rasterio`, `geopandas`, `shapely`, `pyogrio`, `scipy.ndimage` (flood-fill), `pyproj`; `mapshaper`/`topojson` do uproszczenia. Wejście: `npm run data:build` (obok istniejącego `data:fetch`). Pipeline **idempotentny i offline po pierwszym pobraniu** — surowe dane poza gitem, assety wyjściowe w gicie.
+Stack: `xarray` + `netCDF4`, `rasterio`, `geopandas`, `shapely`, `pyogrio`, `scipy.ndimage`, `pyproj`; `mapshaper`/`topojson` do uproszczenia. Pipeline **idempotentny i offline po pierwszym pobraniu**.
 
 ### Kolejność prac
 
-1. **Sprzątanie startowe** — `git submodule update --init` przed czymkolwiek, inaczej build nie przejdzie.
-2. **Od końca ku początkowi** — najpierw dziś → 8 ka (najlepsze dane), potem fazy jeziorne (najtrudniejsze, bo próg zamiast eustatyki). Najszybsza droga do działającej aplikacji. Start na GEBCO 2024 + RSL Steffena i Kaufmanna + DATED-1 — wszystkie ✅, bez czekania na odpowiedzi licencyjne.
-3. **Katalogi i krzywe** (`sills.json`, `taxa.json`, `curves/`) — `sills.json` jest warunkiem sill-checku, zasolenia i maski faz jeziornych, więc powstaje razem z paleo-DEM-em (M2).
-4. **Ulepszenia jakości po licencjach** — EMODnet, ICE-6G_C / GLAC-1D, Stroeven — jako podmiana źródła bez zmiany kontraktu.
+1. **Dziś, bez zależności:** decyzja licencyjna (`0-02`), kontrakt hybrydowy (`0-06`), czysty klon (`0-01`), tura 2 pobierania (`0-05`).
+2. **Ścieżka krytyczna faz morskich:** mozaika (`C-01`) → paleo-DEM co 1 ka (`C-03`) → flood-fill (`C-04`) → emisja (`C-11`, `I-01`) → glob (`I-05`, `I-02`). Dane z tury 1 już leżą lokalnie.
+3. **Równolegle:** lądolód z DATED-1 (`C-07`), krzywe (`C-12`), katalog progów (`C-05`), research batymetrii jezior (`C-02`).
+4. **Fazy jeziorne** (`C-06`, `C-14`, `C-15`) po katalogu progów i jeziorach.
 
 ---
 
 ## 7. Weryfikacja
 
-`tools/data/validate.py` produkuje raport i kończy się błędem przy przekroczeniu progów.
+`tools/data/validate.py` produkuje raport i kończy się błędem przy przekroczeniu progów. Używa **wyłącznie** zbiorów ✅ — także walidacja nie korzysta z ICE-6G_C ani ze Stroevena.
 
-**Sill-check (bilans wysokościowy na progach).** Dla każdego przekroju sprawdzić, czy rzędna progu zgadza się z kierunkiem przepływu: jezioro zaporowe wymaga progu **powyżej** ówczesnego poziomu oceanu, połączenie morskie **poniżej**. Test wewnętrznie spójnościowy — nie wymaga danych zewnętrznych, a wyłapuje dokładnie tę klasę błędu, która jest tu najgroźniejsza (§0.1–0.2). Uruchamiany dla wszystkich progów z `sills.json`.
-
-**RSL wobec obserwacji.** Policzony poziom w punktach bazy Rosentau i in. 2021 vs. wartości zmierzone; **RMSE raportowane per region**, osobno dla trzech klastrów bazy (regresja / transgresja / przejściowe). To jedyna ilościowa walidacja w całym planie — bez niej zostaje „zgodność z syntezami".
-
-**Kontrola zdarzeń.** Spadek Billingen 25–28 m; środkowoholoceński highstand w strefach przejściowych w 7,5–6,5 ka BP; przejście do Littoriny w Małym Bełcie ~7,4 ka cal BP.
-
-**Zgodność z gatunkami wskaźnikowymi.** Rekonstruowane zasolenie w miejscu i czasie wystąpienia gatunku musi mieścić się w jego tolerancji z `taxa.json`.
-
-**Współczesne wypiętrzanie.** Gradient z modelu GIA vs. NKG2016LU — maks. ~10,3 mm/rok przy Umeå, linia zerowa na wybrzeżu Niemiec i Polski.
-
-**Chronologia.** Granice faz i poziomy wód zgodne z Andrén i in. 2011 (źródło wiodące), z udokumentowanymi odstępstwami Björcka 1995/2008, Stroevena i in. 2016 i Uścinowicza 2014 — wszystko w jednolitej skali cal yr BP.
-
-**Topologia i budżet.** Geometrie poprawne (brak samoprzecięć), spójny CRS, suma assetów ≤ 25 MB, pierwszy chunk ≤ 4 MB, sumy kontrolne w `manifest.json` zgodne.
-
-**Kontrola wizualna.** Nałożenie klatek na mapy etapów z Björcka 1995 / Andréna i in. 2011 dla 11,7 / 11,1 / 10,5 ka BP oraz na paleo-DEM-y z ESD 16, 585 (2025) dla 11,7–0 ka — niezależna implementacja tej samej metody, więc rozbieżność linii brzegowej większa niż kilka kilometrów oznacza błąd u nas.
+- **Sill-check:** jezioro zaporowe wymaga progu **powyżej** ówczesnego oceanu, połączenie morskie **poniżej**. Najgroźniejsza klasa błędu (§0.1–0.2).
+- **RSL wobec Rosentaua 2021:** RMSE per region i per klaster; jednocześnie wybór wiodącego modelu Ziemi.
+- **Kontrola zdarzeń:** spadek Billingen 25–28 m; highstand 7,5–6,5 ka BP; Littorina w Małym Bełcie ~7,4 ka cal BP.
+- **Gatunki wskaźnikowe:** zasolenie w miejscu i czasie wystąpienia w tolerancji z `taxa.json`.
+- **Współczesne wypiętrzanie:** gradient RSL 0,9 ka → 0 jako przybliżenie prędkości vs NKG2016LU (lub wartości z artykułu): maks. ~10,3 mm/rok przy Umeå, linia zerowa na wybrzeżu DE/PL.
+- **Chronologia:** zgodność z Andrén i in. 2011.
+- **Topologia i budżet:** brak samoprzecięć, spójny CRS, ≤ 25 / 4 MB, sumy w `manifest.json`.
+- **Kontrola wizualna:** nakładki na mapy Björcka 1995 / Andréna 2011 (11,7 / 11,1 / 10,5 ka) i na paleo-DEM-y ESD 2025 (11,7–0 ka).
 
 ### End-to-end
 
 ```powershell
 git submodule update --init
 npm ci
-npm run data:fetch          # surowe dane → data/raw/, weryfikacja sum
+npm run data:fetch
 npm run data:build          # → raport walidacyjny + src/assets/data/
-npm start                   # wizualna kontrola klatek na osi czasu
-npm run build:gh-pages      # kontrola rozmiaru bundle'a i assetów
+npm start
+npm run build:gh-pages
 ```
 
 ---
@@ -273,22 +275,23 @@ npm run build:gh-pages      # kontrola rozmiaru bundle'a i assetów
 
 | Ryzyko | Reakcja |
 | :-- | :-- |
-| Podwójne liczenie eustatyki w paleo-DEM | §0.1 — formuła nazywa plik i pole; sill-check wyłapie ilościowo |
-| Fazy jeziorne policzone eustatycznie | poziom z rzędnej progu + literatura; `datum` obowiązkowy w kontrakcie |
-| Fałszywe jeziora w zamkniętych obniżeniach | flood-fill z zasiewem w progu, nie próg wysokościowy |
-| Brak licencji ICE-6G_C / GLAC-1D | start na Steffenie i Kaufmannie 2025 (CC BY 4.0); lepsze modele jako podmiana źródła po zgodzie |
-| Stroeven 2016 na CC BY-NC-ND | DATED-1 jako geometria wiodąca; Stroeven tylko wewnętrznie do czasu zgody |
-| Pozorna precyzja (klatki gęstsze niż modele) | `dataQuality` i `ice.interpolated` w każdej klatce; pas min./maks. DATED-1 w danych |
-| Brak batymetrii wielkich jezior | `C-02` na ścieżce krytycznej faz jeziornych; źródła ustalić równolegle z M2 |
-| ~47 klatek × warstwy | chunki per faza, ładowanie leniwe, budżet 25/4 MB pilnowany w CI |
-| Pełna równoległość EN/PL | `content/{lang}/` od pierwszego commita; brak tłumaczenia = błąd builda |
+| Podwójne liczenie eustatyki | §0.1; eustatyka tylko do odczytu w UI; sill-check |
+| Fazy jeziorne policzone eustatycznie | poziom z rzędnej progu; `datum` obowiązkowy |
+| Fałszywe jeziora | flood-fill z zasiewem, nie próg |
+| Jeden model GIA (ANU-ICE 1998, 1°) bez alternatywy | 8 modeli Ziemi jako pas niepewności; RMSE wobec Rosentaua; ESD 2025 jako niezależna kontrola 11,7–0 ka |
+| Krok 1 ka gubi szybkie zdarzenia | przekroje zdarzeniowe (Billingen, Ancylus, Littorina) |
+| Brak grubości lodu z modelu | profil plastyczny z DATED-1, oznaczony jako schematyczny |
+| Brak batymetrii jezior | GLOBathy po weryfikacji licencji albo parametryczna misa z literatury |
+| Zbiór ❓ okaże się wymagać zapytania | wypada; każdy ma fallback z literatury lub GEBCO (§3) |
+| Ciągłe pole zasolenia sugerowane przez makietę | klasa per basen; gradient tylko schematyczny z flagą `qualitative` |
+| Szew domeny paleo / współczesnej na globie | przygaszenie poza domeną RSL, jawna granica w legendzie |
 
 ---
 
 ## 9. Artefakty dokumentacyjne
 
-`docs/research/baltic-data-catalog.md` — raport z researchu: bezpośrednie linki (DOI, PANGAEA, EMODnet, SGU, GFZ), licencje i formaty; **tabela korelacji wiekowej** cal yr BP ↔ ¹⁴C BP ↔ BCE/CE dla wszystkich 7 faz; zestawienie parametrów liczbowych per przekrój (poziom wody, zasolenie, powierzchnia, objętość, maksimum izostazji); katalog współrzędnych punktów kluczowych.
+`docs/research/baltic-data-catalog.md` — linki, licencje, formaty; tabela korelacji cal yr BP ↔ ¹⁴C BP ↔ BCE/CE dla 7 faz; parametry liczbowe per przekrój; współrzędne punktów kluczowych; tabela eustatyki co 1 ka z cytowaniem.
 
-`docs/research/paleo-reconstruction-methodology.md` — specyfikacja matematyczna i geoprzestrzenna przekształcania surowych siatek, izochron i pól GIA w warstwy gotowe do interpolacji. **Musi wskazywać konkretne pliki i nazwy zmiennych** modelu GIA, nie pojęcia (§0.1).
+`docs/research/paleo-reconstruction-methodology.md` — specyfikacja: plik i zmienna RSL, interpolacja w czasie, resampling, profil plastyczny lodu, transformacja datum dla `V-03`.
 
-`SOURCES.md` — pełne cytowania i licencje; źródło prawdy dla generowanego `sources.json`.
+`SOURCES.md` — pełne cytowania i licencje; źródło prawdy dla `sources.json`.

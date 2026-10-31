@@ -1,5 +1,7 @@
 # Zapytania licencyjne
 
+> **Zarchiwizowane 2026-10-31 — żadne zapytanie nie zostanie wysłane.** Decyzja `0-02`: projekt używa wyłącznie zbiorów, które nie wymagają zapytania o licencję. ICE-6G_C, GLAC-1D, ANU-ICE i Stroeven 2016 są w sekcji „Odrzucone” w [`SOURCES.md`](../../SOURCES.md). Dokument zostaje jako zapis researchu na wypadek zmiany decyzji.
+
 Rejestr zapytań o warunki użycia zbiorów bez jawnej licencji (`0-02`, `0-03`). Zakres: postglacjał 20 ka → dziś — zapytanie o PhanDA (fanerozoik) wycofane 2026-10-31. Każda odpowiedź trafia tu dosłownie, z datą, a decyzja — do [`SOURCES.md`](../../SOURCES.md).
 
 > **Cisza nie jest zgodą.** Do czasu pisemnej odpowiedzi zbiór ma status ❓ i żadna jego pochodna nie wchodzi do repo.

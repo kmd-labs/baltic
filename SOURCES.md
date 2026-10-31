@@ -21,21 +21,14 @@ Daty weryfikacji w formacie ISO. „DataCite” oznacza pole `rightsList` w meta
 
 ---
 
-## Decyzja licencyjna modelu GIA (`0-02`)
+## Decyzja licencyjna (`0-02`)
 
-**Stan na 2026-10-30: nierozstrzygnięta. Żadna pochodna GIA nie może wejść do repo.**
+**Stan na 2026-10-31: rozstrzygnięta. Używamy wyłącznie zbiorów, które nie wymagają zapytania o licencję.** Zapytania nie są wysyłane ([`licensing-inquiries.md`](docs/research/licensing-inquiries.md) jest zarchiwizowany).
 
-Żaden z trzech kandydatów nie ma licencji — jest wyłącznie prośba o cytowanie. Brak licencji oznacza brak zgody na redystrybucję, także pochodnych. Wysłane zapytania i odpowiedzi: [`docs/research/licensing-inquiries.md`](docs/research/licensing-inquiries.md).
-
-| Kandydat | Co faktycznie jest dostępne | Licencja | Ocena |
-| :-- | :-- | :-- | :-- |
-| **ICE-6G_C (VM5a)** | PMIP4: 48 plików `I6_C.VM5a_10min.<t>.nc`, siatka **10′** (nie 1°, jak zakłada plan), zmienne `Topo`, `Orog`, `sftlf`, `sftgif`; 0–21 ka co 500 lat, dalej co 1000 lat do 26 ka. Strona Peltiera dodatkowo: pola współczesnych prędkości (dsea/dt, przemieszczenie radialne) 1° i 0,2° — potrzebne do `V-08` | ❓ brak; prośba o cytowanie Argus i in. 2014 + Peltier i in. 2015 | wybór pierwszy merytorycznie, wymaga zgody |
-| **GLAC-1D** | PMIP4: `TOPicemsk.GLACD26kN9894GE90227A6005GGrBgic.nc`, siatka 0,5°, 26 ka → 0 **co 100 lat**; `HDC` = wysokość względem współczesnego sobie poziomu morza (ta sama semantyka co `Topo`), `ICEM` = maska lodu | ❓ brak; prośba o cytowanie 5 prac | technicznie atrakcyjny: krok 100 lat usuwa interpolację przekrojów zdarzeniowych w `C-03`; wymaga zgody |
-| **ANU-ICE (Lambeck)** | brak publicznej dystrybucji siatek topografii | ❓ brak | tylko przez kontakt |
-| **Steffen & Kaufmann 2025 (ANU-ICE / ICE-5G → RSL)** | Zenodo: pola **RSL** względem 1950, 1°, 10°W–70°E / 45–85°N, 21,4 ka, 19 kroków, 8 modeli Ziemi (`rsl_SK05_skan_*.nc`, ~2 MB) | ✅ CC BY 4.0 | **jedyna ścieżka z czystą licencją na pełny zakres 20–0 ka**; paleo-DEM jako `H_now − RSL(t)` (RSL zawiera człon eustatyczny i geoidalny, więc §0.1 nie jest naruszony); wada: krok ~1 ka i starsza wersja ANU-ICE (1998) |
-| **ESD 16, 585 (2025)** | paleo-DEM-y 0,01° w suplemencie artykułu, 9,5–31°E / 52–66,5°N | ✅ CC BY 4.0 (artykuł i suplement) | **nie jest pełnym fallbackiem**: obejmuje tylko **11,7–0 ka** (brak BIL i deglacjacji), a SELEN jest napędzany ICE-5G Peltiera; zostaje jako kontrola w `V-12` |
-
-**Kolejność fallbacku** (przyjęta w `0-02`): ICE-6G_C → GLAC-1D → **Steffen & Kaufmann 2025 (CC BY, bez czekania na odpowiedź)** → ESD 2025 tylko dla 11,7–0 ka. ANU-ICE w postaci siatek topografii wypada — jego licencjonowana pochodna jest już dostępna jako RSL.
+- **Model GIA:** wyłącznie `steffen2025_rsl` (CC BY 4.0). Paleo-DEM: `H_now − RSL(t)`; RSL zawiera człon eustatyczny i geoidalny, więc nie ma podwójnego liczenia.
+- **Lądolód:** wyłącznie `dated1` (CC BY 3.0), przekroje co 1 ka.
+- **Kontrola:** `esd2025` (CC BY 4.0, tylko 11,7–0 ka), `rosentau2021`.
+- **Zbiory ❓** wchodzą tylko po sprawdzeniu licencji **na stronie źródła** (`0-03`). Jeśli okaże się, że wymagają zapytania albo mają klauzulę ND — przechodzą do sekcji „Odrzucone” i wchodzi fallback z planu (§3).
 
 ---
 
@@ -47,17 +40,14 @@ Zakres aplikacji od 2026-10-31. Zbiory dla usuniętych reżimów (fanerozoik, cz
 
 | id | Zbiór | DOI / URL | Licencja | Weryfikacja | Status |
 | :-- | :-- | :-- | :-- | :-- | :-: |
-| `ice6g_c` | ICE-6G_C (VM5a), Peltier, Argus & Drummond 2015 | https://pmip4.lsce.ipsl.fr/doku.php/data:ice_ice6g_c | brak | 2026-10-30, strona PMIP4 | ❓ |
-| `glac1d` | GLAC-1D, Tarasov i in. | https://pmip4.lsce.ipsl.fr/doku.php/data:ice_glac_1d | brak | 2026-10-30, strona PMIP4 | ❓ |
-| `anu_ice` | ANU-ICE, Lambeck i in. | — | brak | 2026-10-30, brak publicznej dystrybucji | ❓ |
-| `steffen2025_rsl` | Steffen & Kaufmann 2025, RSL northern Europe (ANU-ICE, ICE-5G) | `10.5281/zenodo.15481755` | CC BY 4.0 | 2026-10-30, DataCite | ✅ |
+| `steffen2025_rsl` | Steffen & Kaufmann 2025, RSL northern Europe (ANU-ICE, ICE-5G) — 1°, 10°W–70°E / 45–85°N, 21,4 ka → 0, 19 kroków, 8 modeli Ziemi | `10.5281/zenodo.15481755` | CC BY 4.0 | 2026-10-30, DataCite | ✅ |
 | `steffen2025_rsl_sbaltic` | Steffen & Kaufmann 2025, RSL southern Baltic (ANU-ICE, ICE-5G), 5–25°E / 52–60°N | `10.5281/zenodo.15488259` | CC BY 4.0 | 2026-10-30, DataCite | ✅ |
-| `esd2025` | Miluch i in. 2025, *Paleogeographic numerical modeling of marginal seas for the Holocene*, ESD 16, 585–605 | `10.5194/esd-16-585-2025` | CC BY 4.0 | 2026-10-30, strona artykułu | ✅ |
+| `esd2025` | Miluch i in. 2025, *Paleogeographic numerical modeling of marginal seas for the Holocene*, ESD 16, 585–605 — paleo-DEM-y 0,01°, 11,7–0 ka | `10.5194/esd-16-585-2025` | CC BY 4.0 | 2026-10-30, strona artykułu | ✅ |
 | `zhang2024_sed` | Zhang 2024, Holocene sediment thickness map for the Baltic Sea | `10.17632/k45mff2ccy.1` | CC BY 4.0 | 2026-10-30, DataCite | ✅ |
 | `rosentau2021` | Rosentau i in. 2021, A Holocene relative sea-level database for the Baltic Sea (1099 wskaźników, HOLSEA) | `10.5880/GFZ.1.3.2020.003` | CC BY 4.0 | 2026-10-30, DataCite | ✅ |
-| `nkg2016lu` | NKG2016LU, Vestøl i in. 2019, J. Geod. 93, 1759–1779 | `10.1007/s00190-019-01280-8` | CC BY 4.0 (artykuł) | 2026-10-30, repozytorium DUO; **licencja samych siatek** (`_abs`, `_lev`) u Lantmäteriet do sprawdzenia | ❓ |
-| `sgu_strand` | SGU Strandförskjutningsmodell | — | — | — | ❓ |
-| `sincos` | Projekt SINCOS, RSL SW Bałtyku | — | — | — | ❓ |
+| `nkg2016lu` | NKG2016LU, Vestøl i in. 2019, J. Geod. 93, 1759–1779 | `10.1007/s00190-019-01280-8` | CC BY 4.0 (artykuł) | 2026-10-30, repozytorium DUO; **licencja samych siatek** (`_abs`, `_lev`) u Lantmäteriet do sprawdzenia na stronie; fallback: wartości z artykułu | ❓ |
+| `sgu_strand` | SGU Strandförskjutningsmodell | — | — | do sprawdzenia na stronie SGU; fallback: rzędne progów z publikacji | ❓ |
+| `sincos` | Projekt SINCOS, RSL SW Bałtyku | — | — | do sprawdzenia; fallback: `steffen2025_rsl_sbaltic` | ❓ |
 
 **Atrybucja (✅):**
 - `steffen2025_rsl` — Steffen, H., Kaufmann, G. (2025). *Relative sea level changes in northern Europe from glacial isostatic adjustment modelling…* Zenodo. https://doi.org/10.5281/zenodo.15481755. CC BY 4.0.
@@ -70,32 +60,31 @@ Zakres aplikacji od 2026-10-31. Zbiory dla usuniętych reżimów (fanerozoik, cz
 
 | id | Zbiór | DOI / URL | Licencja | Weryfikacja | Status |
 | :-- | :-- | :-- | :-- | :-- | :-: |
-| `stroeven2016` | Stroeven i in. 2016, Deglaciation of Fennoscandia, QSR 147, 91–121 — izochrony (shapefile), 22–13 ka co 1000 lat, 11,6–9,7 ka co 100 lat | https://bolin.su.se/data/stroeven-2016 · `10.1016/j.quascirev.2015.09.016` | **CC BY-NC-ND 4.0** | 2026-10-30, Bolin Centre | ⛔ |
-| `dated1` | DATED-1, Hughes i in. 2016 — marginesy min. / mc / maks., 40–10 ka | `10.1594/PANGAEA.848117` | CC BY 3.0 | 2026-10-30, PANGAEA | ✅ |
+| `dated1` | DATED-1, Hughes i in. 2016 — marginesy min. / mc / maks.; przekroje co 1 ka 25 → 10 ka (`TS<ka>_{min,mc,max}.shp`) oraz starsze | `10.1594/PANGAEA.848117` | CC BY 3.0 | 2026-10-30, PANGAEA; lista przekrojów sprawdzona 2026-10-31 na pobranym archiwum | ✅ |
 
-> **⛔ `stroeven2016` — bloker dla `C-07`.** Klauzula **ND** zakazuje rozpowszechniania utworów zależnych: uproszczone, kwantyzowane i interpolowane izochrony w TopoJSON są utworem zależnym. Klauzula **NC** wymaga ustalenia, czy publikacja KMD jest niekomercyjna. Bez zgody autorów Stroeven nie może być „geometrią wiodącą” — może być tylko wewnętrzną kontrolą w `validate.py`. Fallback: DATED-1 (CC BY 3.0) jako geometria, kosztem rozdzielczości czasowej (co 1000 lat zamiast 100 lat w 11,6–9,7 ka). Zapytanie: [`licensing-inquiries.md`](docs/research/licensing-inquiries.md#4-stroeven-2016--cc-by-nc-nd).
+Grubość lodu nie pochodzi z żadnego zbioru — to profil plastyczny liczony od krawędzi `dated1` (metodyka, `C-07`).
 
 **Atrybucja (✅):**
 - `dated1` — Hughes, A. L. C., Gyllencreutz, R., Lohne, Ø. S., Mangerud, J., Svendsen, J. I. (2015). *DATED-1: compilation of dates and time-slice reconstruction of the build-up and retreat of the last Eurasian Ice Sheets 40–10 ka*. PANGAEA. https://doi.org/10.1594/PANGAEA.848117. CC BY 3.0. Opis: Hughes i in. 2016, *Boreas* 45, 1–45, https://doi.org/10.1111/bor.12142.
 
-### Batymetria i topografia bazowa
+### Batymetria, topografia i tło globu
 
 | id | Zbiór | DOI / URL | Licencja | Weryfikacja | Status |
 | :-- | :-- | :-- | :-- | :-- | :-: |
-| `emodnet_dtm2024` | EMODnet Digital Bathymetry (DTM 2024), 1/16′ | `10.12770/cf51df64-56f9-4a99-b1aa-36b8d7b743a1` | plan zakłada CC BY 4.0 — **DataCite nie podaje licencji** | 2026-10-30, DataCite; do potwierdzenia na portalu EMODnet | ❓ |
-| `gebco2024` | GEBCO_2024 Grid, 15″ — kafel GeoTIFF 0–90°N / 0–90°E z archiwum CEDA | `10.5285/1c44ce99-0a0d-5f4f-e063-7086abc0ea0f` | **domena publiczna** z obowiązkiem atrybucji (*Terms of Use of The GEBCO Grid*) | 2026-10-30, `GEBCO_Grid_terms_of_use.pdf` z CEDA | ✅ |
-| `copdem_glo30` | Copernicus DEM GLO-30 | https://spacedata.copernicus.eu | licencja Copernicus DEM (atrybucja DLR / Airbus) | niezweryfikowane | ❓ |
-| `bsbd` | Baltic Sea Bathymetry Database (BSHC) | https://bshc.pro/data | CC BY 3.0 **z ograniczeniami** | niezweryfikowane — treść ograniczeń nieznana | ❓ |
+| `gebco2024` | GEBCO_2024 Grid, 15″ — kafle GeoTIFF 0–90°N / 0–90°E (pobrany) i 0–90°N / 90°W–0 (tura 2, domena RSL od 10°W) z archiwum CEDA. **Jeziora tylko jako powierzchnia wody** (sprawdzone 2026-10-31: Vänern 44 m, Vättern 88 m) | `10.5285/1c44ce99-0a0d-5f4f-e063-7086abc0ea0f` | **domena publiczna** z obowiązkiem atrybucji (*Terms of Use of The GEBCO Grid*) | 2026-10-30, `GEBCO_Grid_terms_of_use.pdf` z CEDA | ✅ |
+| `emodnet_dtm2024` | EMODnet Digital Bathymetry (DTM 2024), 1/16′ | `10.12770/cf51df64-56f9-4a99-b1aa-36b8d7b743a1` | plan zakłada CC BY 4.0 — **DataCite nie podaje licencji** | do potwierdzenia na portalu EMODnet | ❓ |
+| `etopo2` | ETOPO2v2c, NOAA NGDC — `displacementMap` tła globu (jak w `kmd-labs/el-nino`) | https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2/ | domena publiczna (deklaracja w `el-nino/scripts/fetch-elevation.mjs`) | do potwierdzenia u źródła przy pobraniu | ❓ |
+| `ne_sr50m` | Natural Earth 50m Shaded Relief (`SR_50M`) — cieniowanie rzeźby na globie | https://www.naturalearthdata.com/ | domena publiczna (deklaracja w `el-nino/scripts/fetch-relief.mjs`) | do potwierdzenia u źródła przy pobraniu | ❓ |
+| `world_atlas_land50m` | `world-atlas@2` `land-50m.json` (TopoJSON z Natural Earth) — kontur lądu | https://github.com/topojson/world-atlas | ISC (pakiet) + Natural Earth (domena publiczna) | do potwierdzenia | ❓ |
+| `globathy` | GLOBathy, Khazaei i in. 2022 — batymetria jezior (Ładoga, Onega, Vänern, Vättern) | Sci. Data 9, 36 (2022) · figshare | CC BY 4.0 — do potwierdzenia | — | ❓ |
+| `copdem_glo30` | Copernicus DEM GLO-30 | https://spacedata.copernicus.eu | licencja Copernicus DEM (atrybucja DLR / Airbus) | niezweryfikowane; niepotrzebny przy GEBCO jako bazie | ❓ |
+| `bsbd` | Baltic Sea Bathymetry Database (BSHC) | https://bshc.pro/data | CC BY 3.0 **z ograniczeniami** | treść ograniczeń nieznana — jeśli wymagają zapytania, wypada | ❓ |
 | `iowtopo2` | IOWTOPO2 (IOW) | — | — | — | ❓ |
-| `lakes_ladoga` | batymetria Ładogi | **źródło nieustalone** | — | — | ❓ |
-| `lakes_onega` | batymetria Onegi | **źródło nieustalone** | — | — | ❓ |
-| `lakes_vanern` | batymetria Vänern | **źródło nieustalone** | — | — | ❓ |
-| `lakes_vattern` | batymetria Vättern | **źródło nieustalone** | — | — | ❓ |
 
 **Atrybucja (✅):**
 - `gebco2024` — GEBCO Compilation Group (2024). *GEBCO 2024 Grid*. https://doi.org/10.5285/1c44ce99-0a0d-5f4f-e063-7086abc0ea0f. Warunki: wolno kopiować, adaptować i wykorzystywać komercyjnie. Nie wolno sugerować oficjalnego statusu ani poparcia GEBCO, IHO lub IOC. Nie do nawigacji.
 
-> **Batymetria jezior (`C-02`)** — plan nie podaje źródeł. To jedyne dane na ścieżce krytycznej bez wskazanego zbioru.
+> **Batymetria jezior (`C-02`)** — GEBCO jej nie ma. Kolejność: `globathy` (po ✅) → otwarte dane krajowe → parametryczna misa z opublikowanych głębokości maks. i średnich (`dataQuality: "modelled"`).
 
 ### Zasolenie, cieśniny, baseny
 
@@ -115,6 +104,19 @@ Zakres aplikacji od 2026-10-31. Zbiory dla usuniętych reżimów (fanerozoik, cz
 
 ---
 
+## Odrzucone
+
+Zbiory, które **nie są używane w żadnej postaci** (także do walidacji), bo wymagałyby zapytania o licencję albo licencja wyklucza publikację pochodnych. Decyzja: 2026-10-31 (`0-02`).
+
+| id | Zbiór | Powód | Co tracimy | Zastępstwo |
+| :-- | :-- | :-- | :-- | :-- |
+| `ice6g_c` | ICE-6G_C (VM5a), Peltier, Argus & Drummond 2015 — PMIP4, siatka 10′, `Topo` | brak licencji, tylko prośba o cytowanie | nowszy model GIA, siatka 10′, pole współczesnej prędkości wypiętrzania | `steffen2025_rsl`; prędkość z gradientu RSL (`V-08`) |
+| `glac1d` | GLAC-1D, Tarasov i in. — PMIP4, 0,5°, co 100 lat | brak licencji | krok 100 lat, grubość lodu | przekroje zdarzeniowe; profil plastyczny lodu |
+| `anu_ice` | ANU-ICE, Lambeck i in. — siatki topografii | brak publicznej dystrybucji i licencji | nowsza wersja niż 1998 | `steffen2025_rsl` (ANU-ICE 1998) |
+| `stroeven2016` | Stroeven i in. 2016 — izochrony deglacjacji Fennoskandii | **CC BY-NC-ND 4.0** — ND zakazuje utworów zależnych | izochrony co 100 lat w 11,6–9,7 ka | `dated1` co 1 ka; daty z artykułu cytowane jako fakty w chronologii (`C-08`) |
+
+---
+
 ## Literatura cytowana w kartach i klatkach
 
 Publikacje, których **liczby** (granice faz, rzędne, poziomy) trafiają do kontraktu. Fakty i wartości liczbowe nie podlegają prawu autorskiemu, ale każda musi mieć cytowanie w `sources.json`.
@@ -122,11 +124,11 @@ Publikacje, których **liczby** (granice faz, rzędne, poziomy) trafiają do kon
 | id | Publikacja |
 | :-- | :-- |
 | `andren2011` | Andrén, T. i in. 2011 — źródło wiodące chronologii faz (`C-08`) |
+| `lambeck2014` | Lambeck, K., Rouby, H., Purcell, A., Sun, Y., Sambridge, M. 2014, PNAS 111, 15296–15303, `10.1073/pnas.1411762111` — eustatyka co 1 ka (`curves/esl`, `C-12`) |
+| `khazaei2022` | Khazaei, B. i in. 2022, Sci. Data 9, 36 — opis GLOBathy (`C-02`) |
 | `bjorck1995` | Björck, S. 1995 |
 | `bjorck2008` | Björck, S. 2008 |
 | `uscinowicz2014` | Uścinowicz, Sz. 2014 — odstępstwa chronologii (`C-08`) |
-| `argus2014` | Argus, D. F. i in. 2014, GJI 198, 537–563, `10.1093/gji/ggu140` |
-| `peltier2015` | Peltier, W. R., Argus, D. F., Drummond, R. 2015, JGR Solid Earth 120, 450–487, `10.1002/2014JB011176` |
 | `steffen2005` | Steffen, H., Kaufmann, G. 2005, GJI 163, 801–812, `10.1111/j.1365-246X.2005.02740.x` |
 | `steffen2014` | Steffen, H., Kaufmann, G., Lampe, R. 2014, Solid Earth 5, 447–459, `10.5194/se-5-447-2014` |
 | `hughes2016` | Hughes, A. L. C. i in. 2016, Boreas 45, 1–45, `10.1111/bor.12142` |
