@@ -123,8 +123,10 @@
     transition: opacity transition("fast"), visibility transition("fast");
   }
 
+  // The layers pill matches the tutorial pill: same height, padding and type; both as wide
+  // as the wider of the two.
   &__view {
-    width: 180px;
+    padding: 0;
     position: relative;
     z-index: 3; // the open layer list stays above the tutorial pill
   }
@@ -132,12 +134,13 @@
   // Layers pill with the tutorial pill under it (top-right; decision 2026-10-31).
   &__right {
     flex-direction: column;
-    align-items: flex-end;
+    align-items: stretch;
   }
 
   &__tour {
     display: inline-flex;
     align-items: center;
+    width: 100%;
     gap: 8px;
     height: 34px;
     padding: 0 14px;
@@ -165,9 +168,6 @@
       display: none;
     }
 
-    &__view {
-      width: 140px;
-    }
   }
 }
 

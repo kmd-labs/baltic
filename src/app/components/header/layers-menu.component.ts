@@ -50,8 +50,8 @@ export interface LayerItem {
     `
       :host { position: relative; display: block; }
       .pill-btn {
-        display: inline-flex; align-items: center; gap: 8px; width: 100%; height: 34px; padding: 0 12px;
-        border: 0; border-radius: 999px; background: transparent; font: inherit; font-size: 13px; font-weight: 600;
+        display: inline-flex; align-items: center; gap: 8px; width: 100%; height: 32px; padding: 0 14px;
+        border: 0; border-radius: 999px; background: transparent; font: inherit; font-size: 12.5px; font-weight: 600;
         color: var(--color-text-bright); cursor: pointer;
       }
       .pill-btn:hover { background: var(--color-btn-hover); }
