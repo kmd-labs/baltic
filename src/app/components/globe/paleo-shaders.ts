@@ -102,7 +102,8 @@ export const PATCH_FRAGMENT = /* glsl */ `
       float depth = level - hp;
       float k = smoothstep(0.0, 220.0, depth);
       if (ocean && oceanSide(ll)) {
-        col = mix(cOcean, cOceanDeep, k);
+        // Open ocean: a long, soft ramp so the deep Atlantic does not dominate the cap.
+        col = mix(cOcean, cOceanDeep, smoothstep(0.0, 1500.0, depth));
       } else {
         col = mix(mix(cBasin, vec3(1.0), 0.45), cBasin, k);
       }

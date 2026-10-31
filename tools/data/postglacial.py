@@ -4,7 +4,7 @@
     python tools/data/postglacial.py --model j88
 
 Writes to src/assets/data/:
-    grid/dem-europe.bin.gz         H_now, GEBCO 2024, 0–50°E / 48–75°N, 0.05°, KMDG/1 int16 (m)
+    grid/dem-europe.bin.gz         H_now, GEBCO 2024, RSL domain 10°W–70°E / 45–85°N, 0.05°, KMDG/1 int16 (m)
     grid/dem-baltic.bin.gz         H_now, GEBCO 2024, Baltic window 9–33°E / 53–67°N, 1/40°, KMDG/1 int16 (m)
     grid/rsl.bin.gz                RSL(t) of one Steffen & Kaufmann 2025 earth model, 1°, 19 layers, int16 × 0.01 m
     prototype/ice-dated1.json      DATED-1 outlines (mc, min, max) for 20 → 10 ka, simplified GeoJSON
@@ -13,7 +13,6 @@ The app derives H_paleo = H_now − RSL(t) itself (contract §5); there is no se
 eustatic term because RSL already contains it (0-02, C-03).
 
 Prototype limits (tracked in C-01 / C-03 / C-04 / C-07):
-- DEM covers 0–50°E / 48–75°N only: the GEBCO tile west of 0° is tier 2 (0-05).
 - No flood-fill: the app thresholds H_paleo < 0, so closed depressions show as water (C-04).
 - Ice is the outline only; thickness (plastic profile) comes with C-07.
 - Lakes are water surfaces in GEBCO (C-02).
@@ -44,8 +43,12 @@ ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "data" / "raw"
 OUT = ROOT / "src" / "assets" / "data"
 
-GEBCO = RAW / "gebco2024" / "gebco_2024_n90.0_s0.0_w0.0_e90.0.tif"
-DEM_BBOX = (0.0, 48.0, 50.0, 75.0)  # west, south, east, north
+# GEBCO tiles as (west, east, file); the RSL domain spans both.
+GEBCO_TILES = [
+    (-90.0, 0.0, RAW / "gebco2024" / "gebco_2024_n90.0_s0.0_w-90.0_e0.0.tif"),
+    (0.0, 90.0, RAW / "gebco2024" / "gebco_2024_n90.0_s0.0_w0.0_e90.0.tif"),
+]
+DEM_BBOX = (-10.0, 45.0, 70.0, 85.0)  # west, south, east, north — the Steffen & Kaufmann RSL domain
 DEM_STEP = 0.05  # degrees = 12 GEBCO cells
 BALTIC_BBOX = (9.0, 53.0, 33.0, 67.0)
 BALTIC_STEP = 1 / 40  # degrees = 6 GEBCO cells
@@ -60,10 +63,17 @@ def build_dem(bbox=DEM_BBOX, step=DEM_STEP) -> kmdg.Grid:
     west, south, east, north = bbox
     nx = round((east - west) / step)
     ny = round((north - south) / step)
-    with rasterio.open(GEBCO) as ds:
-        window = from_bounds(west, south, east, north, ds.transform)
-        # Block average of 12 × 12 source cells; rows come north first, as KMDG expects.
-        h = ds.read(1, window=window, out_shape=(ny, nx), resampling=Resampling.average, out_dtype="float32")
+    h = np.empty((ny, nx), dtype=np.float32)
+    for t_west, t_east, path in GEBCO_TILES:
+        w, e = max(west, t_west), min(east, t_east)
+        if w >= e:
+            continue
+        c0 = round((w - west) / step)
+        c1 = round((e - west) / step)
+        with rasterio.open(path) as ds:
+            window = from_bounds(w, south, e, north, ds.transform)
+            # Block average of the source cells; rows come north first, as KMDG expects.
+            h[:, c0:c1] = ds.read(1, window=window, out_shape=(ny, c1 - c0), resampling=Resampling.average, out_dtype="float32")
     raw = kmdg.quantize(h[None].astype(np.float64), scale=1.0)
     return kmdg.Grid(raw=raw, bbox=bbox, times=(0.0,), scale=1.0, offset=0.0, nodata=-32768)
 

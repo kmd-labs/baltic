@@ -727,6 +727,8 @@ Decyzja z 2026-10-31: scena to **glob z `kmd-labs/el-nino` — tylko glob i reli
 
 **DoD**
 - [ ] Glob działa na danych dziś (klatka 0) zanim powstaną klatki paleo
+> **Decyzja (2026-10-31, wieczór):** zamiast całego globu rysujemy tylko wycinek kuli z domeną RSL (10°W–70°E / 45–85°N); siatka Europy 1/20°, Bałtyku 1/40°; woda modelowana tylko w Bałtyku. Tło ETOPO2 / Natural Earth / world-atlas wypada.
+>
 > **Prototyp (2026-10-31, PR #61):** `src/app/components/globe/` — glob i relief z El Niño; region paleo to osobna gęsta łatka liczona na GPU (`paleo-shaders.ts`): `H_now − RSL(t)` per piksel z siatek `dem-europe` (0,05°) i `dem-baltic` (1/40°), woda z wypełnienia od oceanu i *priority-flood* basenu (lód = ściana), rzeźba 3D z przewyższeniem, brzeg dziś i −1000 lat, lód DATED-1 z pasem niepewności, progi, przekrój. Dock z makiety: karta fazy z sill-check (model vs literatura), przekrój Umeå → Gdańsk, krzywe RSL z punktem po kliknięciu, tooltip, warstwy, pasma faz i zdarzenia, odtwarzanie, słowniczek / źródła / o prototypie (`src/assets/content/{en,pl}`). `?t=` w URL. Assety tła w `src/assets/data/globe/` (licencje ✅ w `SOURCES.md`).
 
 - [ ] Start zbliżony na Bałtyk; nie da się obrócić globu poza Europę — próba daje przechylenie, a po puszczeniu kamera wraca i centruje się na Bałtyku

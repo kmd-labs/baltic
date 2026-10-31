@@ -15,8 +15,6 @@ import {
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import * as d3Geo from 'd3-geo';
-import * as topojson from 'topojson-client';
-import type { Feature, FeatureCollection } from 'geojson';
 import { ThemeService } from '@kmd/design-system/services/theme.service';
 import { isAtMost, isMobileLandscape } from '@kmd/design-system/utils/breakpoints';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -52,12 +50,13 @@ export interface GlobePointer {
 }
 
 /**
- * Globe ported from kmd-labs/el-nino — only the globe and its relief (I-05): sphere, land
- * texture on an equirectangular canvas, ETOPO2 displacement, Natural Earth relief, glow.
+ * Globe from kmd-labs/el-nino reduced to a European cap (I-05; decision 2026-10-31): only the
+ * Steffen & Kaufmann RSL domain (10°W–70°E / 45–85°N) is drawn, as a curved patch of the
+ * sphere on the page background — the rest of the globe is cut away.
  *
- * The paleo region is a separate dense patch on the sphere, shaded per pixel on the GPU
- * from the present-day grids and the RSL field (paleo-shaders.ts), displaced by H_paleo.
- * The camera starts over the Baltic; dragging only tilts and springs back to the Baltic.
+ * The patch is shaded per pixel on the GPU from the present-day grids and the RSL field
+ * (paleo-shaders.ts) and displaced by H_paleo. The camera starts over the Baltic; dragging only
+ * tilts and springs back to the Baltic.
  */
 @Component({
   selector: 'app-globe',
@@ -109,11 +108,6 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
 
   private readonly R = 5;
   private readonly DEG = Math.PI / 180;
-  private readonly ELEV_CEILING_M = 9000;
-  private readonly EARTH_RADIUS_M = 6371000;
-  private readonly ELEV_EXAGGERATION = 10;
-  private readonly RELIEF_STRENGTH = 0.55;
-  private readonly RELIEF_RANGE = 46;
 
   private readonly FOCUS = { lon: 20, lat: 59 };
   private readonly TILT_AZIMUTH = 22 * (Math.PI / 180);
@@ -125,12 +119,6 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   private camera!: THREE.PerspectiveCamera;
   private controls!: OrbitControls;
   private ocean!: THREE.Mesh;
-  private landMat!: THREE.MeshLambertMaterial;
-  private landCanvas!: HTMLCanvasElement;
-  private landTex!: THREE.CanvasTexture;
-  private land: FeatureCollection | Feature | null = null;
-  private relief: { data: Uint8Array; w: number; h: number; base: number } | null = null;
-  private reliefCanvas: HTMLCanvasElement | null = null;
 
   private patchMat?: THREE.ShaderMaterial;
   private rslTex?: THREE.DataTexture;
@@ -187,8 +175,6 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.zone.runOutsideAngular(() => {
       this.initThree();
-      this.initLand();
-      this.initGlow();
       this.initPointer();
       this.handleResize();
       this.resizeObs = new ResizeObserver(() => this.handleResize());
@@ -285,169 +271,11 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     this.pos(this.FOCUS.lon, this.FOCUS.lat, this.defaultDistance, this.camera.position);
     this.controls.update();
 
-    this.ocean = new THREE.Mesh(
-      new THREE.SphereGeometry(this.R, 128, 64),
-      new THREE.MeshBasicMaterial({ color: new THREE.Color(this.theme.getTokenColor('globe-ocean', '#e0f2fe')) })
-    );
+    // Only the European cap is drawn (decision 2026-10-31); this sphere is never rendered and
+    // serves the pointer (hover, click) only.
+    this.ocean = new THREE.Mesh(new THREE.SphereGeometry(this.R, 96, 48), new THREE.MeshBasicMaterial());
+    this.ocean.visible = false;
     this.scene.add(this.ocean);
-  }
-
-  private initGlow(): void {
-    const mat = new THREE.ShaderMaterial({
-      uniforms: {
-        c: { value: new THREE.Color(this.theme.getTokenColor('globe-glow', '#0f172a')) },
-        uOpacity: { value: 0.22 },
-        uPower: { value: 2.2 }
-      },
-      vertexShader: `
-        varying vec3 vN; varying vec3 vV;
-        void main() {
-          vec4 mv = modelViewMatrix * vec4(position, 1.0);
-          vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz);
-          gl_Position = projectionMatrix * mv;
-        }`,
-      fragmentShader: `
-        uniform vec3 c; uniform float uOpacity; uniform float uPower; varying vec3 vN; varying vec3 vV;
-        void main() {
-          float d = clamp(-dot(vN, vV), 0.0, 1.0);
-          gl_FragColor = vec4(c, pow(clamp(d / 0.4938, 0.0, 1.0), uPower) * uOpacity);
-        }`,
-      side: THREE.BackSide,
-      transparent: true,
-      depthWrite: false
-    });
-    this.scene.add(new THREE.Mesh(new THREE.SphereGeometry(this.R * 1.15, 64, 32), mat));
-  }
-
-  private initLand(): void {
-    const size = this.renderer.capabilities.maxTextureSize >= 8192 && !isAtMost('mobile') ? 4096 : 2048;
-    this.landCanvas = document.createElement('canvas');
-    this.landCanvas.width = size;
-    this.landCanvas.height = size / 2;
-    this.landTex = new THREE.CanvasTexture(this.landCanvas);
-    this.landTex.colorSpace = THREE.SRGBColorSpace;
-    this.landTex.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
-    this.landMat = new THREE.MeshLambertMaterial({ map: this.landTex, transparent: true, depthWrite: false });
-    this.landMat.color.setHex(0x000000);
-    this.landMat.emissive.setHex(0xffffff);
-    this.landMat.emissiveMap = this.landTex;
-    const seg = isAtMost('mobile') ? 192 : 256;
-    this.scene.add(new THREE.Mesh(new THREE.SphereGeometry(this.R * 1.003, seg, seg / 2), this.landMat));
-    this.drawLand();
-
-    fetch('assets/data/globe/land-50m.json')
-      .then(r => r.json())
-      .then(topology => {
-        this.land = topojson.feature(topology, topology.objects.land) as unknown as FeatureCollection;
-        this.drawLand();
-        setTimeout(() => {
-          this.loadRelief();
-          this.loadElevation();
-        }, 120);
-      })
-      .catch(err => console.warn('Could not load land data:', err));
-  }
-
-  private loadElevation(): void {
-    const file = isAtMost('mobile') ? 'assets/data/globe/elevation-1k.png' : 'assets/data/globe/elevation.png';
-    new THREE.TextureLoader().load(
-      file,
-      tex => {
-        tex.colorSpace = THREE.NoColorSpace;
-        this.landMat.displacementMap = tex;
-        this.landMat.displacementScale = this.R * (this.ELEV_CEILING_M / this.EARTH_RADIUS_M) * this.ELEV_EXAGGERATION;
-        this.landMat.needsUpdate = true;
-        this.needsRender = true;
-      },
-      undefined,
-      () => console.warn('Could not load elevation data')
-    );
-  }
-
-  /** Natural Earth relief in the El Niño 'KMDR' format. The 2k file keeps the first load under 4 MB. */
-  private async loadRelief(): Promise<void> {
-    try {
-      const resp = await fetch('assets/data/globe/relief-2k.bin.gz');
-      if (!resp.ok) return;
-      let buf = await resp.arrayBuffer();
-      const magic = new Uint8Array(buf, 0, Math.min(2, buf.byteLength));
-      if (magic[0] === 0x1f && magic[1] === 0x8b) {
-        const stream = new Response(buf).body!.pipeThrough(new DecompressionStream('gzip'));
-        buf = await new Response(stream).arrayBuffer();
-      }
-      const head = new DataView(buf);
-      if (buf.byteLength < 10 || head.getUint32(0, false) !== 0x4b4d4452) return;
-      const w = head.getUint16(4, true);
-      const h = head.getUint16(6, true);
-      if (buf.byteLength < 10 + w * h) return;
-      this.relief = { data: new Uint8Array(buf, 10, w * h), w, h, base: head.getUint8(8) };
-      this.reliefCanvas = null;
-      this.drawLand();
-    } catch (err) {
-      console.warn('Could not load relief data:', err);
-    }
-  }
-
-  private drawLand(): void {
-    const ctx = this.landCanvas.getContext('2d');
-    if (!ctx) return;
-    const W = this.landCanvas.width;
-    const H = this.landCanvas.height;
-    ctx.clearRect(0, 0, W, H);
-    const proj = d3Geo.geoEquirectangular().scale(W / (2 * Math.PI)).translate([W / 2, H / 2]).precision(0.1);
-    const path = d3Geo.geoPath(proj, ctx);
-    ctx.beginPath();
-    path(d3Geo.geoGraticule().step([10, 10])());
-    ctx.strokeStyle = this.theme.getTokenColor('globe-graticule', 'rgba(15, 23, 42, 0.07)');
-    ctx.lineWidth = W / 2048;
-    ctx.stroke();
-    if (!this.land) {
-      this.landTex.needsUpdate = true;
-      return;
-    }
-    const fill = this.theme.getTokenColor('globe-land-fill', '#cfd8e3');
-    ctx.beginPath();
-    path(this.land);
-    ctx.fillStyle = fill;
-    ctx.fill();
-    const relief = this.reliefLayer(fill);
-    if (relief) {
-      ctx.save();
-      ctx.clip();
-      ctx.drawImage(relief, 0, 0, W, H);
-      ctx.restore();
-    }
-    ctx.beginPath();
-    path(this.land);
-    ctx.strokeStyle = this.theme.getTokenColor('globe-land-stroke', 'rgba(71, 85, 105, 0.55)');
-    ctx.lineWidth = W / 2400;
-    ctx.stroke();
-    this.landTex.needsUpdate = true;
-    this.needsRender = true;
-  }
-
-  private reliefLayer(fill: string): HTMLCanvasElement | null {
-    const r = this.relief;
-    if (!r) return null;
-    if (this.reliefCanvas) return this.reliefCanvas;
-    const cv = document.createElement('canvas');
-    cv.width = r.w;
-    cv.height = r.h;
-    const cx = cv.getContext('2d');
-    if (!cx) return null;
-    const [fr, fg, fb] = this.cssToRgb(fill);
-    const img = cx.createImageData(r.w, r.h);
-    const px = img.data;
-    for (let i = 0, o = 0; i < r.data.length; i++, o += 4) {
-      const f = 1 + this.RELIEF_STRENGTH * clamp((r.data[i] - r.base) / this.RELIEF_RANGE, -1, 1);
-      px[o] = fr * f;
-      px[o + 1] = fg * f;
-      px[o + 2] = fb * f;
-      px[o + 3] = 255;
-    }
-    cx.putImageData(img, 0, 0);
-    this.reliefCanvas = cv;
-    return cv;
   }
 
   // ─── paleo patch ────────────────────────────────────────────────────────
@@ -513,15 +341,15 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
         cSeabed: { value: c('paleo-seabed', '#e4dccb') },
         cBasin: { value: c('paleo-brackish', '#8dbcdc') },
         cOcean: { value: c('globe-ocean', '#e0f2fe') },
-        cOceanDeep: { value: c('paleo-water-deep', '#7dd3fc') },
+        cOceanDeep: { value: c('paleo-water-shallow', '#bae6fd') },
         cCoast: { value: c('neutral-600', '#475569') },
         cPrev: { value: c('accent', '#d37400') }
       }
     });
     const geo = new THREE.SphereGeometry(
       this.R * 1.0035,
-      mobile ? 240 : 360,
-      mobile ? 130 : 200,
+      mobile ? 300 : 480,
+      mobile ? 150 : 240,
       (w + 180) * this.DEG,
       (e - w) * this.DEG,
       (90 - n) * this.DEG,
@@ -830,18 +658,6 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     this.renderer.render(this.scene, this.camera);
   };
 
-  private cssToRgb(css: string): [number, number, number] {
-    const cv = document.createElement('canvas');
-    cv.width = 1;
-    cv.height = 1;
-    const cx = cv.getContext('2d', { willReadFrequently: true });
-    if (!cx) return [207, 216, 227];
-    cx.fillStyle = '#cfd8e3';
-    cx.fillStyle = css;
-    cx.fillRect(0, 0, 1, 1);
-    const d = cx.getImageData(0, 0, 1, 1).data;
-    return [d[0], d[1], d[2]];
-  }
 }
 
 function clamp(v: number, lo: number, hi: number): number {

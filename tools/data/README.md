@@ -23,6 +23,7 @@ Nowy zbiór: wpis w `SOURCES.md` → wpis w `registry.json` (z `md5`, jeśli źr
 | Tura | Zbiory | Cel |
 | :-: | :-- | :-- |
 | 1 | `gebco2024`, `steffen2025_rsl`, `dated1` | minimum do pierwszego paleo-DEM-u i maski wody faz morskich (M3) — wszystkie z licencją ✅ |
+| 2 (część) | `gebco2024` — kafel 0–90°N / 90°W–0 | domena RSL od 10°W (Wyspy Brytyjskie, Morze Północne); pobrany 2026-10-31 |
 
 ## Przetwarzanie
 
