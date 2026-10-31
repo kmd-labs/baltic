@@ -97,7 +97,7 @@ Prawie każdy zbiór w §3 to CC BY, co nakłada wymóg atrybucji — a atrybucj
 - `SOURCES.md` jako jedyne źródło prawdy dla generowanego `sources.json`.
 
 **DoD**
-- [ ] `SOURCES.md` pokrywa 100% zbiorów z §3
+- [x] `SOURCES.md` pokrywa 100% zbiorów z §3
 - [ ] Zero pozycji ze statusem „do weryfikacji"
 - [ ] Każda pozycja ma pełne cytowanie i tekst atrybucji
 
