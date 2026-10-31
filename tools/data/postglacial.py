@@ -4,7 +4,8 @@
     python tools/data/postglacial.py --model j88
 
 Writes to src/assets/data/:
-    grid/dem-europe.bin.gz         H_now, GEBCO 2024, 0.05°, KMDG/1 int16 (m)
+    grid/dem-europe.bin.gz         H_now, GEBCO 2024, 0–50°E / 48–75°N, 0.05°, KMDG/1 int16 (m)
+    grid/dem-baltic.bin.gz         H_now, GEBCO 2024, Baltic window 9–33°E / 53–67°N, 1/40°, KMDG/1 int16 (m)
     grid/rsl.bin.gz                RSL(t) of one Steffen & Kaufmann 2025 earth model, 1°, 19 layers, int16 × 0.01 m
     prototype/ice-dated1.json      DATED-1 outlines (mc, min, max) for 20 → 10 ka, simplified GeoJSON
 
@@ -46,6 +47,8 @@ OUT = ROOT / "src" / "assets" / "data"
 GEBCO = RAW / "gebco2024" / "gebco_2024_n90.0_s0.0_w0.0_e90.0.tif"
 DEM_BBOX = (0.0, 48.0, 50.0, 75.0)  # west, south, east, north
 DEM_STEP = 0.05  # degrees = 12 GEBCO cells
+BALTIC_BBOX = (9.0, 53.0, 33.0, 67.0)
+BALTIC_STEP = 1 / 40  # degrees = 6 GEBCO cells
 RSL = RAW / "steffen2025_rsl" / "rsl_SK05_skan_{model}.nc"
 DATED1 = RAW / "dated1" / "DATED-1_TimeSlices_shp.zip"
 ICE_KA = range(10, 21)  # frames 20 → 10 ka sit exactly on DATED-1 slices
@@ -53,16 +56,16 @@ ICE_SIMPLIFY_DEG = 0.02
 ICE_GRID_DEG = 0.001  # coordinate precision of the published outline
 
 
-def build_dem() -> kmdg.Grid:
-    west, south, east, north = DEM_BBOX
-    nx = round((east - west) / DEM_STEP)
-    ny = round((north - south) / DEM_STEP)
+def build_dem(bbox=DEM_BBOX, step=DEM_STEP) -> kmdg.Grid:
+    west, south, east, north = bbox
+    nx = round((east - west) / step)
+    ny = round((north - south) / step)
     with rasterio.open(GEBCO) as ds:
         window = from_bounds(west, south, east, north, ds.transform)
         # Block average of 12 × 12 source cells; rows come north first, as KMDG expects.
         h = ds.read(1, window=window, out_shape=(ny, nx), resampling=Resampling.average, out_dtype="float32")
     raw = kmdg.quantize(h[None].astype(np.float64), scale=1.0)
-    return kmdg.Grid(raw=raw, bbox=DEM_BBOX, times=(0.0,), scale=1.0, offset=0.0, nodata=-32768)
+    return kmdg.Grid(raw=raw, bbox=bbox, times=(0.0,), scale=1.0, offset=0.0, nodata=-32768)
 
 
 def build_rsl(model: str) -> kmdg.Grid:
@@ -151,13 +154,14 @@ def main(argv: list[str]) -> int:
 
     dem = build_dem()
     kmdg.write(OUT / "grid" / "dem-europe.bin.gz", dem)
+    kmdg.write(OUT / "grid" / "dem-baltic.bin.gz", build_dem(BALTIC_BBOX, BALTIC_STEP))
     rsl = build_rsl(args.model)
     kmdg.write(OUT / "grid" / "rsl.bin.gz", rsl)
     ice = build_ice()
     (OUT / "prototype" / "ice-dated1.json").write_text(
         json.dumps(ice, separators=(",", ":"), sort_keys=True), encoding="utf-8", newline="\n")
 
-    for f in ("grid/dem-europe.bin.gz", "grid/rsl.bin.gz", "prototype/ice-dated1.json"):
+    for f in ("grid/dem-europe.bin.gz", "grid/dem-baltic.bin.gz", "grid/rsl.bin.gz", "prototype/ice-dated1.json"):
         print(f"  {f}: {(OUT / f).stat().st_size / 1024:.0f} KB")
 
     # Checkpoints: H_paleo computed with the app's sampling rules. tests/contract/paleo.test.ts

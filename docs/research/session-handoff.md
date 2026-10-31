@@ -25,12 +25,14 @@ PR #2 zamknięty jako zbędny. Opisy #58, #17, #21, #16 zsynchronizowane z backl
 
 ## Prototyp na globie — stan
 
-- Uruchomienie: `npm start`, potem `http://localhost:4200/?ka=11` (0–20).
+- Uruchomienie: `npm start`, potem `http://localhost:4200/?t=11650` (cal BP, 0–20 000; działa też `?ka=11`).
+- **Wersja 2 (wieczór 2026-10-31):** region paleo liczony per piksel na GPU (ostra linia brzegowa przy zbliżeniu), siatka Bałtyku 1/40°, woda: wypełnienie od Skagerraku + *priority-flood* basenu do najniższego progu (lód = ściana). Model sam daje BIL ok. +31…+39 m (literatura +25), drenaż Billingen, Ancylus +22 m (lit. +10), dziś 390 tys. km² / 21,4 tys. km³ (rzeczywiście ok. 377 tys. / 21,7 tys.). Panele z makiety w docku; treści w `src/assets/content/{en,pl}` (`I-03`).
+- Test interakcji przez DevTools (`chromium` headless, CDP): przeciągnięcie przechyla do ~16°, po puszczeniu kamera wraca nad Bałtyk.
 - Dane: `python -m tools.data.postglacial` (sk1) → `src/assets/data/grid/` i `prototype/`. Deterministyczne.
 - Aplikacja liczy `H_now − RSL(t)` i zgadza się z pipeline'em < 5 cm (`tests/contract/paleo.test.ts`).
 - Pierwsze wejście na desktopie ~3,8 MB (limit 4 MB) — relief 4k z El Niño to 1,7 MB; przy dokładaniu klatek trzeba to obciąć.
 - **Znane ograniczenia:** domena DEM 0–50°E (szew na 0° w Morzu Północnym do czasu kafla GEBCO z tury 2); brak flood-fill (`C-04`) — zamknięte obniżenia i poldery wyglądają jak woda; fazy jeziorne na poziomie oceanu (`C-06`); lód bez grubości; ocean poza domeną bez batymetrii, więc głęboka woda w domenie jest ciemniejsza niż reszta oceanu.
-- **Niezweryfikowane:** sprężynowy powrót kamery i zachowanie na telefonie — rozszerzenie Chrome nie było połączone, zrzuty robione headless Chromium (bez interakcji; minimalna szerokość okna ~500 px).
+- **Niezweryfikowane na prawdziwym sprzęcie:** płynność na słabszych telefonach (łatka ma 140 tys. wierzchołków; headless bez GPU daje ~2,6 kl./s) — układ mobilny 390 px sprawdzony w emulacji DevTools.
 - Licencje tła globu (ETOPO2, Natural Earth, world-atlas) sprawdzone u źródła i oznaczone ✅ w `SOURCES.md`.
 
 ## Makieta

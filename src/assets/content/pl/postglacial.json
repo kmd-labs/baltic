@@ -1,0 +1,173 @@
+{
+ "phases": {
+  "deglaciation": {
+   "name": "Recesja lądolodu",
+   "short": "Recesja",
+   "water": "lądolód i zastoiska",
+   "psu": "—",
+   "desc": "Lądolód skandynawski cofa się z Pomorza. Misa Bałtyku leży jeszcze pod lodem, a na jego czole powstają pierwsze zastoiska.",
+   "species": null
+  },
+  "bil": {
+   "name": "Bałtyckie Jezioro Lodowe",
+   "short": "Jez. Lodowe",
+   "water": "słodkowodny, zaporowy",
+   "psu": "0–0,5",
+   "desc": "Jezioro spiętrzone lodem i progiem Øresundu ok. 25 m ponad ówczesny ocean. Gdy lądolód odsłania górę Billingen, poziom spada o 25–28 m.",
+   "species": null
+  },
+  "yoldia": {
+   "name": "Morze Yoldiowe",
+   "short": "Yoldia",
+   "water": "krótko słonawy, potem słodki",
+   "psu": "0–12",
+   "desc": "Połączenie z oceanem przez środkową Szwecję: najpierw korytarzem Billingen, potem Cieśniną Närke. Słona woda dociera tylko w ok. 11 700–11 100 cal BP.",
+   "species": "Portlandia (Yoldia) arctica"
+  },
+  "ancylus": {
+   "name": "Jezioro Ancylusowe",
+   "short": "Ancylus",
+   "water": "słodkowodny",
+   "psu": "0–0,5",
+   "desc": "Wypiętrzanie zamyka cieśniny w Szwecji. Jezioro odpływa Rzeką Svea, potem Rzeką Dana przez Cieśniny Duńskie; na południu wybrzeże tonie.",
+   "species": "Ancylus fluviatilis"
+  },
+  "mastogloia": {
+   "name": "Morze Mastogloiowe",
+   "short": "Mastogloia",
+   "water": "przejściowy, słonawy",
+   "psu": "0,5–5",
+   "desc": "Ocean podnosi się szybciej niż progi Cieśnin Duńskich. Ingresja słonej wody postępuje powoli.",
+   "species": "okrzemki Mastogloia"
+  },
+  "littorina": {
+   "name": "Morze Litorynowe",
+   "short": "Litoryna",
+   "water": "morski",
+   "psu": "3–18",
+   "desc": "Maksymalna transgresja. Zasolenie wyraźnie wyższe niż dziś; morze zalewa niziny na południu, a Zatoka Botnicka się wynurza.",
+   "species": "Littorina littorea"
+  },
+  "post-littorina": {
+   "name": "Morze Limneowe i Myowe",
+   "short": "Limnea · Mya",
+   "water": "słonawy",
+   "psu": "2–20",
+   "desc": "Wypłycenie Cieśnin Duńskich ogranicza wlewy. Zasolenie spada do dzisiejszego poziomu: ok. 7 PSU w Bałtyku właściwym.",
+   "species": "Limnaea (Radix) balthica, Mya arenaria"
+  }
+ },
+ "events": {
+  "billingen-before": {
+   "label": "Przed drenażem Billingen",
+   "note": "Lód jeszcze blokuje korytarz Billingen. Jezioro odpływa przez Øresund."
+  },
+  "billingen-after": {
+   "label": "Po drenażu Billingen",
+   "note": "Czas trwania drenażu jest sporny: „1–2 lata” to jedno z oszacowań, nie konsensus."
+  },
+  "ancylus-max": {
+   "label": "Maksimum ancylusowe",
+   "note": "Literatura: poziom ok. +10 m ponad ówczesny ocean."
+  },
+  "ancylus-regression": {
+   "label": "Próg regresji ancylusowej",
+   "note": "Odpływ przechodzi z Rzeki Svea na Rzekę Dana."
+  },
+  "littorina-onset": {
+   "label": "Początek ingresji litorynowej",
+   "note": "Ocean przelewa się przez próg Darss."
+  },
+  "littorina-max": {
+   "label": "Maksimum litorynowe",
+   "note": "Środkowoholoceński highstand w strefach przejściowych: 7,5–6,5 ka BP."
+  }
+ },
+ "sills": {
+  "billingen": "Billingen",
+  "narke": "Cieśnina Närke",
+  "svea": "Svea (Degerfors)",
+  "darss": "Próg Darss",
+  "oresund": "Drogden · Øresund",
+  "storebaelt": "Wielki Bełt"
+ },
+ "places": {
+  "stockholm": "Sztokholm",
+  "helsinki": "Helsinki",
+  "tallinn": "Tallinn",
+  "riga": "Ryga",
+  "gdansk": "Gdańsk",
+  "copenhagen": "Kopenhaga",
+  "umea": "Umeå",
+  "oulu": "Oulu",
+  "szczecin": "Szczecin",
+  "gotland": "Gotlandia"
+ },
+ "glossary": [
+  [
+   "cal BP",
+   "Lata kalibrowane przed 1950 r. (Present = 1950). Daty ¹⁴C z literatury przelicza się krzywą IntCal20; bez tego daty z późnego glacjału przesuwają się o 1000–1500 lat."
+  ],
+  [
+   "Izostazja glacjalna (GIA)",
+   "Ląd ugięty ciężarem lądolodu powoli wraca do równowagi. Przy Umeå podnosi się dziś o ok. 10 mm/rok, a na wybrzeżu Polski prawie wcale."
+  ],
+  [
+   "Eustatyka",
+   "Globalna zmiana poziomu oceanu wynikająca z ilości wody uwięzionej w lądolodach. 20 tys. lat temu ocean stał ok. 120 m niżej."
+  ],
+  [
+   "RSL",
+   "Względny poziom morza: gdzie stała powierzchnia wody w stosunku do dzisiejszego lądu w danym miejscu. Łączy izostazję i eustatykę — dlatego H_paleo = H_dziś − RSL(t) bez osobnego członu eustatycznego."
+  ],
+  [
+   "Próg (sill)",
+   "Najniższe miejsce między basenem a oceanem. W fazach jeziornych to on, a nie ocean, ustala poziom wody w Bałtyku."
+  ],
+  [
+   "PSU",
+   "Praktyczna jednostka zasolenia, w przybliżeniu gramy soli na kilogram wody. Ocean ok. 35, Bałtyk właściwy dziś ok. 7."
+  ],
+  [
+   "Datum: geoida z epoki",
+   "Wysokości liczone względem ówczesnej powierzchni morza, nie dzisiejszej. Tylko w tym układzie poziom jeziora (np. +25 m) jest jedną liczbą dla całego basenu."
+  ],
+  [
+   "Pas niepewności",
+   "Zasięg lądolodu w wariantach minimalnym i maksymalnym (DATED-1) pokazany razem z linią najbardziej prawdopodobną."
+  ]
+ ],
+ "sources": [
+  [
+   "GEBCO Compilation Group 2024",
+   "GEBCO_2024 Grid, doi:10.5285/1c44ce99-0a0d-5f4f-e063-7086abc0ea0f — rzeźba i batymetria dziś (domena publiczna)."
+  ],
+  [
+   "Steffen i Kaufmann 2025",
+   "Pola RSL dla północnej Europy, ANU-ICE, 8 modeli Ziemi, Zenodo 10.5281/zenodo.15481755 (CC BY 4.0) — model GIA."
+  ],
+  [
+   "Hughes i in. 2016",
+   "DATED-1, zasięg lądolodów eurazjatyckich min / mc / maks, PANGAEA 10.1594/PANGAEA.848117 (CC BY 3.0)."
+  ],
+  [
+   "Andrén i in. 2011",
+   "The development of the Baltic Sea Basin during the last 130 ka — chronologia i opisy faz."
+  ],
+  [
+   "NOAA NGDC 2006",
+   "ETOPO2v2, doi:10.7289/V5J1012Q — przewyższenie terenu na globie."
+  ],
+  [
+   "Natural Earth",
+   "SR_50M i land-50m (przez world-atlas) — cieniowanie i kontur lądu na globie (domena publiczna)."
+  ]
+ ],
+ "about": [
+  "To prototyp, nie wynik naukowy. Wysokości są prawdziwe (GEBCO 2024 i pola RSL Steffena i Kaufmanna 2025), ale pipeline nie ma jeszcze wszystkich kroków.",
+  "H_paleo = H_dziś − RSL(t) liczymy w przeglądarce, z interpolacją liniową w czasie i dwuliniową w przestrzeni — tak samo jak pipeline (zgodność < 5 cm).",
+  "Woda w oknie Bałtyku jest wypełniana od Skagerraku. Gdy basen nie ma połączenia z oceanem, wypełnia się do najniższego progu odpływu (priority-flood, lód działa jak ściana) — ten poziom karta fazy porównuje z literaturą, jak test sill-check (V-02).",
+  "Jeszcze nie ma: katalogu progów z rzędnymi i stanami (C-05), zasolenia per basen (C-10), krzywej eustatycznej (C-12), grubości lodu (C-07) ani danych na zachód od 0°E.",
+  "Kliknięcie w glob dodaje krzywą RSL dla wybranego punktu."
+ ]
+}
