@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
   Globe,
-  Mountain,
   BookOpen,
   Library,
   Info,
@@ -14,7 +13,8 @@ import {
   ChevronDown,
   Plus,
   Minus,
-  Maximize2
+  Maximize2,
+  GraduationCap
 } from 'lucide-angular';
 import {
   ButtonComponent,
@@ -40,6 +40,9 @@ import { PhaseCardComponent } from './components/panels/phase-card.component';
 import { TransectPanelComponent } from './components/panels/transect-panel.component';
 import { PhaseBandsComponent } from './components/panels/phase-bands.component';
 import { InfoPopupComponent } from './components/panels/info-popup.component';
+import { LayersMenuComponent, LayerItem } from './components/header/layers-menu.component';
+import { TourComponent, TourStep } from './components/tour/tour.component';
+import type { TourStepId } from './core/i18n/i18n.types';
 
 type Tab = 'phase' | 'transect';
 type LayerId = keyof GlobeLayers;
@@ -59,7 +62,9 @@ type LayerId = keyof GlobeLayers;
     GlobeComponent,
     PhaseCardComponent,
     TransectPanelComponent,
-    PhaseBandsComponent
+    PhaseBandsComponent,
+    LayersMenuComponent,
+    TourComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
@@ -74,10 +79,21 @@ export class AppComponent implements OnDestroy {
   readonly content = inject(ContentService);
 
   @ViewChild(GlobeComponent) globe?: GlobeComponent;
+  @ViewChild(TourComponent) tour?: TourComponent;
 
-  readonly icons = { Globe, Mountain, BookOpen, Library, Info, Play, Pause, ChevronLeft, ChevronRight, ChevronDown, Plus, Minus, Maximize2 };
+  /** Tutorial steps in the order of the brief: play, layers, glossary, sources, phase, transect, KMD. */
+  readonly tourSteps: TourStep[] = [
+    { id: 'play', target: '[data-tour="play"]' },
+    { id: 'layers', target: '[data-tour="layers"]' },
+    { id: 'glossary', target: '[data-tour="glossary"]' },
+    { id: 'sources', target: '[data-tour="sources"]' },
+    { id: 'phase', target: '[data-tour="phase"]' },
+    { id: 'transect', target: '[data-tour="transect"]' },
+    { id: 'about', target: '[data-tour="about"]' }
+  ];
 
-  readonly currentView = signal<string>('paleo');
+  readonly icons = { Globe, BookOpen, Library, Info, Play, Pause, ChevronLeft, ChevronRight, ChevronDown, Plus, Minus, Maximize2, GraduationCap };
+
   /** Shown time, cal yr BP. */
   readonly t = signal<number>(initialTime());
   readonly phase = computed(() => phaseAt(this.t()));
@@ -86,6 +102,8 @@ export class AppComponent implements OnDestroy {
   readonly tab = signal<Tab>('phase');
   readonly pointer = signal<GlobePointer | null>(null);
   readonly layers = signal<GlobeLayers>({ ice: true, band: true, today: true, prev: true, sills: true, transect: true, labels: true });
+
+  readonly layerItems = computed<LayerItem[]>(() => this.layerList().map(l => ({ ...l, on: this.layers()[l.id] })));
 
   readonly layerList = computed<{ id: LayerId; label: string }[]>(() => {
     const t = this.i18n.t();
@@ -143,7 +161,6 @@ export class AppComponent implements OnDestroy {
     }))
   );
 
-  readonly viewOptions = computed<DropdownOption<string>[]>(() => [{ value: 'paleo', label: this.i18n.t().viewPaleo, icon: Mountain }]);
   readonly isPopupOpen = computed(() => this.popup.config() !== null);
 
   private playTimer: ReturnType<typeof setInterval> | null = null;
@@ -188,6 +205,19 @@ export class AppComponent implements OnDestroy {
     this.playing.set(false);
     if (this.playTimer) clearInterval(this.playTimer);
     this.playTimer = null;
+  }
+
+  startTour(): void {
+    this.stop();
+    this.tour?.start();
+  }
+
+  /** Make the target of a tutorial step visible: panels expanded, the right tab on narrow screens. */
+  onTourStep(id: TourStepId): void {
+    if (id === 'phase' || id === 'transect') {
+      this.collapsed.set(false);
+      this.tab.set(id);
+    }
   }
 
   toggleLayer(id: LayerId): void {

@@ -15,7 +15,7 @@
   right: 16px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   pointer-events: none;
   z-index: 25;
@@ -125,6 +125,33 @@
 
   &__view {
     width: 180px;
+    position: relative;
+    z-index: 3; // the open layer list stays above the tutorial pill
+  }
+
+  // Layers pill with the tutorial pill under it (top-right; decision 2026-10-31).
+  &__right {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  &__tour {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: radius("pill");
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: color("text-bright");
+    cursor: pointer;
+    transition: background transition("fast");
+
+    &:hover { background: color("panel-bg-heavy"); }
+    &:focus-visible { outline: 2px solid color("accent"); outline-offset: 2px; }
   }
 
   @include respond-to("mobile") {
@@ -177,6 +204,7 @@
 .toolbar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
   min-width: 0;
 }
@@ -339,9 +367,10 @@
   border-radius: 14px;
   overflow: hidden;
 
-  // The phase card sizes to its content (no scrolling); the transect fills the row height.
-  &--phase { height: auto; }
-  &--transect { min-height: 230px; }
+  // Half the earlier height (decision 2026-10-31): the phase card scrolls, the transect fills it.
+  height: 165px;
+
+  &--phase { overflow-y: auto; scrollbar-width: thin; }
 }
 
 @include respond-to("tablet") {
@@ -352,7 +381,7 @@
 }
 
 @include respond-to("mobile") {
-  .panel--transect { min-height: 200px; }
+  .panel { height: 150px; }
 }
 
 .zoom {

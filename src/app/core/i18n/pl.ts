@@ -8,7 +8,6 @@ export const PL: Dict = {
   // Top HUD & Navigation
   changeLanguage: 'Język',
   chooseView: 'Widok',
-  viewPaleo: 'Paleogeografia',
   stageAriaLabel: 'Glob wycentrowany na Bałtyku: woda, ląd i lądolód w wybranym czasie',
 
   // Bottom Dock & Glossary
@@ -29,6 +28,21 @@ export const PL: Dict = {
   collapsePanels: 'Zwiń panele',
   expandPanels: 'Rozwiń panele',
   layersLabel: 'Warstwy',
+  tour: 'Samouczek',
+  tourNext: 'Dalej',
+  tourPrev: 'Wstecz',
+  tourDone: 'Zakończ',
+  tourClose: 'Zamknij samouczek',
+  tourStepOf: (i, n) => `Krok ${i} z ${n}`,
+  tourSteps: {
+    play: { title: 'Odtwarzanie', text: 'Uruchamia animację od 20 tys. lat temu do dziś. Strzałki obok przechodzą o jedną klatkę, a suwak pozwala wybrać dowolny moment.' },
+    layers: { title: 'Warstwy', text: 'Włącz lub wyłącz lądolód, pas niepewności, dzisiejszy brzeg, brzeg sprzed 1000 lat, progi, linię przekroju i nazwy.' },
+    glossary: { title: 'Słowniczek', text: 'Wyjaśnia pojęcia używane w aplikacji: cal BP, izostazję, RSL, progi, PSU i inne.' },
+    sources: { title: 'Źródła', text: 'Skąd pochodzą wszystkie dane, do czego służą w aplikacji, na jakiej licencji są używane i co z nimi zrobiliśmy.' },
+    phase: { title: 'Faza', text: 'Opis bieżącej fazy rozwoju Bałtyku: typ wody, zasolenie, poziom z modelu i z literatury, powierzchnia i objętość. Tu są też przekroje zdarzeniowe.' },
+    transect: { title: 'Przekrój Umeå → Gdańsk', text: 'Profil terenu i wody wzdłuż osi Bałtyku w wybranym czasie. Przerywana linia to dzisiejsze dno.' },
+    about: { title: 'KMD Labs', text: 'Kliknij logo, żeby dowiedzieć się, kto stoi za projektem.' }
+  },
   layerIce: 'Lądolód',
   layerBand: 'Pas niepewności',
   layerToday: 'Brzeg dziś',

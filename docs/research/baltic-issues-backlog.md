@@ -723,7 +723,7 @@ Decyzja z 2026-10-31: scena to **glob z `kmd-labs/el-nino` — tylko glob i reli
 - **Najpierw prototyp:** glob z reliefem na danych „dziś” służy od razu do oglądania prototypu `C-03` (paleo-DEM `H_now − RSL(t)` jako podmieniana tekstura / przemieszczenie w oknie Bałtyku).
 - **Paleo:** w domenie RSL tekstura i przemieszczenie generowane per klatka z `grid/dem-*` − RSL(t), z maską wody, lodu i zasoleniem z klatki; przewyższenie regulowane suwakiem.
 - Tryb 2D z makiety — do decyzji; domyślnie tylko glob.
-- Dropdown w prawym górnym rogu (`AGENTS.md` §2) — **do rozstrzygnięcia**; propozycja: Paleogeografia / Zasolenie / Lądolód.
+- Prawy górny róg: **lista warstw** zamiast przełącznika widoku (decyzja 2026-10-31, odstępstwo od `AGENTS.md` §2) + pastylka „Samouczek” uruchamiająca 7-krokowy samouczek na żądanie.
 
 **DoD**
 - [ ] Glob działa na danych dziś (klatka 0) zanim powstaną klatki paleo

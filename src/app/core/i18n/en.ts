@@ -8,7 +8,6 @@ export const EN: Dict = {
   // Top HUD & Navigation
   changeLanguage: 'Language',
   chooseView: 'View',
-  viewPaleo: 'Paleogeography',
   stageAriaLabel: 'Globe centred on the Baltic Sea showing water, land and ice at the selected time',
 
   // Bottom Dock & Glossary
@@ -29,6 +28,21 @@ export const EN: Dict = {
   collapsePanels: 'Collapse panels',
   expandPanels: 'Expand panels',
   layersLabel: 'Layers',
+  tour: 'Tutorial',
+  tourNext: 'Next',
+  tourPrev: 'Back',
+  tourDone: 'Finish',
+  tourClose: 'Close the tutorial',
+  tourStepOf: (i, n) => `Step ${i} of ${n}`,
+  tourSteps: {
+    play: { title: 'Playback', text: 'Plays the animation from 20,000 years ago to today. The arrows step one frame; the slider picks any moment.' },
+    layers: { title: 'Layers', text: 'Turn the ice sheet, uncertainty band, present-day coast, coast 1000 years earlier, sills, transect line and names on or off.' },
+    glossary: { title: 'Glossary', text: 'Explains the terms used in the app: cal BP, isostasy, RSL, sills, PSU and more.' },
+    sources: { title: 'Sources', text: 'Where every dataset comes from, what it is used for in the app, its licence and what we changed.' },
+    phase: { title: 'Phase', text: 'The current stage of the Baltic: water type, salinity, model and literature level, area and volume. Event sections are listed here too.' },
+    transect: { title: 'Transect Umeå → Gdańsk', text: 'Profile of land and water along the axis of the Baltic at the chosen time. The dashed line is the present-day floor.' },
+    about: { title: 'KMD Labs', text: 'Click the logo to learn who is behind the project.' }
+  },
   layerIce: 'Ice sheet',
   layerBand: 'Uncertainty band',
   layerToday: 'Coast today',

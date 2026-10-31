@@ -1,5 +1,7 @@
 export type Lang = 'en' | 'pl';
 
+export type TourStepId = 'play' | 'layers' | 'glossary' | 'sources' | 'phase' | 'transect' | 'about';
+
 export type PhaseId = 'deglaciation' | 'bil' | 'yoldia' | 'ancylus' | 'mastogloia' | 'littorina' | 'post-littorina';
 
 /**
@@ -14,7 +16,6 @@ export interface Dict {
   // Top HUD & Navigation
   changeLanguage: string;
   chooseView: string;
-  viewPaleo: string;
   stageAriaLabel: string;
 
   // Bottom Dock & Glossary
@@ -38,6 +39,13 @@ export interface Dict {
   collapsePanels: string;
   expandPanels: string;
   layersLabel: string;
+  tour: string;
+  tourNext: string;
+  tourPrev: string;
+  tourDone: string;
+  tourClose: string;
+  tourStepOf: (i: number, n: number) => string;
+  tourSteps: Record<TourStepId, { title: string; text: string }>;
   layerIce: string;
   layerBand: string;
   layerToday: string;
