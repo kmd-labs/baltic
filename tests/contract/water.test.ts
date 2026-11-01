@@ -3,7 +3,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { Feature, Geometry } from 'geojson';
 import { decodeKmdg, gunzipIfNeeded, kmdgLayer } from '../../src/app/core/data/kmdg.ts';
+import { iceMaskFor, iceSliceFor } from '../../src/app/core/data/ice-field.ts';
+import { FRAMES, lakeLevelAt, phaseAt } from '../../src/app/core/data/timeline.ts';
 import { buildResampler, maskFractionAt, paleoElevation, rslAt } from '../../src/app/core/data/paleo.ts';
 import {
   basinStats,
@@ -184,4 +187,106 @@ test('GLSL lake/ocean precedence equals waterKindAt', () => {
       }
     }
   }
+});
+
+// ── A-03 / A-04: the ice-dammed phase, and the level as a monitored error budget ─────────────────
+// The outlines rasterise without a DOM now (ice-field.ts), so the phase where the ice *is* the
+// mechanism is finally reachable from here. Before that every test in this file passed
+// `fillWater(..., null)` and the whole Baltic Ice Lake went uncovered.
+const ice = JSON.parse(readFileSync(join(DATA, 'prototype', 'ice-dated1.json'), 'utf8')) as {
+  features: Feature<Geometry, { ka: number; variant: string }>[];
+};
+const iceCache = new Map<number, Uint8Array>();
+/** The ice wall of a frame, by the app's own slice mapping. */
+function iceAt(t: number): Uint8Array | null {
+  const ka = iceSliceFor(t);
+  if (ka == null) return null;
+  let mask = iceCache.get(ka);
+  if (!mask) {
+    mask = iceMaskFor(ice.features.find(f => f.properties.ka === ka && f.properties.variant === 'mc'), baltic);
+    iceCache.set(ka, mask);
+  }
+  return mask;
+}
+const levelAt = (t: number) => {
+  const hp = paleoElevation(hNow, rslAt(cube, t / 1000), rs);
+  const { water, level } = fillWater(baltic, hp, iceAt(t));
+  return { hp, water, level, stats: basinStats(baltic, hp, water, level) };
+};
+
+test('the Baltic Ice Lake is dammed by the ice, not by topography', () => {
+  const t = 13000;
+  const dammed = levelAt(t);
+  assert.ok(dammed.level > 0, `13 ka with the wall: level ${dammed.level.toFixed(1)} m`);
+  assert.equal(dammed.stats.connected, false, 'a dammed basin is not ocean-connected');
+  assert.ok(dammed.water.some(w => w === WATER_LAKE));
+
+  // Remove the wall and the mechanism goes with it: the same frame drains to the ocean. This is
+  // what every test in this file used to measure, and why the phase had no coverage.
+  const hp = paleoElevation(hNow, rslAt(cube, t / 1000), rs);
+  const open = fillWater(baltic, hp, null);
+  assert.equal(open.level, 0, 'without the ice wall the 13 ka basin is not a lake');
+  assert.ok(basinStats(baltic, hp, open.water, open.level).connected);
+});
+
+/**
+ * How far the modelled level may sit from the literature curve before the test fails.
+ *
+ * Not fitted to the current output: the modelled level is the elevation of the controlling outlet
+ * read off the RSL field, and that field is 1° interpolated onto a 0.025° DEM. Between adjacent
+ * nodes it steps by 16–19 m on average through 16–11 ka (audit §2, `npm run audit:metrics`), so
+ * the outlet elevation carries that much uncertainty before any model error. A budget of 20 m is
+ * the input noise of the era, rounded; the point is not agreement but that a divergence cannot
+ * grow quietly. Worst deviation when this was written: 13.9 m at 14 ka.
+ */
+const LEVEL_BUDGET_M = 20;
+
+/**
+ * Lake-phase frames where the model finds no lake at all. 16 ka is the one: the sheet still covers
+ * the basin and what water there is drains to the ocean, so the model does not reproduce a dammed
+ * lake that early. Pinned rather than tolerated — if the set changes, the change should be read.
+ */
+const CONNECTED_IN_LAKE_PHASE = [16000];
+
+test('modelled lake levels stay inside the error budget against the literature', () => {
+  const rows: string[] = [];
+  let worst = 0;
+  let sq = 0;
+  let n = 0;
+  for (const t of [...FRAMES].sort((a, b) => b - a)) {
+    const { level } = levelAt(t);
+    const lit = lakeLevelAt(t);
+    const lake = phaseAt(t).lake;
+    if (!lake && level === 0) continue;
+    if (lake && level === 0) {
+      assert.ok(CONNECTED_IN_LAKE_PHASE.includes(t), `${t} BP is a lake phase but the model finds no lake`);
+      rows.push(`${t} BP: model connected, literature +${lit} m  (documented divergence)`);
+      continue;
+    }
+    const d = level - lit;
+    worst = Math.max(worst, Math.abs(d));
+    sq += d * d;
+    n++;
+    rows.push(`${t} BP ${phaseAt(t).id.padEnd(14)} model ${level.toFixed(1).padStart(6)}  literature ${lit.toFixed(1).padStart(6)}  diff ${d > 0 ? '+' : ''}${d.toFixed(1)}`);
+    assert.ok(
+      Math.abs(d) <= LEVEL_BUDGET_M,
+      `${t} BP: model ${level.toFixed(1)} m vs literature ${lit.toFixed(1)} m, off by ${d.toFixed(1)} m (budget ${LEVEL_BUDGET_M} m)`
+    );
+  }
+  assert.ok(n >= 8, `only ${n} frames carry a modelled lake`);
+  for (const r of rows) console.log('    ' + r);
+  console.log(`    A-04: ${n} frames, worst ${worst.toFixed(1)} m, RMSE ${Math.sqrt(sq / n).toFixed(1)} m, budget ${LEVEL_BUDGET_M} m`);
+});
+
+test('the budget has teeth: breaking the dam puts 13 ka outside it', () => {
+  // The negative control for the test above. With the wall gone the spill analysis has nothing to
+  // hold the lake, the level drops to 0, and the deviation from the literature's +25 m exceeds the
+  // budget — so a budget that passes is saying something.
+  const t = 13000;
+  const hp = paleoElevation(hNow, rslAt(cube, t / 1000), rs);
+  const broken = fillWater(baltic, hp, null).level;
+  assert.ok(
+    Math.abs(broken - lakeLevelAt(t)) > LEVEL_BUDGET_M,
+    `a broken dam left the level within budget: ${broken.toFixed(1)} m vs ${lakeLevelAt(t)} m`
+  );
 });

@@ -3,9 +3,9 @@ import type { Feature, Geometry } from 'geojson';
 import * as d3Geo from 'd3-geo';
 import { fetchKmdg, kmdgLayer, KmdgGrid } from './kmdg';
 import { bilinear, maskFractionAt, rslAt, RslCube } from './paleo';
-import { EVENTS, FRAMES, lakeLevelAt, nearestFrame } from './timeline';
+import { FRAMES, lakeLevelAt, nearestFrame } from './timeline';
 import { cellIndex, FrameStats, inside, maskHit, WaterKind, waterKindAt, WATER_LAKE, WATER_OCEAN } from './water';
-import { ICE_KA_MAX, ICE_KA_MIN, iceSignedDistance } from './ice-field';
+import { ICE_KA_MAX, ICE_KA_MIN, iceMaskFor, iceSignedDistance, iceSliceFor } from './ice-field';
 import type { WorkerFrame, WorkerInit, WorkerRequest } from './paleo.worker';
 
 export type { FrameStats, WaterKind } from './water';
@@ -93,19 +93,6 @@ const DEG = Math.PI / 180;
 export const TRANSECT: readonly [number, number][] = [
   [19.9, 64.3], [20.5, 63.4], [19.6, 61.6], [19.3, 60.15], [18.9, 58.6], [19.9, 57.3], [19.3, 55.1], [18.6, 54.3]
 ];
-
-/**
- * DATED-1 slice for the Billingen event sections: the ice margin passes Billingen around
- * 11.7 ka, so "before" keeps the 12 ka outline and "after" takes the 11 ka one. Other
- * sections use the nearest slice.
- *
- * This drives the ice *wall* of the flood fill and the tooltip, which are per-frame and stay on the
- * 1 ka timeline. The ice body drawn on the globe is interpolated between slices instead — see
- * `iceBracket` in ice-field.ts.
- */
-const ICE_SLICE_FOR_EVENT: Record<number, number> = Object.fromEntries(
-  EVENTS.filter(e => e.id === 'billingen-before' || e.id === 'billingen-after').map(e => [e.t, e.id === 'billingen-before' ? 12 : 11])
-);
 
 /**
  * Loads the present-day grids, the RSL cube and the DATED-1 outlines once. RSL fields are
@@ -279,11 +266,11 @@ export class PaleoDataService {
     return f;
   }
 
-  /** Nearest-slice outlines for the flood-fill wall and the tooltip; see ICE_SLICE_FOR_EVENT. */
+  /** Outlines of the slice that walls off this frame's fill; the slice choice is `iceSliceFor`. */
   iceFor(t: number): FrameIce | null {
+    const slice = iceSliceFor(t);
+    if (slice == null) return null;
     const ka = t / 1000;
-    if (ka < 9.5) return null;
-    const slice = ICE_SLICE_FOR_EVENT[t] ?? Math.min(20, Math.max(10, Math.round(ka)));
     const features: Partial<Record<IceVariant, IceFeature>> = {};
     for (const f of this.ice) if (f.properties.ka === slice) features[f.properties.variant] = f;
     return { ka: slice, exact: Math.abs(ka - slice) < 1e-6, features };
@@ -335,7 +322,7 @@ export class PaleoDataService {
       const hNow = bilinear(this.hNowBaltic!, b, lon, lat);
       const hPaleo = hNow - rsl;
       // The ice wall of the flood fill, and this flag with it, stay on the 1 ka timeline — see
-      // ICE_SLICE_FOR_EVENT; the body drawn on the globe is interpolated between slices instead.
+      // `iceSliceFor`; the body drawn on the globe is interpolated between slices instead.
       const mask = this.frame(t)?.iceMask;
       return {
         lon,
@@ -439,33 +426,12 @@ export class PaleoDataService {
     this.version.update(v => v + 1);
   }
 
-  /** DATED-1 `mc` outline rasterised onto the Baltic grid. */
+  /** DATED-1 `mc` outline rasterised onto the Baltic grid — the wall of the flood fill. */
   private iceMask(ka: number): Uint8Array {
     const hit = this.iceMasks.get(ka);
     if (hit) return hit;
-    const g = this.baltic!;
-    const [west, south, east, north] = g.bbox;
-    const cv = document.createElement('canvas');
-    cv.width = g.nx;
-    cv.height = g.ny;
-    const cx = cv.getContext('2d', { willReadFrequently: true })!;
-    const sx = g.nx / (east - west);
-    const sy = g.ny / (north - south);
-    const proj = d3Geo.geoTransform({
-      point(lon: number, lat: number) {
-        this.stream.point((lon - west) * sx, (north - lat) * sy);
-      }
-    });
     const mc = this.ice.find(f => f.properties.ka === ka && f.properties.variant === 'mc');
-    const mask = new Uint8Array(g.nx * g.ny);
-    if (mc) {
-      cx.beginPath();
-      d3Geo.geoPath(proj, cx)(mc);
-      cx.fillStyle = '#000';
-      cx.fill();
-      const px = cx.getImageData(0, 0, g.nx, g.ny).data;
-      for (let i = 0; i < mask.length; i++) mask[i] = px[i * 4 + 3] > 127 ? 1 : 0;
-    }
+    const mask = iceMaskFor(mc, this.baltic!);
     this.iceMasks.set(ka, mask);
     return mask;
   }

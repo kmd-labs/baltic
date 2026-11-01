@@ -15,7 +15,7 @@
  * splitting.
  *
  * The transform runs in a stereographic raster — conformal, so distances are locally isotropic and
- * a separable Euclidean transform is valid. On a lon/lat raster the east-west cell size varies with
+ * a separable Euclidean transform is valid. The raster itself is filled here, without a DOM (A-03). On a lon/lat raster the east-west cell size varies with
  * latitude (cos 75 / cos 65 ~ 0.61 across this domain), which that algorithm cannot express. The
  * result is resampled back to a lon/lat grid, so the shader samples it with the same `boxUv` rule
  * as every other grid in the app.
@@ -24,6 +24,7 @@ import * as d3Geo from 'd3-geo';
 import type { Feature, GeoJsonProperties, Geometry } from 'geojson';
 
 import type { GridGeometry } from './paleo';
+import { EVENTS } from './timeline';
 
 /** DATED-1 reaches 95 E and 83 N; clipped here to the RSL / DEM domain (-10...70 E, 45...85 N). */
 export const ICE_DOMAIN: GridGeometry = {
@@ -78,6 +79,161 @@ export function iceBracket(t: number): IceBracket | null {
   return { kaA, kaB, w, fade: 1, interpolated: Math.abs(k - Math.round(k)) > 1e-9 };
 }
 
+// ─── rasterisation ────────────────────────────────────────────────────────────
+
+type IceGeometry = Feature<Geometry, GeoJsonProperties>;
+
+/**
+ * The outlines become rasters twice: as the ice *wall* of the flood fill on the Baltic grid
+ * (`iceMaskFor`) and as the solid interior the distance transform measures (`iceSignedDistance`).
+ * Both used to go through a DOM `<canvas>`, which made a physics input depend on a browser API and
+ * on its fill rules — and left the ice-dammed Baltic Ice Lake with no test coverage at all, since
+ * every contract test had to pass `fillWater(..., null)` (`A-03`).
+ *
+ * The geometry is still d3's. `geoPath` streams through the projection into the same tiny context a
+ * canvas would get, so clipping and the adaptive resampling of geodesics are unchanged; only the
+ * fill is ours. A canvas thresholds antialiased coverage at half a pixel, this tests the pixel
+ * centre, so the two can differ on cells the margin passes through and nowhere else.
+ */
+class PolygonPath {
+  /** One ring per sub-path, flat as [x0, y0, x1, y1, …], in raster pixels. */
+  readonly rings: number[][] = [];
+  private current: number[] = [];
+
+  beginPath(): void {
+    this.rings.length = 0;
+  }
+
+  moveTo(x: number, y: number): void {
+    this.current = [x, y];
+    this.rings.push(this.current);
+  }
+
+  lineTo(x: number, y: number): void {
+    this.current.push(x, y);
+  }
+
+  closePath(): void {
+    // The rasteriser closes every ring itself.
+  }
+
+  arc(): void {
+    // d3-geo only draws arcs for Point geometries; DATED-1 carries polygons.
+  }
+}
+
+/**
+ * Scanline fill with the nonzero winding rule — the default of a canvas `fill()`, and the rule
+ * that gets holes right for GeoJSON wound to the specification. A cell is set when its centre lies
+ * inside the path.
+ */
+export function fillPath(rings: readonly number[][], w: number, h: number, out?: Uint8Array): Uint8Array {
+  const mask = out ?? new Uint8Array(w * h);
+  const xs: number[] = [];
+  const dirs: number[] = [];
+  for (let r = 0; r < h; r++) {
+    const y = r + 0.5;
+    xs.length = 0;
+    dirs.length = 0;
+    for (const ring of rings) {
+      const n = ring.length / 2;
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+        const y0 = ring[i * 2 + 1];
+        const y1 = ring[j * 2 + 1];
+        if (y0 === y1) continue;
+        // Half-open in y: an edge counts on the scanline through its upper end and not its lower
+        // one, so a vertex exactly on the scanline is crossed once, not twice.
+        const down = y0 < y1;
+        if (down ? y < y0 || y >= y1 : y < y1 || y >= y0) continue;
+        xs.push(ring[i * 2] + ((y - y0) / (y1 - y0)) * (ring[j * 2] - ring[i * 2]));
+        dirs.push(down ? 1 : -1);
+      }
+    }
+    if (xs.length < 2) continue;
+    const order = [...xs.keys()].sort((a, b) => xs[a] - xs[b]);
+    let winding = 0;
+    const row = r * w;
+    for (let k = 0; k + 1 < order.length; k++) {
+      winding += dirs[order[k]];
+      if (!winding) continue;
+      const from = Math.max(0, Math.ceil(xs[order[k]] - 0.5));
+      const to = Math.min(w - 1, Math.ceil(xs[order[k + 1]] - 0.5) - 1);
+      for (let c = from; c <= to; c++) mask[row + c] = 1;
+    }
+  }
+  return mask;
+}
+
+/** One outline projected and filled into a w × h raster. */
+export function rasterise(
+  feature: IceGeometry,
+  projection: d3Geo.GeoProjection | d3Geo.GeoStreamWrapper,
+  w: number,
+  h: number,
+  out?: Uint8Array
+): Uint8Array {
+  const path = new PolygonPath();
+  d3Geo.geoPath(projection, path)(feature);
+  return fillPath(path.rings, w, h, out);
+}
+
+/**
+ * One DATED-1 outline on a lon/lat grid: the ice wall the flood fill cannot cross (water.ts).
+ * Plate carrée, so the raster rows and columns are the grid's own and the projection is a scale.
+ */
+export function iceMaskFor(feature: IceGeometry | undefined, g: GridGeometry): Uint8Array {
+  const mask = new Uint8Array(g.nx * g.ny);
+  if (!feature) return mask;
+  const [west, south, east, north] = g.bbox;
+  const sx = g.nx / (east - west);
+  const sy = g.ny / (north - south);
+  return rasterise(
+    feature,
+    d3Geo.geoTransform({
+      point(lon: number, lat: number) {
+        this.stream.point((lon - west) * sx, (north - lat) * sy);
+      }
+    }),
+    g.nx,
+    g.ny,
+    mask
+  );
+}
+
+/**
+ * Below this the sheet no longer dams anything in the window, so a frame gets no wall at all. The
+ * drawn body keeps fading to `ICE_FADE_KA`, which is a separate question — one is physics input,
+ * the other is how the schematic ends.
+ */
+const ICE_WALL_KA_MIN = 9.5;
+
+/**
+ * The Billingen sections straddle the margin passing Billingen around 11.7 ka, so "before" keeps
+ * the 12 ka outline and "after" takes the 11 ka one.
+ */
+const BILLINGEN_SLICE: Record<number, number> = Object.fromEntries(
+  EVENTS.filter(e => e.id === 'billingen-before' || e.id === 'billingen-after').map(e => [
+    e.t,
+    e.id === 'billingen-before' ? 12 : 11
+  ])
+);
+
+/**
+ * The DATED-1 slice whose outline is the ice *wall* of the flood fill at t (cal yr BP), or null
+ * where the sheet no longer dams the basin. Deliberately per-frame and on the 1 ka timeline: the
+ * wall is an input to a fill that is computed per frame, while the body drawn on the globe
+ * interpolates between slices (`iceBracket`).
+ *
+ * One definition, because two sides ask: the app for its frames and `npm run audit:metrics` for
+ * the same numbers outside the browser (`A-03`).
+ */
+export function iceSliceFor(t: number): number | null {
+  const ka = t / 1000;
+  if (ka < ICE_WALL_KA_MIN) return null;
+  return BILLINGEN_SLICE[t] ?? Math.min(ICE_KA_MAX, Math.max(ICE_KA_MIN, Math.round(ka)));
+}
+
 // ─── signed distance ──────────────────────────────────────────────────────────
 
 /**
@@ -98,8 +254,6 @@ const PROJ_CENTER: [number, number] = [25, 67];
 const PROJ_STRIDE = 4;
 const R_EARTH_KM = 6371;
 const FAR = 1e20;
-
-type IceGeometry = Feature<Geometry, GeoJsonProperties>;
 
 /**
  * Signed distance to the margin of one DATED-1 outline, in kilometres x `ICE_SDF_SCALE`, positive
@@ -130,23 +284,13 @@ export function iceSignedDistance(feature: IceGeometry | undefined): Int16Array 
   const tr = proj.translate();
   proj.translate([tr[0] - b[0][0] + PROJ_PAD, tr[1] - b[0][1] + PROJ_PAD]);
 
-  const cv = document.createElement('canvas');
-  cv.width = PROJ_W;
-  cv.height = ph;
-  const ctx = cv.getContext('2d', { willReadFrequently: true })!;
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  d3Geo.geoPath(proj, ctx)(feature);
-  ctx.fill();
-  const px = ctx.getImageData(0, 0, PROJ_W, ph).data;
+  const solid = rasterise(feature, proj, PROJ_W, ph);
 
   const n = PROJ_W * ph;
   const inner = new Float64Array(n);
   const outer = new Float64Array(n);
-  const solid = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
-    const hit = px[i * 4 + 3] > 127 ? 1 : 0;
-    solid[i] = hit;
+    const hit = solid[i];
     inner[i] = hit ? FAR : 0; // seeds outside -> depth inside
     outer[i] = hit ? 0 : FAR; // seeds inside  -> distance outside
   }
@@ -231,7 +375,7 @@ function clampInt(i: number, n: number): number {
  * `FAR` — a large finite value rather than Infinity, which would make the parabola intersection NaN
  * where two seedless cells meet.
  *
- * Exported for `tests/contract/ice.test.ts`; the rest of the module needs a canvas, this does not.
+ * Exported for `tests/contract/ice.test.ts`, which checks it against a brute-force transform.
  */
 export function edt2d(f: Float64Array, w: number, h: number): void {
   const m = Math.max(w, h);

@@ -801,7 +801,7 @@ przejściu na sumę masek żyje tylko w GLSL.
 
 **Audyt:** I.2 `A-02`
 
-## `A-03` Make the ice-dammed lake reachable from tests
+## `A-03` Make the ice-dammed lake reachable from tests — **wykonane 2026-11-01**
 
 **Epik:** A · **Zależy od:** — · **Blokuje:** `A-04` (fazy jeziorne) · **Labels:** `app`, `validation`
 
@@ -811,13 +811,14 @@ inaczej nie potrafi, i cała faza BIL — w której tama *jest* mechanizmem — 
 domknięcie `V-02` po stronie faz jeziornych i ogranicza `npm run audit:metrics` (wiersze `no-ice`).
 
 **DoD**
-- [ ] Rasteryzacja zarysu bez DOM-u, uruchamialna w Node
-- [ ] Ten sam wynik co ścieżka przeglądarkowa na wszystkich przekrojach 10–20 ka (porównanie bit-w-bit albo z tolerancją na komórkę)
-- [ ] `audit:metrics` liczy klatki BIL z tamą i usuwa znacznik `no-ice`
+- [x] `fillPath` / `rasterise` / `iceMaskFor` w `ice-field.ts` — skanlinia nonzero po środkach komórek, zero DOM-u; geometria nadal ze strumienia d3 (to samo przycinanie i zagęszczanie łuków co kontekst `<canvas>`)
+- [x] Zgodność na wszystkich przekrojach 10–20 ka: dokładna wobec niezależnego rzutowania promienia (even-odd, punkt po punkcie), a wobec geodezyjnego `geoContains` z tolerancją jednej komórki przy krawędzi (udokumentowana różnica semantyki: proste w lon/lat vs łuki)
+- [x] `audit:metrics` liczy z tamą (kolumna `ice_ka`, wybór przekroju przez `iceSliceFor` — jedna definicja z aplikacją), znacznik `no-ice` usunięty
+- [x] Pokrycie fazy BIL: test `the Baltic Ice Lake is dammed by the ice, not by topography`
 
 **Audyt:** I.2 `A-03`
 
-## `A-04` Strengthen the water contract tests against literature levels
+## `A-04` Strengthen the water contract tests against literature levels — **wykonane 2026-11-01**
 
 **Epik:** A · **Zależy od:** `A-03` (dla faz zaporowych) · **Labels:** `validation`
 
@@ -827,10 +828,11 @@ przy +100 m. Żaden test nie konfrontuje modelu z literaturą, a rozbieżności 
 w pilnowany budżet błędu**, żeby nie rosła po cichu.
 
 **DoD**
-- [ ] Test porównuje `lakeLevelM` z `lakeLevelAt(t)` dla wszystkich klatek jeziornych
-- [ ] Próg tolerancji ustalony i **uzasadniony w komentarzu**, nie dobrany do bieżącego wyniku
-- [ ] Odchylenie raportowane liczbowo, nie binarnie
-- [ ] Test negatywny: zepsuta analiza przelewu musi go wywalić
+- [x] Test `modelled lake levels stay inside the error budget against the literature` przechodzi po wszystkich klatkach z poziomem (10 klatek), łącznie z jeziorami Yoldii i Mastogloi, których literatura nie przewiduje (B2)
+- [x] Próg 20 m uzasadniony szumem wejścia (średni skok RSL 16–19 m w 16–11 ka, §2 audytu), nie bieżącym wynikiem; aktualny maks. to 13,9 m przy 14 ka
+- [x] Raport liczbowy: wiersz per klatka + maks. i RMSE (10,1 m)
+- [x] Kontrola negatywna `the budget has teeth: breaking the dam puts 13 ka outside it`
+- [x] Klatki fazy jeziornej bez jeziora w modelu są przypięte jawnie (`CONNECTED_IN_LAKE_PHASE` = 16 ka), więc zmiana tego zbioru też wywala test
 
 **Audyt:** I.2 `A-04`, II.2 B1
 

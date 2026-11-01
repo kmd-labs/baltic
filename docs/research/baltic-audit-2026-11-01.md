@@ -21,12 +21,12 @@ zbiory ze statusem ❓ w `SOURCES.md` — lepsza batymetria (`emodnet_dtm2024`, 
 `sgu_strand`, `sincos`. W zakresie zostaje wszystko na ✅ CC BY: `zhang2024_sed`, `esd2025`,
 `rosentau2021`, `steffen2025_rsl` wraz z 8 modelami Ziemi, `steffen2025_rsl_sbaltic`, `dated1`.
 
-**Jedno ograniczenie samego skryptu pomiarowego jest zarazem ustaleniem audytu (`A-03`):** maska lodu
-dławiąca Bałtyckie Jezioro Lodowe powstaje przez rasteryzację `<canvas>` w przeglądarce, więc poza DOM-em
-nie istnieje. Wszystkie wypełnienia w skrypcie liczą się **bez tamy lodowej**; klatki 16–11,7 ka pokazują
-przez to poziom 0 i `connected = true`, podczas gdy aplikacja rysuje tam jezioro zaporowe. Te wiersze są
-oznaczone `no-ice` i nie wolno ich czytać jako wyjścia aplikacji. Liczby dla BIL w tym dokumencie pochodzą
-z panelu przekroju samej aplikacji.
+**Ograniczenie skryptu pomiarowego, które samo było ustaleniem audytu (`A-03`), zostało usunięte tego
+samego dnia:** rasteryzacja zarysów DATED-1 nie przechodzi już przez `<canvas>`, więc tama lodowa istnieje
+poza przeglądarką. Skrypt liczy klatki z tamą i wybiera przekrój lodu tą samą funkcją co aplikacja
+(`iceSliceFor`), znacznik `no-ice` zniknął, a liczby dla BIL poniżej pochodzą ze skryptu, nie z panelu.
+Przy okazji wyszło, czego panel nie pokazywał: **w 16 ka model nie ma jeszcze jeziora zaporowego** —
+lądolód przykrywa basen, a resztka wody ma połączenie z oceanem. Fazę BIL model odtwarza od 15 ka.
 
 ---
 
@@ -66,7 +66,7 @@ rozjazd po cichu zmieniłby publikowane powierzchnie i objętości.
 Ta sama klasa ryzyka dotyczy nowego pierwszeństwa `isLakeAt` / `isOceanAt`, które po zmianie na sumę
 masek żyje wyłącznie w GLSL, a strona TS koduje je niejawnie przez odczyt kodu maski.
 
-### `A-03` Jezioro zaporowe jest nieosiągalne dla testów
+### `A-03` Jezioro zaporowe jest nieosiągalne dla testów — **naprawione**
 
 `iceMask()` (`:376`) rasteryzuje zarys DATED-1 przez `document.createElement('canvas')`. Model fizyczny
 zależy więc od API DOM-u i od reguł wypełniania rastra w przeglądarce, a skutek jest poważniejszy niż
@@ -74,11 +74,23 @@ estetyczny: **każdy test kontraktowy wywołuje `fillWater(..., null)`**, bo ina
 BIL — ta, w której tama lodowa *jest* mechanizmem — nie ma żadnego pokrycia testowego. To blokuje też
 sensowne domknięcie `V-02` po stronie faz jeziornych.
 
-### `A-04` Test ancylusowy sprawdza za mało
+Zastąpione własnym wypełnianiem konturu (`ice-field.ts`: `fillPath`, `rasterise`, `iceMaskFor`) —
+skanlinia z regułą nonzero, po środkach komórek. Geometria pozostaje d3: ten sam strumień projekcji,
+więc to samo przycinanie i to samo zagęszczanie łuków, co miał kontekst `<canvas>`. Test porównuje
+wynik z niezależnym rzutowaniem promienia (even-odd, punkt po punkcie) — zgodność jest dokładna — oraz
+z `geoContains` d3 (geodezyjnym) z tolerancją komórki przy samej krawędzi.
+
+### `A-04` Test ancylusowy sprawdza za mało — **naprawione**
 
 [`tests/contract/water.test.ts:48`](../../tests/contract/water.test.ts) asercja to `level > 0`. Przechodzi
 przy rzeczywistych +22 m i przeszedłby przy +100 m. Żaden test nie konfrontuje modelu z literaturą — dziura
 dokładnie tam, gdzie merytoryka jest najsłabsza (II.2).
+
+Rozbieżność jest teraz **pilnowanym budżetem**: test przechodzi po wszystkich klatkach jeziornych,
+raportuje odchylenie liczbowo (10 klatek, maks. 13,9 m przy 14 ka, RMSE 10,1 m) i wywala się powyżej
+20 m. Próg nie jest dobrany do wyniku — to szum wejścia tej epoki: średni skok RSL między sąsiednimi
+węzłami w 16–11 ka wynosi 16–19 m (§2 poniżej), a modelowany poziom jest rzędną progu czytaną z tego
+pola. Kontrola negatywna: usunięcie tamy lodowej w 13 ka wypycha poziom poza budżet.
 
 ### `A-05` `zhang2024_sed` figuruje jako używany, a nie jest
 
@@ -139,7 +151,8 @@ publikowanych, Öresund −9 m przy −8 m.
 | | model | literatura | różnica |
 | :-- | --: | --: | --: |
 | Ancylus, maksimum 10,3 ka | **+22,1 m** | +10 m | +12,1 m |
-| BIL 13 ka *(z panelu aplikacji)* | **+36 m** | +25 m | +11 m |
+| BIL 13 ka | **+36,5 m** | +25 m | +11,5 m |
+| BIL, maksimum modelu 14 ka | **+38,9 m** | +25 m | +13,9 m |
 
 Scena rysuje `lakeLevelM`, czyli model. Rozbieżność trafia do bocznej karty fazy jako „rozbieżny o X m",
 co jest uczciwe, ale nierównoważne: obraz ma pełną powagę wizualną, zastrzeżenie — nie.
