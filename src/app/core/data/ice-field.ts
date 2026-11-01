@@ -165,6 +165,48 @@ export function fillPath(rings: readonly number[][], w: number, h: number, out?:
   return mask;
 }
 
+/**
+ * Longest edge, in degrees, that goes into a projected raster unsplit. ~0.1° is 11 km north-south,
+ * well under the ~4 km of a stereographic pixel once d3's own resampling takes over.
+ */
+const DENSIFY_DEG = 0.1;
+
+/**
+ * Splits long edges into short ones, in lon/lat, before anything projects them.
+ *
+ * A GeoJSON edge is a straight line in coordinate space (RFC 7946 §3.1.1), which is exactly how
+ * the lon/lat mask draws it. A projection stream instead resamples it as a great circle, and on
+ * this data that is not a detail: the 20 ka DATED-1 margin carries 59 edges longer than 50 km, the
+ * longest 236 km, and the two readings of such an edge part by up to 50 km. Densifying first ties
+ * the projected raster to the RFC's reading, so the ice wall of the flood fill and the body drawn
+ * on the globe follow one outline (`A-09`).
+ */
+export function densify(feature: IceGeometry, step = DENSIFY_DEG): IceGeometry {
+  const ring = (r: number[][]): number[][] => {
+    const out: number[][] = [];
+    for (let i = 0; i + 1 < r.length; i++) {
+      const [x0, y0] = r[i];
+      const [x1, y1] = r[i + 1];
+      out.push([x0, y0]);
+      const n = Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) / step);
+      for (let k = 1; k < n; k++) out.push([x0 + ((x1 - x0) * k) / n, y0 + ((y1 - y0) * k) / n]);
+    }
+    out.push(r[r.length - 1]);
+    return out;
+  };
+  const g = feature.geometry;
+  if (g.type === 'Polygon') {
+    return { ...feature, geometry: { type: 'Polygon', coordinates: (g.coordinates as number[][][]).map(ring) } };
+  }
+  if (g.type === 'MultiPolygon') {
+    return {
+      ...feature,
+      geometry: { type: 'MultiPolygon', coordinates: (g.coordinates as number[][][][]).map(poly => poly.map(ring)) }
+    };
+  }
+  return feature;
+}
+
 /** One outline projected and filled into a w × h raster. */
 export function rasterise(
   feature: IceGeometry,
@@ -268,14 +310,30 @@ export function iceSignedDistance(feature: IceGeometry | undefined): Int16Array 
   }
 
   const [west, south, east, north] = ICE_DOMAIN.bbox;
-  const domain = {
-    type: 'Feature' as const,
-    properties: {},
-    geometry: {
-      type: 'Polygon' as const,
-      coordinates: [[[west, south], [east, south], [east, north], [west, north], [west, south]]]
-    }
-  };
+  /**
+   * The rectangle that has to fit in the raster, and both of its subtleties are `A-09`.
+   *
+   * Wound clockwise: that is d3-geo's convention for an exterior ring smaller than a hemisphere,
+   * the opposite of RFC 7946. Anticlockwise, as this ring was, d3 reads as the whole sphere minus
+   * the rectangle, so `fitWidth` scaled the globe and the field came out at 45 km per pixel
+   * instead of the 3.4 km this geometry is sized for.
+   *
+   * And densified, because the edges of a spherical polygon are great circles: the arc from
+   * (−10°, 50°) to (70°, 50°) crosses 57°N in the middle, so the undensified ring excluded the
+   * southern Baltic from its own bounds. Cells there projected below the raster and the resample
+   * clamped them to its bottom row — the ice field read as solid ice across the southern basin.
+   */
+  const domain = densify(
+    {
+      type: 'Feature' as const,
+      properties: {},
+      geometry: {
+        type: 'Polygon' as const,
+        coordinates: [[[west, south], [west, north], [east, north], [east, south], [west, south]]]
+      }
+    },
+    1
+  );
 
   const proj = d3Geo.geoStereographic().rotate([-PROJ_CENTER[0], -PROJ_CENTER[1]]);
   proj.fitWidth(PROJ_W - 2 * PROJ_PAD, domain);
@@ -284,7 +342,9 @@ export function iceSignedDistance(feature: IceGeometry | undefined): Int16Array 
   const tr = proj.translate();
   proj.translate([tr[0] - b[0][0] + PROJ_PAD, tr[1] - b[0][1] + PROJ_PAD]);
 
-  const solid = rasterise(feature, proj, PROJ_W, ph);
+  // Densified first: the raster is projected, and an unsplit 200 km edge would arrive as a great
+  // circle tens of kilometres off the straight lon/lat line the mask uses for the same outline.
+  const solid = rasterise(densify(feature), proj, PROJ_W, ph);
 
   const n = PROJ_W * ph;
   const inner = new Float64Array(n);

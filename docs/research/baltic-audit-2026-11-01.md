@@ -110,6 +110,38 @@ wpięcie w CI po zmianie zasobów — czeka na `0-08`.
 więc to FIFO, nie LRU. Przy 3 321-komórkowych polach i tym rozmiarze cache bez znaczenia dla działania —
 myli tylko nazwą.
 
+### `A-08` Flaga lodu w podpowiedzi opisywała inną bryłę, niż scena rysuje — **znalezione i naprawione przy `A-01`**
+
+Ten sam rozjazd co `A-01`, warstwę wyżej. Bryła lodu na globie powstaje z pola odległości
+**interpolowanego** między dwoma przekrojami DATED-1 (`iceBracket`, `sdfAt`), a podpowiedź i przekrój
+czytały maskę **jednej klatki** — tę, która jest tamą wypełniania. Pomiar po usunięciu DOM-u (`A-03`)
+pozwolił to policzyć: przy 10,5 ka obie odpowiedzi różnią się na **232 tys. km²** okna, przy 20 ka
+(dokładny przekrój, więc sama różnica rastrów) na 2,2 tys. km².
+
+Odczyty pytają teraz o to samo pole, z którego zbudowana jest bryła (`iceDrawnAt`). Maska zostaje tym,
+czym była — wejściem modelu, tamą na siatce 1 ka — i to jest udokumentowane w obu miejscach.
+
+### `A-09` Pole odległości lodu było 13× zgrubniejsze niż deklaruje, a na południowym Bałtyku zmyślone — **znalezione i naprawione przy `A-08`**
+
+Szukając źródła `A-08` wyszła usterka w samym `iceSignedDistance`, obecna od `C-07`. Prostokąt domeny
+podawany do `fitWidth` miał dwa błędy naraz:
+
+1. **Nawinięcie.** d3-geo czyta pierścień zewnętrzny mniejszy od półkuli jako **zgodny z ruchem
+   wskazówek** — odwrotnie niż RFC 7946. Pierścień przeciwny d3 rozumie jako „cała sfera minus
+   prostokąt", więc `fitWidth` wpisywał w raster kulę ziemską: **45 km na piksel zamiast 3,4 km**.
+   Profil plastyczny `h = K√d` zamieniał to w skok grubości ~1 km na pierwszym pikselu od krawędzi.
+2. **Krawędzie sferyczne.** Brzegi wielokąta sferycznego to łuki wielkiego koła: łuk z (−10°, 50°) do
+   (70°, 50°) wchodzi w środku na 57°N, więc **południowy Bałtyk wypadał poza własne bounds domeny**.
+   Komórki stamtąd rzutowały się pod raster, a resampling przyciągał je do dolnego wiersza — pole
+   odległości pokazywało tam lity lód.
+
+Po naprawie (pierścień nawinięty zgodnie z d3 i zagęszczony co 1°) niezgodność maski i pola przy
+dokładnym przekroju spada z 9 653 do 486 komórek, wszystkie w pasie **2,5 km** od krawędzi, czyli w
+rozdzielczości rastra. Kopuła 20 ka wychodzi na **3 037 m przy 415 km** od krawędzi — zgodnie z
+dokumentowaną wartością ~2 980 m. Oba tryby awarii pilnuje teraz test kontraktowy.
+
+To zmienia obraz: bryła lodu na globie i w widoku rzeźby ma od teraz inny, dokładniejszy kształt.
+
 ---
 
 # Część II — Wartość merytoryczna

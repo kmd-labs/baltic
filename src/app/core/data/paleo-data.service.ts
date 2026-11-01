@@ -1,11 +1,10 @@
 import { Injectable, signal } from '@angular/core';
 import type { Feature, Geometry } from 'geojson';
-import * as d3Geo from 'd3-geo';
 import { fetchKmdg, kmdgLayer, KmdgGrid } from './kmdg';
 import { bilinear, maskFractionAt, rslAt, RslCube } from './paleo';
 import { FRAMES, lakeLevelAt, nearestFrame } from './timeline';
-import { cellIndex, FrameStats, inside, maskHit, WaterKind, waterKindAt, WATER_LAKE, WATER_OCEAN } from './water';
-import { ICE_KA_MAX, ICE_KA_MIN, iceMaskFor, iceSignedDistance, iceSliceFor } from './ice-field';
+import { FrameStats, inside, maskHit, WaterKind, waterKindAt, WATER_LAKE, WATER_OCEAN } from './water';
+import { ICE_DOMAIN, ICE_KA_MAX, ICE_KA_MIN, iceBracket, iceMaskFor, iceSignedDistance, iceSliceFor } from './ice-field';
 import type { WorkerFrame, WorkerInit, WorkerRequest } from './paleo.worker';
 
 export type { FrameStats, WaterKind } from './water';
@@ -309,6 +308,26 @@ export class PaleoDataService {
     return this.rsl(Math.round(t / RSL_STEP_YR) * RSL_STEP_YR);
   }
 
+  /**
+   * Ice where the scene draws it. The body on the globe is built from the distance field
+   * interpolated between the two bracketing DATED-1 slices and faded out below 10 ka
+   * (ice-shaders.ts `sdfAt`, `iceBracket`), so a readout about the ice has to ask that field and
+   * not the per-frame mask.
+   *
+   * The mask is a different question and keeps its own answer: it is the *wall* of the flood fill,
+   * a model input, and it stays on the 1 ka timeline. Measured before the two were separated, they
+   * disagreed over 43 000 km² of the window at 20 ka and 226 000 km² at 10.5 ka — the same class of
+   * mismatch as `A-01`, one layer up (`A-08`).
+   */
+  iceDrawnAt(t: number, lon: number, lat: number): boolean {
+    const b = iceBracket(t);
+    if (!b || b.fade <= 0 || !inside(ICE_DOMAIN, lon, lat)) return false;
+    const a = bilinear(this.iceSdf(b.kaA, 'mc'), ICE_DOMAIN, lon, lat);
+    const c = b.kaA === b.kaB ? a : bilinear(this.iceSdf(b.kaB, 'mc'), ICE_DOMAIN, lon, lat);
+    // Only the sign matters, so the Int16 scale cancels.
+    return a * (1 - b.w) + c * b.w > 0;
+  }
+
   /** Water class at one point of the Baltic grid, by the rule the shader draws with. */
   private kindAt(s: SceneWater, lon: number, lat: number, hp: number): WaterKind {
     const g = this.baltic!;
@@ -329,16 +348,13 @@ export class PaleoDataService {
     if (inside(b, lon, lat)) {
       const hNow = bilinear(this.hNowBaltic!, b, lon, lat);
       const hPaleo = hNow - rsl;
-      // The ice wall of the flood fill, and this flag with it, stay on the 1 ka timeline — see
-      // `iceSliceFor`; the body drawn on the globe is interpolated between slices instead.
-      const mask = this.frame(t)?.iceMask;
       return {
         lon,
         lat,
         hNow,
         hPaleo,
         water: this.kindAt(s, lon, lat, hPaleo),
-        ice: !!mask?.[cellIndex(b, lon, lat)],
+        ice: this.iceDrawnAt(t, lon, lat),
         rsl
       };
     }
@@ -346,8 +362,7 @@ export class PaleoDataService {
       const hNow = bilinear(this.hNowEurope!, e, lon, lat);
       const hPaleo = hNow - rsl;
       // Outside the Baltic window there is no fill, and the shader falls back to hp < 0 as well.
-      const mc = this.frame(t)?.ice?.features.mc;
-      return { lon, lat, hNow, hPaleo, water: hPaleo < 0 ? 'ocean' : 'dry', ice: !!mc && d3Geo.geoContains(mc, [lon, lat]), rsl };
+      return { lon, lat, hNow, hPaleo, water: hPaleo < 0 ? 'ocean' : 'dry', ice: this.iceDrawnAt(t, lon, lat), rsl };
     }
     return null;
   }
@@ -365,7 +380,6 @@ export class PaleoDataService {
     }
     const b = this.baltic!;
     const rsl = this.rslFor(t);
-    const iceMask = this.frame(t)?.iceMask;
     const points: TransectSample[] = [];
     for (let q = 0; q <= samples; q++) {
       let d = (q / samples) * total;
@@ -386,7 +400,7 @@ export class PaleoDataService {
         hNow,
         hPaleo,
         level: kind === 'lake' ? s.lakeLevelM : kind === 'ocean' ? 0 : null,
-        ice: !!iceMask?.[cellIndex(b, lon, lat)]
+        ice: this.iceDrawnAt(t, lon, lat)
       });
     }
     return { total, points };

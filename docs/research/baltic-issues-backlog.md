@@ -21,7 +21,7 @@ Aplikacja liczy wodę, poziomy progów i metryki sama z siatek (Web Worker), wi�
 | **Usunięte — nie robimy** | `C-02` #16, `C-09` #22, `C-10` #24, `C-11` #25, `C-12` #26, `C-15` #29, `V-07` #46, `V-12` #52 — decyzja użytkownika; **trwałe skasowanie na GitHubie czeka na uprawnienia** (system zablokował `gh issue delete`) |
 | **Zawężone** | `I-01` #50 — siatki, zarysy lodu i manifest, bez plików klatek |
 | **Otwarte** | `0-01` #7, `0-03` #9, `0-04` #10, `0-07` #13, `0-08` #14, `C-05` #19, `C-08` #23, `V-01` #40, `V-02` #41, `V-03` #42, `V-06` #45, `V-08` #47, `V-11` #51 oraz follow-upy #62–#67 |
-| **Nowe z audytu 2026-11-01** | `A-01`…`A-05`, `A-07` — bez numerów GitHub, do założenia. `A-06` wykonane (`tools/audit/metrics.ts`). Priorytet: `A-01` (regresja), potem `A-04` + `A-03` |
+| **Nowe z audytu 2026-11-01** | Wykonane tego samego dnia: `A-01`, `A-02`, `A-03`, `A-04`, `A-07` oraz `A-08` i `A-09` (ustalenia z sesji naprawczej). Otwarte: **`A-05`** (korekta na osady — potrzebny Python, pobranie `zhang2024_sed` i decyzja o rozkładzie miąższości w czasie) i ostatni punkt `A-06` (CI, czeka na `0-08`). Numery GitHub do założenia — `gh` nie jest zainstalowany na maszynie |
 
 Opisy zadań poniżej są historyczne dla pozycji zamkniętych i usuniętych; aktualny zakres jest w issues.
 
@@ -59,7 +59,7 @@ Dwie rzeczy nieobejściowe: **`0-01`** (bez submodułu nie ma builda) i **`0-06`
 | **C** | Postglacjał, 20–0 ka | 15 | rdzeń produktu; fazy morskie (M3) przed jeziornymi (M4) |
 | **V** | Walidacja | 8 | jedna bramka ilościowa (`V-03`), resztę da się liczyć wcześnie |
 | **I** | Kontrakt, emisja, integracja | 5 | `I-03` od pierwszego commita; glob `I-05` równolegle z danymi |
-| **A** | Audyt 2026-11-01 | 7 | wyłącznie ustalenia bez pokrycia w `0`/`C`/`V`/`I`; `A-01` to żywa regresja |
+| **A** | Audyt 2026-11-01 | 9 | ustalenia audytu bez pokrycia w `0`/`C`/`V`/`I` (`A-01`…`A-07`) oraz dwa z sesji naprawczej (`A-08`, `A-09`) |
 
 ---
 
@@ -871,6 +871,37 @@ w czasie, walidacja na dziś.
 - [x] Czyta `src/assets/data` i `src/app/core/data`, bez duplikowania logiki
 - [x] Ograniczenie `no-ice` opisane w nagłówku skryptu i powiązane z `A-03`
 - [ ] Uruchamiany w CI po zmianie zasobów danych (czeka na `0-08`)
+
+## `A-08` Read the ice flag from the field the scene draws — **wykonane 2026-11-01**
+
+**Epik:** A · **Zależy od:** `A-03` · **Labels:** `app` · **Źródło:** ustalenie z sesji naprawczej, nie z audytu
+
+Ten sam rozjazd co `A-01`, warstwę wyżej: bryła lodu powstaje z pola odległości interpolowanego między
+przekrojami DATED-1, a podpowiedź i przekrój czytały maskę jednej klatki (tamę wypełniania). Policzone po
+`A-03`: 232 tys. km² okna przy 10,5 ka, 2,2 tys. km² przy dokładnym przekroju (sama różnica rastrów).
+
+**DoD**
+- [x] `iceDrawnAt(t, lon, lat)` pyta to samo pole i stosuje tę samą regułę co shader (`sdfAt`, `fade`)
+- [x] `pointInfo` i `transect` używają go w obu oknach; `geoContains` na zarysie `mc` usunięty
+- [x] Maska zostaje wejściem modelu (tama, siatka 1 ka) — udokumentowane w `iceSliceFor` i `iceDrawnAt`
+- [x] Testy: pas niezgodności przy dokładnym przekroju i jego wielokrotność w środku przedziału
+
+## `A-09` Fix the scale and the extent of the ice distance field — **wykonane 2026-11-01**
+
+**Epik:** A · **Zależy od:** — · **Labels:** `app`, `regime-c` · **Źródło:** ustalenie z sesji naprawczej
+
+Usterka w `iceSignedDistance` obecna od `C-07`. Prostokąt domeny podawany do `fitWidth`: (1) nawinięty
+odwrotnie do konwencji d3-geo (zewnętrzny pierścień mniejszy od półkuli ma być **zgodny** z ruchem
+wskazówek — odwrotnie niż RFC 7946), więc d3 czytał „cała sfera minus prostokąt" i skalował kulę do
+rastra — **45 km/piksel zamiast 3,4**; (2) niezagęszczony, a brzegi wielokąta sferycznego to łuki
+wielkiego koła, więc łuk 50°N wchodził w środku na 57°N i **południowy Bałtyk wypadał poza bounds
+domeny** — komórki stamtąd rzutowały się pod raster, a resampling przyciągał je do dolnego wiersza.
+
+**DoD**
+- [x] Pierścień domeny nawinięty zgodnie z d3 i zagęszczony co 1°
+- [x] Niezgodność maski i pola przy dokładnym przekroju: 9 653 → 486 komórek, wszystkie ≤ 2,5 km od krawędzi
+- [x] Kopuła 20 ka: 3 037 m przy 415 km od krawędzi (dokumentowane ~2 980 m); zero komórek „bez danych"
+- [x] Oba tryby awarii pilnowane testem (`on an exact slice…`, `the thickest point of the 20 ka sheet…`)
 
 ## `A-07` Minor: cache semantics and SOURCES hygiene — **wykonane 2026-11-01**
 
