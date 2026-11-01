@@ -1,7 +1,7 @@
 # Baltic — backlog issues warstwy danych
 
 > Rozpisanie [`baltic-data-plan.md`](./baltic-data-plan.md) na zadania wykonawcze.
-> **4 epiki / 36 zadań.** Tytuły po angielsku (spójne z commitami i publicznym repo `kmd-labs/baltic`), treść po polsku.
+> **5 epików / 43 zadania.** Tytuły po angielsku (spójne z commitami i publicznym repo `kmd-labs/baltic`), treść po polsku.
 > Dokument żywy — aktualizowany razem z planem. Odsyłacze `§x.y` wskazują sekcje planu.
 
 > **Zmiany zakresu (2026-10-31):**
@@ -10,7 +10,7 @@
 > 3. **Krok 1000 lat** (21 klatek + ~6 zdarzeniowych) zamiast 500 lat.
 > 4. **Scena: glob jak w El Niño**, dane runtime hybrydowe (siatki + kostka RSL + wektory). Nowe zadanie `I-05`.
 
-## Stan issues (przegląd 2026-10-31, po scaleniu PR #61)
+## Stan issues (przegląd 2026-10-31, po scaleniu PR #61; epik `A` dopisany 2026-11-01)
 
 Aplikacja liczy wodę, poziomy progów i metryki sama z siatek (Web Worker), więc pipeline nie emituje plików klatek.
 
@@ -21,6 +21,7 @@ Aplikacja liczy wodę, poziomy progów i metryki sama z siatek (Web Worker), wi�
 | **Usunięte — nie robimy** | `C-02` #16, `C-09` #22, `C-10` #24, `C-11` #25, `C-12` #26, `C-15` #29, `V-07` #46, `V-12` #52 — decyzja użytkownika; **trwałe skasowanie na GitHubie czeka na uprawnienia** (system zablokował `gh issue delete`) |
 | **Zawężone** | `I-01` #50 — siatki, zarysy lodu i manifest, bez plików klatek |
 | **Otwarte** | `0-01` #7, `0-03` #9, `0-04` #10, `0-07` #13, `0-08` #14, `C-05` #19, `C-08` #23, `V-01` #40, `V-02` #41, `V-03` #42, `V-06` #45, `V-08` #47, `V-11` #51 oraz follow-upy #62–#67 |
+| **Nowe z audytu 2026-11-01** | `A-01`…`A-05`, `A-07` — bez numerów GitHub, do założenia. `A-06` wykonane (`tools/audit/metrics.ts`). Priorytet: `A-01` (regresja), potem `A-04` + `A-03` |
 
 Opisy zadań poniżej są historyczne dla pozycji zamkniętych i usuniętych; aktualny zakres jest w issues.
 
@@ -58,6 +59,7 @@ Dwie rzeczy nieobejściowe: **`0-01`** (bez submodułu nie ma builda) i **`0-06`
 | **C** | Postglacjał, 20–0 ka | 15 | rdzeń produktu; fazy morskie (M3) przed jeziornymi (M4) |
 | **V** | Walidacja | 8 | jedna bramka ilościowa (`V-03`), resztę da się liczyć wcześnie |
 | **I** | Kontrakt, emisja, integracja | 5 | `I-03` od pierwszego commita; glob `I-05` równolegle z danymi |
+| **A** | Audyt 2026-11-01 | 7 | wyłącznie ustalenia bez pokrycia w `0`/`C`/`V`/`I`; `A-01` to żywa regresja |
 
 ---
 
@@ -751,6 +753,132 @@ Decyzja z 2026-10-31: scena to **glob z `kmd-labs/el-nino` — tylko glob i reli
 - [ ] Desktop i mobile (`BreakpointService`) — tekstury 2k na mobile jak w El Niño
 
 **Plan:** §5.1
+
+---
+
+# Epik `A` — audyt 2026-11-01
+
+> Zadania wynikające z [`baltic-audit-2026-11-01.md`](./baltic-audit-2026-11-01.md).
+> **Tu są wyłącznie ustalenia bez pokrycia w epikach `0`/`C`/`V`/`I`.** Rzeczy, które audyt
+> potwierdził, a które mają już swoje issue — poziomy faz jeziornych (`C-06b` #62), bilans progów
+> (`V-02` #41), RSL wobec obserwacji (`V-03` #42), spadek Billingen (`V-06` #45), ograniczenia
+> profilu lodu (`0-07` #13) — **nie są tu powtórzone**; audyt dostarcza do nich materiał dowodowy.
+>
+> Pominięte zgodnie z decyzją: wszystko, co wymagałoby uzyskania licencji, czyli zbiory ❓
+> z `SOURCES.md` (lepsza batymetria, batymetria jezior, `V-08` na `nkg2016lu`, `sgu_strand`, `sincos`).
+
+## `A-01` Realign tooltip and transect with the rendered water rule
+
+**Epik:** A · **Zależy od:** — · **Blokuje:** — · **Labels:** `app`, `regression`
+
+Regresja wprowadzona razem z synchronizacją wypełniania (2026-11-01). Scena liczy wodę jako
+`union(A,B) ∧ hp(t) < poziom` z poziomem interpolowanym między klatkami, a `pointInfo`
+(`paleo-data.service.ts:269`) i `transect` (`:296`) nadal czytają surową maskę **najbliższej klatki**
+i jej `lakeLevelM`. Przed zmianą maska renderera równała się najbliższej klatce, więc zgadzały się co do
+komórki. Rozbieżność jest największa przy brzegu — czyli tam, gdzie użytkownik najczęściej najeżdża.
+
+**DoD**
+- [ ] `pointInfo` i `transect` dostają bracket i stosują tę samą regułę co shader
+- [ ] Poziom w obu ścieżkach interpolowany, nie brany z klatki
+- [ ] Test: w klatce pośredniej klasa wody z `pointInfo` zgadza się z regułą sceny na siatce punktów brzegowych
+
+**Audyt:** I.2 `A-01`
+
+## `A-02` Single source of truth for the water rule
+
+**Epik:** A · **Zależy od:** — · **Blokuje:** — · **Labels:** `app`, `contract`
+
+`oceanSide()` istnieje dwa razy: `water.ts:33` (TS — decyduje o powierzchni i objętości) oraz
+`paleo-shaders.ts:127` (GLSL — decyduje o kolorze basenu), z identycznymi magicznymi liczbami i synchronizacją
+wyłącznie komentarzem. **Reguła wyklucza 19,9% dzisiejszych komórek wody** z metryk, więc jej rozjazd po cichu
+zmieniłby publikowane liczby. Ta sama klasa ryzyka dotyczy pierwszeństwa `isLakeAt`/`isOceanAt`, które po
+przejściu na sumę masek żyje tylko w GLSL.
+
+**DoD**
+- [ ] Jedna definicja granicy basenu i jedna definicja pierwszeństwa jezioro/ocean, generowana albo wstrzykiwana do GLSL
+- [ ] Test wyłapujący rozjazd TS ↔ GLSL (porównanie na siatce punktów kontrolnych)
+- [ ] Udział komórek wykluczanych przez regułę raportowany w `audit:metrics`
+
+**Audyt:** I.2 `A-02`
+
+## `A-03` Make the ice-dammed lake reachable from tests
+
+**Epik:** A · **Zależy od:** — · **Blokuje:** `A-04` (fazy jeziorne) · **Labels:** `app`, `validation`
+
+`iceMask()` (`:376`) rasteryzuje zarys DATED-1 przez `document.createElement('canvas')`, więc tama lodowa
+istnieje wyłącznie w przeglądarce. Skutek: **każdy test kontraktowy wywołuje `fillWater(..., null)`**, bo
+inaczej nie potrafi, i cała faza BIL — w której tama *jest* mechanizmem — nie ma pokrycia. To samo blokuje
+domknięcie `V-02` po stronie faz jeziornych i ogranicza `npm run audit:metrics` (wiersze `no-ice`).
+
+**DoD**
+- [ ] Rasteryzacja zarysu bez DOM-u, uruchamialna w Node
+- [ ] Ten sam wynik co ścieżka przeglądarkowa na wszystkich przekrojach 10–20 ka (porównanie bit-w-bit albo z tolerancją na komórkę)
+- [ ] `audit:metrics` liczy klatki BIL z tamą i usuwa znacznik `no-ice`
+
+**Audyt:** I.2 `A-03`
+
+## `A-04` Strengthen the water contract tests against literature levels
+
+**Epik:** A · **Zależy od:** `A-03` (dla faz zaporowych) · **Labels:** `validation`
+
+`tests/contract/water.test.ts:48` asercja to `level > 0` — przechodzi przy rzeczywistych +22 m i przeszłaby
+przy +100 m. Żaden test nie konfrontuje modelu z literaturą, a rozbieżności są duże: Ancylus +22,1 m wobec
++10 m, BIL +36 m wobec +25 m. Zadanie nie polega na wymuszeniu zgodności — tylko na **zamianie rozbieżności
+w pilnowany budżet błędu**, żeby nie rosła po cichu.
+
+**DoD**
+- [ ] Test porównuje `lakeLevelM` z `lakeLevelAt(t)` dla wszystkich klatek jeziornych
+- [ ] Próg tolerancji ustalony i **uzasadniony w komentarzu**, nie dobrany do bieżącego wyniku
+- [ ] Odchylenie raportowane liczbowo, nie binarnie
+- [ ] Test negatywny: zepsuta analiza przelewu musi go wywalić
+
+**Audyt:** I.2 `A-04`, II.2 B1
+
+## `A-05` Apply the Holocene sediment correction to the paleo-DEM
+
+**Epik:** A · **Zależy od:** `C-03` · **Labels:** `data-pipeline`, `regime-c`
+
+`H_now` zawiera holoceńskie osady, których paleo-dno nie miało — w depocentrach kilkanaście do kilkudziesięciu
+metrów. Głębokości i objętość są przez to systematycznie **zaniżone** dla starszych klatek, najmocniej tam,
+gdzie muł najgrubszy. `zhang2024_sed` (Mendeley Data, CC BY 4.0, ✅) jest zarejestrowany w `SOURCES.md`
+dokładnie pod to zastosowanie i **nie jest używany nigdzie w `tools/` ani `src/`** — co samo w sobie jest
+usterką dokumentu deklarującego się jako jedyne źródło prawdy.
+
+Jedyne nowe ustalenie merytoryczne audytu bez pokrycia w planie. Licencyjnie czyste — nie wymaga zapytania.
+
+**DoD**
+- [ ] Wpis `zhang2024_sed` w `tools/data/registry.json` i przypięcie w `checksums.lock.json`
+- [ ] Miąższość osadów odjęta od `H_now` przed `H_paleo`, z jawną zależnością od czasu (osad narasta, nie jest stały)
+- [ ] Wpływ na powierzchnię, objętość i głębokość maks. zmierzony i opisany per faza
+- [ ] `SOURCES.md`: status wpisu odzwierciedla faktyczne użycie
+- [ ] Metodyka w `0-07` rozszerzona o człon osadowy
+
+**Audyt:** I.2 `A-05`, II.2 B4
+
+## `A-06` Ship the audit measurements as a repeatable script — **wykonane 2026-11-01**
+
+**Epik:** A · **Labels:** `validation`, `docs`
+
+Każda liczba cytowana w audycie liczona przez `tools/audit/metrics.ts` (`npm run audit:metrics`) z zatwierdzonych
+zasobów i warstwy danych aplikacji, nie z równoległej reimplementacji. Pięć sekcji: poziomy model/literatura
+z metrykami basenu, skoki RSL między węzłami, przełożenie błędu poziomu na przesunięcie brzegu, rzędne progów
+w czasie, walidacja na dziś.
+
+**DoD**
+- [x] Skrypt w repo, wpięty jako `npm run audit:metrics`
+- [x] Czyta `src/assets/data` i `src/app/core/data`, bez duplikowania logiki
+- [x] Ograniczenie `no-ice` opisane w nagłówku skryptu i powiązane z `A-03`
+- [ ] Uruchamiany w CI po zmianie zasobów danych (czeka na `0-08`)
+
+## `A-07` Minor: cache semantics and SOURCES hygiene
+
+**Epik:** A · **Labels:** `app`, `docs`
+
+**DoD**
+- [ ] `rslCache` (`:203`) — albo prawdziwe LRU (odświeżanie przy `get`), albo nazwa mówiąca, że to FIFO
+- [ ] Przegląd `SOURCES.md` pod kątem wpisów ✅, które nie mają użycia w kodzie (patrz `A-05`)
+
+**Audyt:** I.2 `A-07`
 
 ---
 

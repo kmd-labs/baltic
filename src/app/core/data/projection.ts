@@ -127,7 +127,8 @@ export const UNITS_PER_KM = BLOCK_SPAN_UNITS / Math.max(BLOCK_KM.x, BLOCK_KM.y);
 export const UNITS_PER_PROJ = R_EARTH_KM * UNITS_PER_KM;
 
 /**
- * World units per metre of elevation at exaggeration 1. Relief here is 2 667 m over 1 336 km —
- * 0.2% of the block's width — so the view needs a large factor to read as relief at all.
+ * World units per metre of elevation at exaggeration 1. Relief here is 3 729 m (−1 742 to 1 987)
+ * over 1 605 km — 0.23% of the block's width — so the view needs a large factor to read as relief
+ * at all. BlockComponent.exaggeration picks it.
  */
 export const UNITS_PER_M = UNITS_PER_KM / 1000;

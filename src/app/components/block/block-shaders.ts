@@ -15,6 +15,10 @@
  *
  * Unlike the globe's patch, the surface here is the *bare bed* — H_paleo with no water fill. Water
  * is a separate translucent sheet (WATER_*), so the basin's depth stays visible through it.
+ *
+ * The walls, though, are the cut face of the *whole* body: rock up to the bed, then the water
+ * standing on it up to the level of the moment. That column is what makes the slab read as a basin
+ * being filled as time runs, rather than as a sheet of glass laid over the relief.
  */
 import { COMMON } from '../globe/paleo-shaders';
 
@@ -41,6 +45,19 @@ const BLOCK_COMMON = /* glsl */ `
   /** Bare bed in metres: H_paleo = H_now − RSL(t), never filled up to a water surface. */
   float bedM(vec2 ll) {
     return hNowAt(ll) - rslAt(uRsl, ll);
+  }
+
+  /**
+   * Top of the water standing on this column, or the bed itself where the column is dry. Every
+   * water body in the window counts, not only the basin: the flood fill decides inside the Baltic
+   * box and the threshold on H_paleo outside it, which is the same rule the sheets draw by
+   * (WATER_FRAGMENT) — so the sheet and the wall it is cut by always agree on the level.
+   */
+  float waterTopM(vec2 ll, float bed) {
+    vec2 wm = waterMask(ll, bed);
+    if (isLakeAt(wm, bed)) return uLake;
+    if (isOceanAt(wm, bed)) return 0.0;
+    return bed;
   }
 
   float toY(float m) {
@@ -106,11 +123,24 @@ export const BLOCK_VERTEX = /* glsl */ `
   varying vec2 vProj;
   varying float vFace;
   varying float vY;
+  varying float vBedY;
+  varying float vTopY;
 
   void main() {
     vProj = aProj;
     vFace = aFace;
-    float y = aTop > 0.5 ? toY(bedM(lccInv(aProj))) : uBaseY;
+    vec2 ll = lccInv(aProj);
+    float bed = bedM(ll);
+    float bedY = toY(bed);
+    // A wall reaches the water surface, not the bed: it is the cut face of rock *and* water, so the
+    // column the sheet stands in has somewhere to be drawn. The top surface stays the bare bed.
+    // Both heights come from aProj alone, so they interpolate along the edge and not down it — the
+    // fragment stage gets the bed and the surface of its own column, and the quad is then split
+    // exactly between the two with nothing left to clip.
+    float topY = aFace > 0.5 ? toY(waterTopM(ll, bed)) : bedY;
+    vBedY = bedY;
+    vTopY = topY;
+    float y = aTop > 0.5 ? topY : uBaseY;
     vY = y;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position.x, y, position.z, 1.0);
   }
@@ -130,11 +160,15 @@ export const BLOCK_FRAGMENT = /* glsl */ `
   uniform vec3 cPlinth;
   uniform vec3 cLine;
   uniform vec3 cPrev;
+  uniform vec3 cWater;
+  uniform vec3 cWaterDeep;
   uniform float uShowToday;
   uniform float uShowPrev;
   varying vec2 vProj;
   varying float vFace;
   varying float vY;
+  varying float vBedY;
+  varying float vTopY;
 
   void main() {
     if (vFace > 1.5) {
@@ -146,10 +180,22 @@ export const BLOCK_FRAGMENT = /* glsl */ `
     vec2 ll = lccInv(vProj);
 
     if (vFace > 0.5) {
-      // Wall of the slab: plain material carrying the elevation scale. Sea level is the strong
-      // line, every 500 m a faint one — the walls are where a depth reads off an object like this.
+      // Wall of the slab: the body cut open. Rock below the bed, the water column above it up to
+      // the surface of the moment — so the basin visibly fills and drains as time runs. The wall
+      // top is already at that surface, so every pixel here is one or the other and nothing needs
+      // clipping. (A lake phase does stand above the ocean on this cut, but ~25 m at ×30 is under a
+      // pixel: the step is in the geometry, not something to point at.)
+      // Over both the elevation scale: sea level the strong line, every 500 m a faint one — the
+      // walls are where a depth reads off an object like this.
       float m = toM(vY);
-      vec3 col = cWall * (m < 0.0 ? 0.93 : 1.0);
+      float above = toM(vY - vBedY);
+      float depth = toM(vTopY - vY);
+      vec3 rock = cWall * (m < 0.0 ? 0.93 : 1.0);
+      // Same ramp as the sheet above, so the column and the surface read as one body of water.
+      vec3 water = mix(cWater, cWaterDeep, smoothstep(0.0, 320.0, depth));
+      water = mix(water, cLine, hairline(depth, 1.4) * 0.3);
+      // The bed contact is a hard colour edge; one pixel of blend takes the stair-step off it.
+      vec3 col = mix(rock, water, clamp(above / max(fwidth(above), 1e-4), 0.0, 1.0));
       float g = m / 500.0;
       col = mix(col, cLine, hairline(fract(g + 0.5) - 0.5, 1.0) * 0.22);
       col = mix(col, cLine, hairline(m / 500.0, 1.4) * 0.75);
@@ -165,8 +211,8 @@ export const BLOCK_FRAGMENT = /* glsl */ `
     float hn = hNowAt(ll);
     float hp = hn - rslAt(uRsl, ll);
     vec2 wm = waterMask(ll, hp);
-    bool ocean = wm.x > 0.5 && hp < 0.0;
-    bool lake = !ocean && wm.y > 0.5 && hp < uLake;
+    bool lake = isLakeAt(wm, hp);
+    bool ocean = isOceanAt(wm, hp);
 
     vec3 col;
     if (ocean || lake) {
@@ -238,17 +284,26 @@ export const WATER_FRAGMENT = /* glsl */ `
     float hp = bedM(ll);
     vec2 wm = waterMask(ll, hp);
     float level = uIsLake > 0.5 ? uLake : 0.0;
-    bool show = uIsLake > 0.5 ? (wm.y > 0.5 && hp < level) : (wm.x > 0.5 && hp < 0.0);
+    // Exactly one sheet draws any given cell. Through a phase change the union leaves both channels
+    // live at once, so without the shared precedence the two translucent sheets would stack and the
+    // basin would darken for a thousand years on its way between lake and sea.
+    bool show = uIsLake > 0.5 ? isLakeAt(wm, hp) : isOceanAt(wm, hp);
     if (!show) discard;
 
-    // Shallow water stays clear so the bed shows through; depth both darkens and thickens it,
-    // which is what makes the basin and its sills readable at a glance.
+    // Calibrated to this basin, not to the open ocean. The Baltic averages ~55 m and only the
+    // Landsort Deep passes 400 m, so ramps spread over 0–300 m left the whole sea a faint wash of
+    // pale blue over a cream bed: it read as tinted ground rather than as water, and the basin
+    // never looked like it was filling. The colour now reaches the basin's own tone by ~150 m, and
+    // the sheet is opaque enough even at the shore to read as a body of water — depth is carried by
+    // the colour ramp, with the true profile still legible on the walls.
     float depth = level - hp;
-    float k = smoothstep(0.0, 320.0, depth);
-    vec3 col = mix(cWater, cWaterDeep, k);
-    float a = mix(0.34, 0.86, smoothstep(0.0, 260.0, depth));
-    // Pick out the shoreline, where the sheet meets the bed.
-    a = mix(a, 0.95, hairline(depth, 1.6) * 0.5);
+    vec3 col = mix(cWater, cWaterDeep, smoothstep(0.0, 150.0, depth));
+    float a = mix(0.60, 0.93, smoothstep(0.0, 120.0, depth));
+    // Pick out the shoreline, where the sheet meets the bed: the water's edge is the outline of the
+    // filled basin, so it is drawn and not merely left as the end of the transparency.
+    float rim = hairline(depth, 1.6);
+    col = mix(col, col * 0.7, rim * 0.6);
+    a = mix(a, 0.95, rim * 0.5);
     gl_FragColor = vec4(col, a);
     #include <colorspace_fragment>
   }

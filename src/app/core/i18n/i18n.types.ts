@@ -1,6 +1,6 @@
 export type Lang = 'en' | 'pl';
 
-export type TourStepId = 'play' | 'layers' | 'glossary' | 'sources' | 'phase' | 'transect' | 'about';
+export type TourStepId = 'play' | 'view' | 'layers' | 'glossary' | 'sources' | 'phase' | 'transect' | 'about';
 
 export type PhaseId = 'deglaciation' | 'bil' | 'yoldia' | 'ancylus' | 'mastogloia' | 'littorina' | 'post-littorina';
 

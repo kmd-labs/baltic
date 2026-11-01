@@ -39,6 +39,10 @@ export const EN: Dict = {
   tourStepOf: (i, n) => `Step ${i} of ${n}`,
   tourSteps: {
     play: { title: 'Playback', text: 'Plays the animation from 20,000 years ago to today. The arrows step one frame; the slider picks any moment.' },
+    view: {
+      title: 'View: relief block',
+      text: 'Switches between the globe and the relief block — the Baltic as a solid slab you can turn in the hand, with the seabed and the mountains on one vertical scale (×30). Its four walls are cut through the water, so you watch the basin fill and drain as time runs, and they carry the elevation scale: the strong line is sea level, the faint ones every 500 m.'
+    },
     layers: { title: 'Layers', text: 'Turn the ice sheet, uncertainty band, present-day coast, coast 1000 years earlier, sills, transect line and names on or off.' },
     glossary: { title: 'Glossary', text: 'Explains the terms used in the app: cal BP, isostasy, RSL, sills, PSU and more.' },
     sources: { title: 'Sources', text: 'Where every dataset comes from, what it is used for in the app, its licence and what we changed.' },

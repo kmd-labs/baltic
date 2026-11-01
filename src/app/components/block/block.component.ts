@@ -62,7 +62,8 @@ const PLINTH_M = -3500;
  *
  * Differences from the globe that matter:
  * - the surface is the bare bed, never filled up to a water level, because the water is a separate
- *   translucent sheet and the depth below it is the thing worth seeing;
+ *   translucent sheet and the depth below it is the thing worth seeing — but the four walls are cut
+ *   through that water and show the column, so the basin reads as filling and draining with time;
  * - the depth buffer does the occlusion, so there is no renderOrder juggling and no hemisphere
  *   culling — a closed solid behaves itself;
  * - terrain and ice share one `exaggeration`, instead of the globe's flat terrain and its own ice
@@ -102,11 +103,18 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
   readonly t = input.required<number>();
   readonly layers = input.required<GlobeLayers>();
   /**
-   * Shared by the bed and the ice. Relief here is 2 667 m over 1 336 km — 0.2% of the block's
-   * width — so it takes a large factor to read as relief; ×60 puts the mountains at 0.8 of the
-   * 11-unit block and a 3 km ice dome at 1.2, which is the right order for the two to compare.
+   * Shared by the bed and the ice — one factor for everything, so a depth still reads off the
+   * elevation scale on the walls. Relief here is 3 729 m over 1 605 km, 0.23% of the block's width,
+   * so it takes a large factor to read as relief at all. On the 11-unit block, ×30 puts the
+   * Scandinavian peaks (1 987 m) at 0.41 units and a 3 km ice dome at 0.62: the ice still out-tops
+   * the mountains, which is the comparison this view exists for, without the north-west turning
+   * into a wall of spikes the way ×60 did (0.82 against a 0.19-unit basin).
+   *
+   * The cost of one honest scale is that the basin is shallow in the same proportion: 459 m of
+   * water is 0.09 units, so the column cut into the walls is thin in the Baltic proper and only
+   * really deep in the Atlantic corner (−1 742 m, 0.36 units).
    */
-  readonly exaggeration = input<number>(60);
+  readonly exaggeration = input<number>(30);
   readonly labels = input<GlobeLabel[]>([]);
   readonly hover = output<GlobePointer | null>();
 
@@ -425,7 +433,6 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
       uWater: { value: this.waterTex },
       uWaterB: { value: this.waterBTex },
       uWaterPrev: { value: this.waterPrevTex },
-      uWaterMix: { value: 0 },
       uLakePrev: { value: 0 },
       uPrevReady: { value: 0 },
       uBoxE: { value: new THREE.Vector4(...E.bbox) },
@@ -458,6 +465,10 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
         cPlinth: { value: c('neutral-300', '#cfd8e3') },
         cLine: { value: c('neutral-600', '#475569') },
         cPrev: { value: c('accent', '#d37400') },
+        // The walls cut through the water as well as the rock, so the slab carries the sheets'
+        // colours too and the cut column matches the surface standing on it.
+        cWater: { value: c('paleo-water-shallow', '#bae6fd') },
+        cWaterDeep: { value: c('paleo-marine', '#3d6aa3') },
         uShowToday: { value: this.layers().today ? 1 : 0 },
         uShowPrev: { value: this.layers().prev ? 1 : 0 }
       })
@@ -595,7 +606,8 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
       const cls: WaterClass = phaseAt(t).cls;
       const token = cls === 'marine' ? 'paleo-marine' : cls === 'brackish' ? 'paleo-brackish' : 'paleo-fresh';
       const deep = new THREE.Color(this.theme.getTokenColor(token, '#3d6aa3'));
-      for (const m of this.waterMats) (m.uniforms['cWaterDeep'].value as THREE.Color).copy(deep);
+      // The slab too: its walls carry the water column, which takes the phase's colour with it.
+      for (const m of [...this.waterMats, this.slabMat]) (m.uniforms['cWaterDeep'].value as THREE.Color).copy(deep);
       this.showIce(t);
     }
 
@@ -604,16 +616,16 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
       this.frame = a;
       this.fillWater(this.waterTex!, a.water);
     }
-    if (b && b !== this.frameB) {
-      this.frameB = b;
-      this.fillWater(this.waterBTex!, b.water);
+    // The shader unions the two fills, so the second texture must never be left holding a frame
+    // from somewhere else on the timeline — a stale one would now contribute instead of being
+    // weighted out. With no bracket on the other side it mirrors the first.
+    const second = b ?? a;
+    if (second && second !== this.frameB) {
+      this.frameB = second;
+      this.fillWater(this.waterBTex!, second.water);
     }
-    const mix = this.frame && this.frameB ? w : 0;
-    const lake = this.frame ? (this.frameB ? this.frame.lakeLevelM + (this.frameB.lakeLevelM - this.frame.lakeLevelM) * w : this.frame.lakeLevelM) : 0;
-    for (const u of us) {
-      u['uWaterMix'].value = mix;
-      u['uLake'].value = lake;
-    }
+    const lake = this.frame ? (b ? this.frame.lakeLevelM + (b.lakeLevelM - this.frame.lakeLevelM) * w : this.frame.lakeLevelM) : 0;
+    for (const u of us) u['uLake'].value = lake;
 
     // The ghost coast stays on the 1 ka grid: following it continuously would ask the worker for a
     // new flood fill on every tick.

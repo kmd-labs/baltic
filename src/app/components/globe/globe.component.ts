@@ -359,7 +359,6 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
         uRsl: { value: this.rslTex },
         uWater: { value: this.waterTex },
         uWaterB: { value: this.waterBTex },
-        uWaterMix: { value: 0 },
         uRslPrev: { value: this.rslPrevTex },
         uWaterPrev: { value: this.waterPrevTex },
         uLakePrev: { value: 0 },
@@ -452,7 +451,6 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
           uWater: shared['uWater'],
           uWaterB: shared['uWaterB'],
           uWaterPrev: shared['uWaterPrev'],
-          uWaterMix: shared['uWaterMix'],
           uLakePrev: shared['uLakePrev'],
           uPrevReady: shared['uPrevReady'],
           uBoxE: shared['uBoxE'],
@@ -563,14 +561,17 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
       this.frame = a;
       this.fillWaterTex(this.waterTex!, a.water);
     }
-    if (b && b !== this.frameB) {
-      this.frameB = b;
-      this.fillWaterTex(this.waterBTex!, b.water);
+    // The shader unions the two fills, so the second texture must never be left holding a frame
+    // from somewhere else on the timeline — a stale one would now contribute instead of being
+    // weighted out. With no bracket on the other side it mirrors the first.
+    const second = b ?? a;
+    if (second && second !== this.frameB) {
+      this.frameB = second;
+      this.fillWaterTex(this.waterBTex!, second.water);
     }
-    u['uWaterMix'].value = this.frame && this.frameB ? w : 0;
     if (this.frame) {
       const la = this.frame.lakeLevelM;
-      u['uLake'].value = this.frameB ? la + (this.frameB.lakeLevelM - la) * w : la;
+      u['uLake'].value = b ? la + (b.lakeLevelM - la) * w : la;
     }
 
     // The ghost coast is a reference contour, so it stays on the 1 ka grid: following it
