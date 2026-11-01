@@ -1,3 +1,5 @@
+import { WATER_RULE_GLSL } from '../../core/data/water';
+
 /**
  * Shaders of the paleo patch. Everything is evaluated per vertex / per pixel from the
  * present-day grids and the RSL field, so the shoreline stays sharp at any zoom:
@@ -59,19 +61,11 @@ export const COMMON = /* glsl */ `
     return vec2(hp < 0.0 ? 1.0 : 0.0, 0.0);
   }
 
-  /**
-   * Lake before ocean. With the union above, both channels are candidates at once right through a
-   * phase change, so the two had to stop disagreeing — the globe's vertex stage already resolved it
-   * this way. Lake is the correct winner: uLake interpolates between the two frames' levels and a
-   * frame whose basin is ocean-connected carries level 0, so this branch walks the basin
-   * continuously through the handover in either direction and hands over seamlessly at uLake = 0.
-   */
-  bool isLakeAt(vec2 wm, float hp) {
-    return wm.y > 0.5 && hp < uLake;
-  }
-  bool isOceanAt(vec2 wm, float hp) {
-    return !isLakeAt(wm, hp) && wm.x > 0.5 && hp < 0.0;
-  }
+  // The basin boundary and the lake-before-ocean precedence are generated from water.ts, which is
+  // also what the CPU side runs: oceanSide decides which water the published metrics count, and
+  // with the union above both mask channels are candidates at once right through a phase change,
+  // so the two sides cannot be left to agree by comment alone (A-02).
+  ${WATER_RULE_GLSL}
 `;
 
 export const PATCH_VERTEX = /* glsl */ `
@@ -121,11 +115,6 @@ export const PATCH_FRAGMENT = /* glsl */ `
   }
   uniform float uFeather;
   varying vec2 vLL;
-
-  // Same rule as oceanSide() in water.ts.
-  bool oceanSide(vec2 ll) {
-    return ll.x < 10.3 || (ll.y > 56.95 && ll.x < 12.4) || (ll.y > 62.0 && ll.x < 16.5);
-  }
 
   float contourLine(float v, float width) {
     float d = abs(v) / max(fwidth(v), 1e-4);

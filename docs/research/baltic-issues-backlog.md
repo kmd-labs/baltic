@@ -784,7 +784,7 @@ komórki. Rozbieżność jest największa przy brzegu — czyli tam, gdzie użyt
 
 **Audyt:** I.2 `A-01`
 
-## `A-02` Single source of truth for the water rule
+## `A-02` Single source of truth for the water rule — **wykonane 2026-11-01**
 
 **Epik:** A · **Zależy od:** — · **Blokuje:** — · **Labels:** `app`, `contract`
 
@@ -795,9 +795,9 @@ zmieniłby publikowane liczby. Ta sama klasa ryzyka dotyczy pierwszeństwa `isLa
 przejściu na sumę masek żyje tylko w GLSL.
 
 **DoD**
-- [ ] Jedna definicja granicy basenu i jedna definicja pierwszeństwa jezioro/ocean, generowana albo wstrzykiwana do GLSL
-- [ ] Test wyłapujący rozjazd TS ↔ GLSL (porównanie na siatce punktów kontrolnych)
-- [ ] Udział komórek wykluczanych przez regułę raportowany w `audit:metrics`
+- [x] Jedna definicja: stałe `OCEAN_SIDE` + `MASK_HIT` w `water.ts`, a `WATER_RULE_GLSL` generowany z tych samych liczb i wstrzykiwany do `COMMON` (`paleo-shaders.ts`); `bedAt` w `ice-shaders.ts` przeszedł na `isLakeAt`/`isOceanAt` zamiast trzeciej kopii pierwszeństwa
+- [x] Test `GLSL oceanSide equals the TS one across the window` (117 tys. punktów) i `GLSL lake/ocean precedence equals waterKindAt` — tłumaczą **źródło GLSL** z powrotem na JS i porównują z TS; sprawdzone, że usunięcie strażnika `!isLakeAt` w `isOceanAt` test wywala
+- [x] `audit:metrics` raportuje udział (19,9%) i wskazuje, że druga strona jest generowana
 
 **Audyt:** I.2 `A-02`
 

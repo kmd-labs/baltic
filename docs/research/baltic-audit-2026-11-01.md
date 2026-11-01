@@ -55,7 +55,7 @@ się co do komórki. Teraz nie. Najazd kursorem przy brzegu w środku przedział
 gdzie obraz pokazuje wodę; linia wody w panelu przekroju bywa przesunięta względem brzegu na scenie.
 Rozbieżność jest największa dokładnie przy brzegu, czyli tam, gdzie ludzie najczęściej najeżdżają.
 
-### `A-02` Reguła wody istnieje w dwóch egzemplarzach
+### `A-02` Reguła wody istnieje w dwóch egzemplarzach — **naprawione**
 
 `oceanSide()` jest zapisana dwa razy — [`water.ts:33`](../../src/app/core/data/water.ts) (TS, decyduje
 o powierzchni i objętości) i [`paleo-shaders.ts:127`](../../src/app/components/globe/paleo-shaders.ts)

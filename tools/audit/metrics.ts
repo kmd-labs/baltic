@@ -170,4 +170,4 @@ for (let r = 0; r < baltic.ny; r++) {
   }
 }
 console.log('\n  oceanSide() excludes', ((ocean / total) * 100).toFixed(1) + '% of present-day water cells from the basin metrics');
-console.log('  (the same rule is duplicated in GLSL — audit finding A-02)\n');
+console.log('  (one definition in water.ts; the GLSL the shaders compile is generated from it — A-02)\n');

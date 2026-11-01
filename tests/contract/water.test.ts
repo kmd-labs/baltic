@@ -5,7 +5,16 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { decodeKmdg, gunzipIfNeeded, kmdgLayer } from '../../src/app/core/data/kmdg.ts';
 import { buildResampler, maskFractionAt, paleoElevation, rslAt } from '../../src/app/core/data/paleo.ts';
-import { basinStats, fillWater, maskHit, waterKindAt, WATER_LAKE, WATER_OCEAN } from '../../src/app/core/data/water.ts';
+import {
+  basinStats,
+  fillWater,
+  maskHit,
+  oceanSide,
+  waterKindAt,
+  WATER_LAKE,
+  WATER_OCEAN,
+  WATER_RULE_GLSL
+} from '../../src/app/core/data/water.ts';
 
 test('ocean water stops at a sill above the ocean level', () => {
   // 9 × 5 cells west→east: ocean | sill at +12 m | depression at −40 m | high ground.
@@ -104,4 +113,75 @@ test('mid-interval water class follows the scene rule, not the nearest frame', (
   // more likely is that someone moved a readout back onto the nearest frame.
   assert.ok(divergent > 0, 'no cell distinguishes the scene rule from the nearest-frame read');
   console.log(`    A-01: ${divergent} of ${Math.ceil(candidates.length / stride)} sampled coastal cells disagree with a nearest-frame read`);
+});
+
+// ── A-02: the GPU's copy of the rule is generated from this one ───────────────────────────────────
+// `WATER_RULE_GLSL` is the source the shaders actually compile (paleo-shaders.ts injects it into
+// COMMON, ice-shaders.ts and block-shaders.ts build on it). Translating that source back to JS and
+// running it against the TS functions is what makes "one definition" checkable rather than
+// asserted: a structural edit on either side — a flipped precedence, a moved threshold, a changed
+// boundary — fails here instead of quietly moving published areas and volumes.
+function glslReturn(fn: string): string {
+  const at = WATER_RULE_GLSL.indexOf(`bool ${fn}(`);
+  assert.ok(at >= 0, `${fn} is missing from WATER_RULE_GLSL`);
+  const open = WATER_RULE_GLSL.indexOf('{', at);
+  const body = WATER_RULE_GLSL.slice(open + 1, WATER_RULE_GLSL.indexOf('}', open));
+  const m = /return([\s\S]*?);/.exec(body);
+  assert.ok(m, `${fn} has no return statement`);
+  // GLSL and JS share the operators used here; only the names differ. `wm` carries the mask
+  // channels the shader sampled, so it arrives as a fraction, not a boolean.
+  return m[1]
+    .replace(/\bll\.x\b/g, 'lon')
+    .replace(/\bll\.y\b/g, 'lat')
+    .replace(/\bwm\.x\b/g, 'ocean')
+    .replace(/\bwm\.y\b/g, 'lake')
+    .replace(/\buLake\b/g, 'level')
+    .replace(/isLakeAt\(wm, hp\)/g, 'isLake(ocean, lake, hp, level)');
+}
+
+const glslOceanSide = new Function('lon', 'lat', `return ${glslReturn('oceanSide')};`) as (lon: number, lat: number) => boolean;
+const glslIsLake = new Function('ocean', 'lake', 'hp', 'level', `return ${glslReturn('isLakeAt')};`) as Rule;
+const glslIsOceanRaw = new Function('ocean', 'lake', 'hp', 'level', 'isLake', `return ${glslReturn('isOceanAt')};`);
+type Rule = (ocean: number, lake: number, hp: number, level: number) => boolean;
+const glslIsOcean: Rule = (o, l, h, v) => glslIsOceanRaw(o, l, h, v, glslIsLake);
+
+test('GLSL oceanSide equals the TS one across the window', () => {
+  const [west, south, east, north] = baltic.bbox;
+  let checked = 0;
+  for (let lat = south; lat <= north; lat += 0.05) {
+    for (let lon = west; lon <= east; lon += 0.05) {
+      assert.equal(glslOceanSide(lon, lat), oceanSide(lon, lat), `${lon.toFixed(2)} ${lat.toFixed(2)}`);
+      checked++;
+    }
+  }
+  assert.ok(checked > 100_000, `only ${checked} points`);
+});
+
+test('GLSL lake/ocean precedence equals waterKindAt', () => {
+  // 0.5 is the threshold itself and 0.5000001 the first value above it: both sides must agree on
+  // which way the boundary falls, not only on the clear cases.
+  const fractions = [0, 0.25, 0.5, 0.5000001, 0.75, 1];
+  // Levels: connected (0), the model's Yoldia and Ancylus-maximum levels. H_paleo values straddle
+  // 0 and each level, including exact equality, where `<` decides.
+  for (const level of [0, 7.8, 22.1]) {
+    for (const hp of [-1000, -50, -1, -0.001, 0, 0.001, 5, level, level + 0.001, 50]) {
+      for (const oa of fractions) {
+        for (const ob of fractions) {
+          for (const la of fractions) {
+            for (const lb of fractions) {
+              const ocean = Math.max(oa, ob);
+              const lake = Math.max(la, lb);
+              // Each predicate on its own, not through a precedence ternary: a caller may ask
+              // isOceanAt alone (block-shaders.ts draws one sheet at a time), so the guard inside
+              // it has to hold by itself.
+              const cpu = waterKindAt(maskHit(oa, ob), maskHit(la, lb), hp, level);
+              const where = `ocean ${oa}/${ob} lake ${la}/${lb} hp ${hp} level ${level}`;
+              assert.equal(glslIsLake(ocean, lake, hp, level), cpu === 'lake', 'lake: ' + where);
+              assert.equal(glslIsOcean(ocean, lake, hp, level), cpu === 'ocean', 'ocean: ' + where);
+            }
+          }
+        }
+      }
+    }
+  }
 });

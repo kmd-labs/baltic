@@ -41,14 +41,12 @@ const ICE_COMMON = /* glsl */ `
     return iceThickness(sdfAt(ll));
   }
 
-  /** The surface the ice rests on — the same rule as the paleo patch's vertex stage. */
+  /** The surface the ice rests on: the paleo patch's own rule, not a second copy of it. */
   float bedAt(vec2 ll) {
     float hn = hNowAt(ll);
     float hp = hn - rslAt(uRsl, ll);
     vec2 wm = waterMask(ll, hp);
-    float h = hp;
-    if (wm.x > 0.5 && hp < 0.0) h = 0.0;
-    if (wm.y > 0.5 && hp < uLake) h = uLake;
+    float h = isLakeAt(wm, hp) ? uLake : isOceanAt(wm, hp) ? 0.0 : hp;
     return max(h, 0.0);
   }
 `;
