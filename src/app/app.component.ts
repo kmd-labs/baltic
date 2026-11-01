@@ -99,9 +99,14 @@ export class AppComponent implements OnDestroy {
   }
   @ViewChild(TourComponent) tour?: TourComponent;
 
-  /** Tutorial steps in the order of the brief: play, layers, glossary, sources, phase, transect, KMD. */
+  /**
+   * Tutorial steps in the order of the brief: play, layers, glossary, sources, phase, transect,
+   * KMD — with the view switcher added after playback, because what the relief block shows is not
+   * guessable from the pill and it is the one control that changes the whole stage.
+   */
   readonly tourSteps: TourStep[] = [
     { id: 'play', target: '[data-tour="play"]' },
+    { id: 'view', target: '[data-tour="view"]' },
     { id: 'layers', target: '[data-tour="layers"]' },
     { id: 'glossary', target: '[data-tour="glossary"]' },
     { id: 'sources', target: '[data-tour="sources"]' },

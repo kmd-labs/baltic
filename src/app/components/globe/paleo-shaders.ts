@@ -15,7 +15,6 @@ export const COMMON = /* glsl */ `
   uniform sampler2D uWater;
   uniform sampler2D uWaterB;
   uniform sampler2D uWaterPrev;
-  uniform float uWaterMix;
   uniform float uLakePrev;
   uniform float uPrevReady;
   uniform vec4 uBoxE;   // west, south, east, north
@@ -40,15 +39,38 @@ export const COMMON = /* glsl */ `
     return texture2D(s, boxUv(uBoxR, ll)).r;
   }
   // x: ocean-connected, y: lake (basin) — from the CPU flood fill in the Baltic window.
-  // The fill is only defined on the 1 ka timeline, so the two bracketing frames are blended:
-  // connectivity flips at the midpoint while the shoreline itself moves continuously, because
-  // H_paleo is continuous in time (RSL is interpolated between the source layers).
+  //
+  // The fill is only defined on the 1 ka timeline, so the two bracketing frames are UNIONED, not
+  // blended. The mask then answers one question only — does this cell belong to the connected water
+  // body anywhere in this interval — and the shoreline is left entirely to hp, which is continuous
+  // because RSL is interpolated between the source layers. Blending the two and thresholding at 0.5
+  // instead made each cell flip at the midpoint of its interval: wherever the mask was the binding
+  // constraint the water's edge sat still for 1 000 years and then jumped, while the coast slid on
+  // smoothly. The union can only ever be the looser constraint, so hp sets the edge everywhere and
+  // the two move as one.
+  //
+  // Nothing is over-flooded by this: a cell enters the union only if the flood fill itself called
+  // it connected water at one of the two frames, so inland depressions below sea level stay dry.
   vec2 waterMask(vec2 ll, float hp) {
     if (inBox(uBoxB, ll, 0.05)) {
       vec2 uvB = boxUv(uBoxB, ll);
-      return mix(texture2D(uWater, uvB).rg, texture2D(uWaterB, uvB).rg, uWaterMix);
+      return max(texture2D(uWater, uvB).rg, texture2D(uWaterB, uvB).rg);
     }
     return vec2(hp < 0.0 ? 1.0 : 0.0, 0.0);
+  }
+
+  /**
+   * Lake before ocean. With the union above, both channels are candidates at once right through a
+   * phase change, so the two had to stop disagreeing — the globe's vertex stage already resolved it
+   * this way. Lake is the correct winner: uLake interpolates between the two frames' levels and a
+   * frame whose basin is ocean-connected carries level 0, so this branch walks the basin
+   * continuously through the handover in either direction and hands over seamlessly at uLake = 0.
+   */
+  bool isLakeAt(vec2 wm, float hp) {
+    return wm.y > 0.5 && hp < uLake;
+  }
+  bool isOceanAt(vec2 wm, float hp) {
+    return !isLakeAt(wm, hp) && wm.x > 0.5 && hp < 0.0;
   }
 `;
 
@@ -64,9 +86,7 @@ export const PATCH_VERTEX = /* glsl */ `
     float hn = hNowAt(ll);
     float hp = hn - rslAt(uRsl, ll);
     vec2 wm = waterMask(ll, hp);
-    float h = hp;
-    if (wm.x > 0.5 && hp < 0.0) h = 0.0;
-    if (wm.y > 0.5 && hp < uLake) h = uLake;
+    float h = isLakeAt(wm, hp) ? uLake : isOceanAt(wm, hp) ? 0.0 : hp;
     float disp = uR * max(h, 0.0) / 6371000.0 * uExag;
     vec3 p = position + normalize(position) * disp;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
@@ -119,8 +139,8 @@ export const PATCH_FRAGMENT = /* glsl */ `
     float shade = dem.g;
     float hp = hn - rslAt(uRsl, ll);
     vec2 wm = waterMask(ll, hp);
-    bool ocean = wm.x > 0.5 && hp < 0.0;
-    bool lake = !ocean && wm.y > 0.5 && hp < uLake;
+    bool lake = isLakeAt(wm, hp);
+    bool ocean = isOceanAt(wm, hp);
 
     vec3 col;
     if (ocean || lake) {

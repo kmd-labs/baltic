@@ -39,6 +39,10 @@ export const PL: Dict = {
   tourStepOf: (i, n) => `Krok ${i} z ${n}`,
   tourSteps: {
     play: { title: 'Odtwarzanie', text: 'Uruchamia animację od 20 tys. lat temu do dziś. Strzałki obok przechodzą o jedną klatkę, a suwak pozwala wybrać dowolny moment.' },
+    view: {
+      title: 'Widok: bryła rzeźby',
+      text: 'Przełącza między globusem a bryłą rzeźby — Bałtyk jako lity blok, który można obrócić w dłoni, z dnem i górami w jednej skali pionowej (×30). Cztery ściany bryły są przecięte przez wodę, więc widać, jak zbiornik napełnia się i opróżnia w miarę biegu czasu, a na ścianach jest podziałka wysokości: mocna linia to poziom morza, słabe — co 500 m.'
+    },
     layers: { title: 'Warstwy', text: 'Włącz lub wyłącz lądolód, pas niepewności, dzisiejszy brzeg, brzeg sprzed 1000 lat, progi, linię przekroju i nazwy.' },
     glossary: { title: 'Słowniczek', text: 'Wyjaśnia pojęcia używane w aplikacji: cal BP, izostazję, RSL, progi, PSU i inne.' },
     sources: { title: 'Źródła', text: 'Skąd pochodzą wszystkie dane, do czego służą w aplikacji, na jakiej licencji są używane i co z nimi zrobiliśmy.' },

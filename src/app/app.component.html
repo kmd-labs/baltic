@@ -19,7 +19,7 @@
         </button>
       </div>
 
-      <div class="header__settings glass-panel" role="group" [attr.aria-label]="tr.viewLabel">
+      <div class="header__settings glass-panel" role="group" data-tour="view" [attr.aria-label]="tr.viewLabel">
         <app-dropdown
           variant="ghost"
           [icon]="view() === 'block' ? icons.Box : icons.Globe"
