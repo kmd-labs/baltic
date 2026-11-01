@@ -16,12 +16,12 @@ Aplikacja liczy wodę, poziomy progów i metryki sama z siatek (Web Worker), wi�
 
 | Status | Zadania |
 | :-- | :-- |
-| **Zamknięte — wykonane** | `0-02` #8, `0-06` #12, `C-01` #15, `C-04` #18, `I-05` #58 |
+| **Zamknięte — wykonane** | `0-02` #8, `0-06` #12, `C-01` #15, `C-04` #18, `I-05` #58 oraz epik `A`: `A-01` #70, `A-02` #71, `A-03` #72, `A-04` #73, `A-07` #76, `A-08` #77, `A-09` #78 |
 | **Zamknięte — wykonane z follow-upem** | `C-03` #17 (reszta → `I-01`, `0-07`, `V-03`), `C-06` #20 i `C-14` #27 (→ `C-06b` #62), `C-07` #21 (→ `C-07b` #63), `C-13` #28, `I-02` #53 (→ `I-02b` #64), `I-03` #54 (→ `I-03b` #65), `I-04` #55 (→ `I-04b` #66), `0-05` #11 (→ `0-05b` #67) |
 | **Usunięte — nie robimy** | `C-02` #16, `C-09` #22, `C-10` #24, `C-11` #25, `C-12` #26, `C-15` #29, `V-07` #46, `V-12` #52 — decyzja użytkownika; **trwałe skasowanie na GitHubie czeka na uprawnienia** (system zablokował `gh issue delete`) |
 | **Zawężone** | `I-01` #50 — siatki, zarysy lodu i manifest, bez plików klatek |
 | **Otwarte** | `0-01` #7, `0-03` #9, `0-04` #10, `0-07` #13, `0-08` #14, `C-05` #19, `C-08` #23, `V-01` #40, `V-02` #41, `V-03` #42, `V-06` #45, `V-08` #47, `V-11` #51 oraz follow-upy #62–#67 |
-| **Nowe z audytu 2026-11-01** | Wykonane tego samego dnia: `A-01`, `A-02`, `A-03`, `A-04`, `A-07` oraz `A-08` i `A-09` (ustalenia z sesji naprawczej). Otwarte: **`A-05`** (korekta na osady — potrzebny Python, pobranie `zhang2024_sed` i decyzja o rozkładzie miąższości w czasie) i ostatni punkt `A-06` (CI, czeka na `0-08`). Numery GitHub do założenia — `gh` nie jest zainstalowany na maszynie |
+| **Otwarte w epiku `A`** | `A-05` #74 (korekta na osady — potrzebny Python, pobranie `zhang2024_sed` i decyzja o rozkładzie miąższości w czasie) oraz `A-06` #75 (ostatni punkt: `audit:metrics` w CI, czeka na `0-08` #14) |
 
 Opisy zadań poniżej są historyczne dla pozycji zamkniętych i usuniętych; aktualny zakres jest w issues.
 
@@ -759,6 +759,7 @@ Decyzja z 2026-10-31: scena to **glob z `kmd-labs/el-nino` — tylko glob i reli
 # Epik `A` — audyt 2026-11-01
 
 > Zadania wynikające z [`baltic-audit-2026-11-01.md`](./baltic-audit-2026-11-01.md).
+> **Issues: #70–#78** (etykieta `epic:A`). Zamknięte 2026-11-01: #70, #71, #72, #73, #76, #77, #78. Otwarte: #74 (`A-05`), #75 (`A-06`).
 > **Tu są wyłącznie ustalenia bez pokrycia w epikach `0`/`C`/`V`/`I`.** Rzeczy, które audyt
 > potwierdził, a które mają już swoje issue — poziomy faz jeziornych (`C-06b` #62), bilans progów
 > (`V-02` #41), RSL wobec obserwacji (`V-03` #42), spadek Billingen (`V-06` #45), ograniczenia
@@ -766,8 +767,13 @@ Decyzja z 2026-10-31: scena to **glob z `kmd-labs/el-nino` — tylko glob i reli
 >
 > Pominięte zgodnie z decyzją: wszystko, co wymagałoby uzyskania licencji, czyli zbiory ❓
 > z `SOURCES.md` (lepsza batymetria, batymetria jezior, `V-08` na `nkg2016lu`, `sgu_strand`, `sincos`).
+>
+> Materiał dowodowy z audytu trafił komentarzami do issues, które go dotyczą: **#41** (`V-02`, tabela rzędnych
+> progów w czasie), **#42** (`V-03`, skoki RSL i przełożenie na brzeg), **#45** (`V-06`, przebieg BIL i spadek
+> Billingen), **#62** (`C-06b`, poziomy modelu wobec literatury), **#13** (`0-07`, ograniczenia profilu lodu),
+> **#14** (`0-08`, `audit:metrics` w CI).
 
-## `A-01` Realign tooltip and transect with the rendered water rule — **wykonane 2026-11-01**
+## `A-01` #70 Realign tooltip and transect with the rendered water rule — **wykonane 2026-11-01**
 
 **Epik:** A · **Zależy od:** — · **Blokuje:** — · **Labels:** `app`, `regression`
 
@@ -784,7 +790,7 @@ komórki. Rozbieżność jest największa przy brzegu — czyli tam, gdzie użyt
 
 **Audyt:** I.2 `A-01`
 
-## `A-02` Single source of truth for the water rule — **wykonane 2026-11-01**
+## `A-02` #71 Single source of truth for the water rule — **wykonane 2026-11-01**
 
 **Epik:** A · **Zależy od:** — · **Blokuje:** — · **Labels:** `app`, `contract`
 
@@ -801,7 +807,7 @@ przejściu na sumę masek żyje tylko w GLSL.
 
 **Audyt:** I.2 `A-02`
 
-## `A-03` Make the ice-dammed lake reachable from tests — **wykonane 2026-11-01**
+## `A-03` #72 Make the ice-dammed lake reachable from tests — **wykonane 2026-11-01**
 
 **Epik:** A · **Zależy od:** — · **Blokuje:** `A-04` (fazy jeziorne) · **Labels:** `app`, `validation`
 
@@ -818,7 +824,7 @@ domknięcie `V-02` po stronie faz jeziornych i ogranicza `npm run audit:metrics`
 
 **Audyt:** I.2 `A-03`
 
-## `A-04` Strengthen the water contract tests against literature levels — **wykonane 2026-11-01**
+## `A-04` #73 Strengthen the water contract tests against literature levels — **wykonane 2026-11-01**
 
 **Epik:** A · **Zależy od:** `A-03` (dla faz zaporowych) · **Labels:** `validation`
 
@@ -836,7 +842,7 @@ w pilnowany budżet błędu**, żeby nie rosła po cichu.
 
 **Audyt:** I.2 `A-04`, II.2 B1
 
-## `A-05` Apply the Holocene sediment correction to the paleo-DEM
+## `A-05` #74 Apply the Holocene sediment correction to the paleo-DEM
 
 **Epik:** A · **Zależy od:** `C-03` · **Labels:** `data-pipeline`, `regime-c`
 
@@ -857,7 +863,7 @@ Jedyne nowe ustalenie merytoryczne audytu bez pokrycia w planie. Licencyjnie czy
 
 **Audyt:** I.2 `A-05`, II.2 B4
 
-## `A-06` Ship the audit measurements as a repeatable script — **wykonane 2026-11-01**
+## `A-06` #75 Ship the audit measurements as a repeatable script — **wykonane 2026-11-01**
 
 **Epik:** A · **Labels:** `validation`, `docs`
 
@@ -872,7 +878,7 @@ w czasie, walidacja na dziś.
 - [x] Ograniczenie `no-ice` opisane w nagłówku skryptu i powiązane z `A-03`
 - [ ] Uruchamiany w CI po zmianie zasobów danych (czeka na `0-08`)
 
-## `A-08` Read the ice flag from the field the scene draws — **wykonane 2026-11-01**
+## `A-08` #77 Read the ice flag from the field the scene draws — **wykonane 2026-11-01**
 
 **Epik:** A · **Zależy od:** `A-03` · **Labels:** `app` · **Źródło:** ustalenie z sesji naprawczej, nie z audytu
 
@@ -886,7 +892,7 @@ przekrojami DATED-1, a podpowiedź i przekrój czytały maskę jednej klatki (ta
 - [x] Maska zostaje wejściem modelu (tama, siatka 1 ka) — udokumentowane w `iceSliceFor` i `iceDrawnAt`
 - [x] Testy: pas niezgodności przy dokładnym przekroju i jego wielokrotność w środku przedziału
 
-## `A-09` Fix the scale and the extent of the ice distance field — **wykonane 2026-11-01**
+## `A-09` #78 Fix the scale and the extent of the ice distance field — **wykonane 2026-11-01**
 
 **Epik:** A · **Zależy od:** — · **Labels:** `app`, `regime-c` · **Źródło:** ustalenie z sesji naprawczej
 
@@ -903,7 +909,7 @@ domeny** — komórki stamtąd rzutowały się pod raster, a resampling przycią
 - [x] Kopuła 20 ka: 3 037 m przy 415 km od krawędzi (dokumentowane ~2 980 m); zero komórek „bez danych"
 - [x] Oba tryby awarii pilnowane testem (`on an exact slice…`, `the thickest point of the 20 ka sheet…`)
 
-## `A-07` Minor: cache semantics and SOURCES hygiene — **wykonane 2026-11-01**
+## `A-07` #76 Minor: cache semantics and SOURCES hygiene — **wykonane 2026-11-01**
 
 **Epik:** A · **Labels:** `app`, `docs`
 
