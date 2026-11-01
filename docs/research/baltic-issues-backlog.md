@@ -10,7 +10,7 @@
 > 3. **Krok 1000 lat** (21 klatek + ~6 zdarzeniowych) zamiast 500 lat.
 > 4. **Scena: glob jak w El Niño**, dane runtime hybrydowe (siatki + kostka RSL + wektory). Nowe zadanie `I-05`.
 
-## Stan issues (przegląd 2026-10-31, po scaleniu PR #61; epik `A` dopisany 2026-11-01)
+## Stan issues (przegląd 2026-11-01, po scaleniu PR #79 i sesji naprawczej epiku `A`)
 
 Aplikacja liczy wodę, poziomy progów i metryki sama z siatek (Web Worker), więc pipeline nie emituje plików klatek.
 
@@ -20,10 +20,15 @@ Aplikacja liczy wodę, poziomy progów i metryki sama z siatek (Web Worker), wi�
 | **Zamknięte — wykonane z follow-upem** | `C-03` #17 (reszta → `I-01`, `0-07`, `V-03`), `C-06` #20 i `C-14` #27 (→ `C-06b` #62), `C-07` #21 (→ `C-07b` #63), `C-13` #28, `I-02` #53 (→ `I-02b` #64), `I-03` #54 (→ `I-03b` #65), `I-04` #55 (→ `I-04b` #66), `0-05` #11 (→ `0-05b` #67) |
 | **Usunięte — nie robimy** | `C-02` #16, `C-09` #22, `C-10` #24, `C-11` #25, `C-12` #26, `C-15` #29, `V-07` #46, `V-12` #52 — decyzja użytkownika; **trwałe skasowanie na GitHubie czeka na uprawnienia** (system zablokował `gh issue delete`) |
 | **Zawężone** | `I-01` #50 — siatki, zarysy lodu i manifest, bez plików klatek |
-| **Otwarte** | `0-01` #7, `0-03` #9, `0-04` #10, `0-07` #13, `0-08` #14, `C-05` #19, `C-08` #23, `V-01` #40, `V-02` #41, `V-03` #42, `V-06` #45, `V-08` #47, `V-11` #51 oraz follow-upy #62–#67 |
+| **Otwarte** | `0-01` #7, `0-03` #9, `0-04` #10, `0-07` #13, `0-08` #14, `C-05` #19, `C-08` #23, `V-01` #40, `V-03` #42, `V-06` #45, `V-08` #47, `V-11` #51 oraz follow-upy #62–#67 |
+| **Częściowo wykonane** | `V-02` #41 — kontrola działa na katalogu z `geo.ts` (niezmienniki blokujące, test negatywny, próg sterujący per klatka); zostaje podmiana źródła progów na `sills.json` razem z `C-05` #19 |
 | **Otwarte w epiku `A`** | `A-05` #74 (korekta na osady — potrzebny Python, pobranie `zhang2024_sed` i decyzja o rozkładzie miąższości w czasie) oraz `A-06` #75 (ostatni punkt: `audit:metrics` w CI, czeka na `0-08` #14) |
 
 Opisy zadań poniżej są historyczne dla pozycji zamkniętych i usuniętych; aktualny zakres jest w issues.
+
+**Następne w kolejce** (stan 2026-11-01): `C-06b` #62 — nazwanie czynnego progu w fazach jeziornych; po
+`V-02` model zna komórkę sterującą dla każdej klatki, więc karta fazy może pokazać trasę odpływu, a nie
+sam poziom. Potem `C-05` #19 (`sills.json` wyprowadzony z analizy przelewu), który domyka `V-02`.
 
 ## Jak czytać
 
