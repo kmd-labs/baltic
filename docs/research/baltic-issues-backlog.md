@@ -530,7 +530,7 @@ Klatki faz `deglaciation`, `bil`, `ancylus` (12 → 20 ka co 1 ka) oraz przekroj
 
 **Plan:** §7
 
-## `V-02` Sill-check — elevation balance at every sill
+## `V-02` Sill-check — elevation balance at every sill — **wykonane 2026-11-01 na katalogu `geo.ts`**
 
 **Epik:** V · **Zależy od:** `V-01`, `C-03`, `C-05`, `C-06` · **Labels:** `validation`, `blocker`
 
@@ -539,9 +539,16 @@ Dla każdego przekroju sprawdzić, czy rzędna progu zgadza się z kierunkiem pr
 Test wewnętrznie spójnościowy — nie wymaga danych zewnętrznych, a wyłapuje **ilościowo** dokładnie tę klasę błędu, która jest tu najgroźniejsza: podwójne liczenie eustatyki (§0.1) i pomylony datum (§0.2). **Najwyższy priorytet w epiku.**
 
 **DoD**
-- [ ] Uruchamiany dla wszystkich progów z `sills.json`, wszystkich przekrojów
-- [ ] Status `blocking`
-- [ ] Test negatywny: celowo zepsuta formuła musi go wywalić
+- [x] Uruchamiany dla wszystkich progów katalogu i **wszystkich klatek** — `sill-check.ts` + `tests/contract/sills.test.ts`; źródłem progów jest na razie `geo.ts`, zamiana na `sills.json` razem z `C-05` #19
+- [x] Status `blocking`: niezmienniki wywalają test (`assertBalance`) — jezioro z progiem pod poziomem oceanu, poziom przy połączeniu z oceanem, poziom nieodpowiadający progowi, głębia bez wody i bez lodu
+- [x] Test negatywny: podniesienie poziomu bez zmiany progu musi zostać wyłapane
+- [x] `fillWater` zwraca **komórkę sterującą** (najwyższy punkt na najtańszej drodze z głębi do oceanu), więc kontrola mierzy trasę zamiast ją zgadywać; `audit:metrics` §4b drukuje ją per klatka
+
+**Wynik — i korekta hipotezy z audytu.** Model przelewa: BIL przez **Öresund** (7–9 km od wpisu
+katalogu), Yoldia 11 ka przez **zachodnią Szwecję, 12,24°E 58,24°N — 97 km od czegokolwiek w
+katalogu**, Ancylus i Mastogloia przez **południową trasę przy Darssie** (21 km). `svea` nie steruje
+nigdy, wbrew diagnozie z audytu II.2 B2. Trzy stany basenu rozróżnione jawnie: `lake`, `connected`
+i `buried` (20–16 ka — głębie leżą pod lodem, nie ma czego bilansować).
 
 **Plan:** §7, §0.1, §0.2
 
