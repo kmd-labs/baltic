@@ -19,6 +19,17 @@
         </button>
       </div>
 
+      <div class="header__settings glass-panel" role="group" [attr.aria-label]="tr.viewLabel">
+        <app-dropdown
+          variant="ghost"
+          [icon]="view() === 'block' ? icons.Box : icons.Globe"
+          [options]="viewOptions()"
+          [value]="view()"
+          [ariaLabel]="tr.viewLabel"
+          (valueChange)="view.set($any($event))">
+        </app-dropdown>
+      </div>
+
       <div class="header__settings glass-panel" role="group" [attr.aria-label]="tr.changeLanguage">
         <app-dropdown
           variant="ghost"
@@ -44,22 +55,31 @@
 
   <!-- Fullscreen Visualization Stage -->
   <section class="stage">
-    <app-globe
-      [t]="t()"
-      [layers]="layers()"
-      [labels]="labels()"
-      (hover)="pointer.set($event)">
-    </app-globe>
+    @if (view() === 'globe') {
+      <app-globe
+        [t]="t()"
+        [layers]="layers()"
+        [labels]="labels()"
+        (hover)="pointer.set($event)">
+      </app-globe>
+    } @else {
+      <app-block
+        [t]="t()"
+        [layers]="layers()"
+        [labels]="labels()"
+        (hover)="pointer.set($event)">
+      </app-block>
+    }
   </section>
 
   <div class="zoom glass-panel" role="group">
-    <button type="button" [attr.aria-label]="tr.zoomIn" [title]="tr.zoomIn" (click)="globe?.zoomBy(0.8)">
+    <button type="button" [attr.aria-label]="tr.zoomIn" [title]="tr.zoomIn" (click)="zoomBy(0.8)">
       <lucide-icon [img]="icons.Plus" [size]="14"></lucide-icon>
     </button>
-    <button type="button" [attr.aria-label]="tr.zoomOut" [title]="tr.zoomOut" (click)="globe?.zoomBy(1.25)">
+    <button type="button" [attr.aria-label]="tr.zoomOut" [title]="tr.zoomOut" (click)="zoomBy(1.25)">
       <lucide-icon [img]="icons.Minus" [size]="14"></lucide-icon>
     </button>
-    <button type="button" [attr.aria-label]="tr.zoomFit" [title]="tr.zoomFit" (click)="globe?.fit()">
+    <button type="button" [attr.aria-label]="tr.zoomFit" [title]="tr.zoomFit" (click)="fitView()">
       <lucide-icon [img]="icons.Maximize2" [size]="14"></lucide-icon>
     </button>
   </div>

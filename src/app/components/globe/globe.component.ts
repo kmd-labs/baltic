@@ -14,15 +14,19 @@ import {
 } from '@angular/core';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import * as d3Geo from 'd3-geo';
 import { ThemeService } from '@kmd/design-system/services/theme.service';
 import { isAtMost, isMobileLandscape } from '@kmd/design-system/utils/breakpoints';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { PaleoDataService, PaleoFrame, TRANSECT } from '../../core/data/paleo-data.service';
+import { IceVariant, PaleoDataService, PaleoFrame, TRANSECT } from '../../core/data/paleo-data.service';
 import { WATER_LAKE, WATER_OCEAN } from '../../core/data/water';
-import { phaseAt, WaterClass } from '../../core/data/timeline';
+import { nearestFrame, phaseAt, WaterClass } from '../../core/data/timeline';
 import { SILLS } from '../../core/data/geo';
 import { PATCH_FRAGMENT, PATCH_VERTEX } from './paleo-shaders';
+import { ICE_FRAGMENT, ICE_VERTEX } from './ice-shaders';
+import { ICE_DOMAIN, ICE_PROFILE_K, ICE_SDF_SCALE, iceBracket } from '../../core/data/ice-field';
+
+/** RSL is resampled at this granularity so scrubbing reuses cached fields. */
+const RSL_STEP_YR = 25;
 
 export interface GlobeLayers {
   ice: boolean;
@@ -95,6 +99,13 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   readonly layers = input.required<GlobeLayers>();
   /** Vertical exaggeration of the 3D relief; flat (×1) by decision 2026-10-31. */
   readonly exaggeration = input<number>(1);
+  /**
+   * Vertical exaggeration of the ice body alone. The terrain is deliberately flat, and at true
+   * scale ~3 km of ice is 0.0024 of the 5-unit globe radius — less than the paleo patch's own
+   * offset, so the dome would be invisible. ×45 puts a 3 km dome at ~0.11 units over an ~800 km
+   * half-width: a legible dome, still shallow enough to read as ice rather than a cone.
+   */
+  readonly iceExaggeration = input<number>(45);
   readonly labels = input<GlobeLabel[]>([]);
   readonly hover = output<GlobePointer | null>();
 
@@ -130,7 +141,16 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   private overlayTex?: THREE.CanvasTexture;
   private overlayBCanvas?: HTMLCanvasElement;
   private overlayBTex?: THREE.CanvasTexture;
+  private waterBTex?: THREE.DataTexture;
+  private iceMats = new Map<IceVariant, THREE.ShaderMaterial>();
+  private iceMeshes = new Map<IceVariant, THREE.Mesh>();
+  private iceSdfTex = new Map<string, THREE.DataTexture>();
+  /** Slice pair bound to each variant's material, tracked per variant: a layer that is off when
+   *  the pair changes must still pick up the new textures when it is switched back on. */
+  private shownIceSlices = new Map<IceVariant, string>();
   private frame: PaleoFrame | null = null;
+  private frameB: PaleoFrame | null = null;
+  private earlierTarget = -1;
   private shownT = -1;
   /** Render only when something changed (camera, data, layers, size). */
   private needsRender = true;
@@ -168,7 +188,11 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
       this.patchMat.uniforms['uShowToday'].value = L.today ? 1 : 0;
       this.patchMat.uniforms['uShowPrev'].value = L.prev ? 1 : 0;
       this.patchMat.uniforms['uExag'].value = ex;
-      this.zone.runOutsideAngular(() => this.drawOverlay());
+      this.iceExaggeration();
+      this.zone.runOutsideAngular(() => {
+        if (this.shownT >= 0) this.showIce(this.shownT);
+        this.drawOverlay();
+      });
       this.needsRender = true;
     });
   }
@@ -188,6 +212,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
       if (this.data.state() !== 'ready') return;
       this.zone.runOutsideAngular(() => {
         this.initPatch();
+        this.drawOverlay();
         this.showFrame(this.t());
       });
     });
@@ -196,6 +221,9 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.resizeObs?.disconnect();
     if (this.animId !== null) cancelAnimationFrame(this.animId);
+    for (const tex of this.iceSdfTex.values()) tex.dispose();
+    for (const mat of this.iceMats.values()) mat.dispose();
+    this.iceMeshes.forEach(m => m.geometry.dispose());
     this.controls?.dispose();
     this.renderer?.dispose();
   }
@@ -299,6 +327,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     this.rslPrevTex = half(new Float32Array(Rg.nx * Rg.ny), Rg.nx, Rg.ny);
     this.waterPrevTex = this.dataTex(new Uint8Array(B.nx * B.ny * 2), B.nx, B.ny, THREE.RGFormat, THREE.UnsignedByteType);
     this.waterTex = this.dataTex(new Uint8Array(B.nx * B.ny * 2), B.nx, B.ny, THREE.RGFormat, THREE.UnsignedByteType);
+    this.waterBTex = this.dataTex(new Uint8Array(B.nx * B.ny * 2), B.nx, B.ny, THREE.RGFormat, THREE.UnsignedByteType);
 
     this.overlayCanvas = document.createElement('canvas');
     // Ice outlines only: 2048 px over Europe is enough, and uploads stay small.
@@ -329,6 +358,8 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
         uDemB: { value: demB },
         uRsl: { value: this.rslTex },
         uWater: { value: this.waterTex },
+        uWaterB: { value: this.waterBTex },
+        uWaterMix: { value: 0 },
         uRslPrev: { value: this.rslPrevTex },
         uWaterPrev: { value: this.waterPrevTex },
         uLakePrev: { value: 0 },
@@ -365,6 +396,127 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     const patch = new THREE.Mesh(geo, this.patchMat);
     patch.renderOrder = 10;
     this.scene.add(patch);
+    this.initIce(mobile);
+  }
+
+  // ─── ice body (C-07) ────────────────────────────────────────────────────
+
+  /**
+   * One mesh per DATED-1 variant over the ice domain, all sharing a single sphere sector: the shape
+   * comes from the distance field in the shader, so nothing but the uniforms differs.
+   *
+   * `min` ⊂ `mc` ⊂ `max` are nested, so an opaque `mc` would hide `min` entirely. All three are
+   * therefore translucent and drawn inner to outer: the extents read as three steps of brightness,
+   * with the margin of each picked out by its own highlight.
+   *
+   * Like the paleo patch, the shells do not use the depth buffer — nothing in this scene writes to
+   * it — so ordering is by `renderOrder` and the far hemisphere is culled in the shader.
+   */
+  private initIce(mobile: boolean): void {
+    const [w, s, e, n] = ICE_DOMAIN.bbox;
+    const geo = new THREE.SphereGeometry(
+      this.R * 1.0035,
+      mobile ? 224 : 480,
+      mobile ? 96 : 192,
+      (w + 180) * this.DEG,
+      (e - w) * this.DEG,
+      (90 - n) * this.DEG,
+      (n - s) * this.DEG
+    );
+    const shared = this.patchMat!.uniforms;
+    // The --color-paleo-ice* tokens carry their alpha inside rgba(), which was the opacity of the
+    // old flat fill; THREE.Color keeps only the hue. Three nested shells need their own opacities
+    // anyway — 0.92 for mc would hide min completely — so those are set per variant below.
+    const ice = this.theme.getTokenColor('paleo-ice', 'rgba(255,255,255,0.92)');
+    const band = this.theme.getTokenColor('paleo-ice-band', 'rgba(255,255,255,0.45)');
+    const edge = this.theme.getTokenColor('paleo-ice-edge', '#7dd3fc');
+    // opacity, rim width (km), render order — inner to outer
+    const look: Record<IceVariant, { color: string; opacity: number; rim: number; order: number }> = {
+      min: { color: band, opacity: 0.42, rim: 6, order: 11 },
+      mc: { color: ice, opacity: 0.46, rim: 9, order: 12 },
+      max: { color: band, opacity: 0.24, rim: 14, order: 13 }
+    };
+    for (const variant of ['min', 'mc', 'max'] as IceVariant[]) {
+      const L = look[variant];
+      const mat = new THREE.ShaderMaterial({
+        vertexShader: ICE_VERTEX,
+        fragmentShader: ICE_FRAGMENT,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        uniforms: {
+          uDemE: shared['uDemE'],
+          uDemB: shared['uDemB'],
+          uRsl: shared['uRsl'],
+          uRslPrev: shared['uRslPrev'],
+          uWater: shared['uWater'],
+          uWaterB: shared['uWaterB'],
+          uWaterPrev: shared['uWaterPrev'],
+          uWaterMix: shared['uWaterMix'],
+          uLakePrev: shared['uLakePrev'],
+          uPrevReady: shared['uPrevReady'],
+          uBoxE: shared['uBoxE'],
+          uBoxB: shared['uBoxB'],
+          uBoxR: shared['uBoxR'],
+          uLake: shared['uLake'],
+          uExag: shared['uExag'],
+          uR: { value: this.R },
+          uBoxI: { value: new THREE.Vector4(...ICE_DOMAIN.bbox) },
+          uSdfA: { value: this.sdfTexture(20, variant) },
+          uSdfB: { value: this.sdfTexture(20, variant) },
+          uSdfMix: { value: 0 },
+          uProfileK: { value: ICE_PROFILE_K },
+          uIceExag: { value: this.iceExaggeration() },
+          uColor: { value: new THREE.Color(L.color) },
+          uEdge: { value: new THREE.Color(edge) },
+          uOpacity: { value: L.opacity },
+          uFade: { value: 0 },
+          uFeatherKm: { value: 1.5 },
+          uRimKm: { value: L.rim }
+        }
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.renderOrder = L.order;
+      mesh.visible = false;
+      this.iceMats.set(variant, mat);
+      this.iceMeshes.set(variant, mesh);
+      this.scene.add(mesh);
+    }
+  }
+
+  /** Signed-distance texture for one DATED-1 slice, built once and kept. */
+  private sdfTexture(ka: number, variant: IceVariant): THREE.DataTexture {
+    const key = `${ka}:${variant}`;
+    const hit = this.iceSdfTex.get(key);
+    if (hit) return hit;
+    const src = this.data.iceSdf(ka, variant);
+    const half = new Uint16Array(src.length);
+    for (let i = 0; i < src.length; i++) half[i] = THREE.DataUtils.toHalfFloat(src[i] / ICE_SDF_SCALE);
+    const tex = this.dataTex(half, ICE_DOMAIN.nx, ICE_DOMAIN.ny, THREE.RedFormat, THREE.HalfFloatType);
+    this.iceSdfTex.set(key, tex);
+    return tex;
+  }
+
+  /** Slice pair and blend weight for t; drives both the shape and the fade below 10 ka. */
+  private showIce(t: number): void {
+    if (!this.iceMats.size) return;
+    const b = iceBracket(t);
+    const L = this.layers();
+    for (const [variant, mat] of this.iceMats) {
+      const on = variant === 'mc' ? L.ice : L.band;
+      const mesh = this.iceMeshes.get(variant)!;
+      mesh.visible = !!b && on;
+      if (!b || !on) continue;
+      const pair = `${b.kaA}:${b.kaB}`;
+      if (this.shownIceSlices.get(variant) !== pair) {
+        this.shownIceSlices.set(variant, pair);
+        mat.uniforms['uSdfA'].value = this.sdfTexture(b.kaA, variant);
+        mat.uniforms['uSdfB'].value = this.sdfTexture(b.kaB, variant);
+      }
+      mat.uniforms['uSdfMix'].value = b.w;
+      mat.uniforms['uFade'].value = b.fade;
+      mat.uniforms['uIceExag'].value = this.iceExaggeration();
+    }
   }
 
   private dataTex(
@@ -386,28 +538,48 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * RSL updates immediately (the shader computes H_paleo itself); the water mask follows when
-   * the worker delivers the frame — usually already cached by the background precomputation.
+   * Time is continuous. RSL and the ice body follow it directly — the shader computes H_paleo and
+   * the ice profile itself — while the water mask, which costs a flood fill per frame, is blended
+   * between the two bracketing frames of the 1 ka timeline.
    */
   private showFrame(t: number): void {
     if (!this.patchMat) return;
     const u = this.patchMat.uniforms;
     if (t !== this.shownT) {
       this.shownT = t;
-      this.setHalf(this.rslTex!, this.data.rsl(t));
-      this.setHalf(this.rslPrevTex!, this.data.rsl(t + 1000));
-      this.earlierShown = null;
-      u['uPrevReady'].value = 0;
+      // Quantised so scrubbing reuses cached RSL fields; 25 years is far below one pixel of the
+      // timeline and well inside the 1 m agreement the pipeline is checked against (I-01).
+      const q = Math.round(t / RSL_STEP_YR) * RSL_STEP_YR;
+      this.setHalf(this.rslTex!, this.data.rsl(q));
+      this.setHalf(this.rslPrevTex!, this.data.rsl(q + 1000));
       const cls: WaterClass = phaseAt(t).cls;
       const token = cls === 'marine' ? 'paleo-marine' : cls === 'brackish' ? 'paleo-brackish' : 'paleo-fresh';
       (u['cBasin'].value as THREE.Color).set(this.theme.getTokenColor(token, '#8dbcdc'));
-      this.drawOverlay();
+      this.showIce(t);
     }
-    const f = this.data.frame(t);
-    if (f && f !== this.frame) {
-      this.frame = f;
-      this.fillWaterTex(this.waterTex!, f.water);
-      u['uLake'].value = f.lakeLevelM;
+
+    const { a, b, w } = this.data.bracket(t);
+    if (a && a !== this.frame) {
+      this.frame = a;
+      this.fillWaterTex(this.waterTex!, a.water);
+    }
+    if (b && b !== this.frameB) {
+      this.frameB = b;
+      this.fillWaterTex(this.waterBTex!, b.water);
+    }
+    u['uWaterMix'].value = this.frame && this.frameB ? w : 0;
+    if (this.frame) {
+      const la = this.frame.lakeLevelM;
+      u['uLake'].value = this.frameB ? la + (this.frameB.lakeLevelM - la) * w : la;
+    }
+
+    // The ghost coast is a reference contour, so it stays on the 1 ka grid: following it
+    // continuously would ask the worker for a new fill on every tick.
+    const te = nearestFrame(t) + 1000;
+    if (te !== this.earlierTarget) {
+      this.earlierTarget = te;
+      this.earlierShown = null;
+      u['uPrevReady'].value = 0;
     }
     const e = this.data.earlier(t);
     if (e && e !== this.earlierShown) {
@@ -468,53 +640,18 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     return this.dataTex(out, nx, ny, THREE.RGFormat, THREE.HalfFloatType);
   }
 
-  /** Ice (mc + min/max band), sills and the transect line, in the patch's lon/lat frame. */
+  /**
+   * Annotation layer over the patch domain. Ice used to be painted flat here and is now a 3D body
+   * (see initIce), which leaves this canvas empty — the lines that remain all fall inside the
+   * Baltic window. Kept because it is the only annotation surface that spans the whole patch.
+   *
+   * Nothing here depends on time, so it is redrawn on layer and theme changes only: it is a 2048 px
+   * texture upload, and time now advances continuously rather than once per 1000 years.
+   */
   private drawOverlay(): void {
     const cv = this.overlayCanvas;
-    const E = this.data.europe;
-    if (!cv || !E) return;
-    const ctx = cv.getContext('2d')!;
-    const W = cv.width;
-    const H = cv.height;
-    const [w, s, e, n] = E.bbox;
-    ctx.clearRect(0, 0, W, H);
-    const sx = W / (e - w);
-    const sy = H / (n - s);
-    const proj = d3Geo.geoTransform({
-      point(lon: number, lat: number) {
-        this.stream.point((lon - w) * sx, (n - lat) * sy);
-      }
-    });
-    const path = d3Geo.geoPath(proj, ctx);
-    const L = this.layers();
-    const ice = this.shownT >= 0 ? this.data.iceFor(this.shownT) : null;
-    const edge = this.theme.getTokenColor('paleo-ice-edge', '#7dd3fc');
-    if (ice) {
-      if (L.band && ice.features.max) {
-        ctx.beginPath();
-        path(ice.features.max);
-        ctx.fillStyle = this.theme.getTokenColor('paleo-ice-band', 'rgba(255,255,255,0.45)');
-        ctx.fill();
-      }
-      if (L.ice && ice.features.mc) {
-        ctx.beginPath();
-        path(ice.features.mc);
-        ctx.fillStyle = this.theme.getTokenColor('paleo-ice', 'rgba(255,255,255,0.92)');
-        ctx.fill();
-        ctx.strokeStyle = edge;
-        ctx.lineWidth = W / 1400;
-        ctx.stroke();
-      }
-      if (L.band && ice.features.min) {
-        ctx.beginPath();
-        path(ice.features.min);
-        ctx.setLineDash([W / 400, W / 600]);
-        ctx.strokeStyle = edge;
-        ctx.lineWidth = W / 2000;
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-    }
+    if (!cv || !this.data.europe) return;
+    cv.getContext('2d')!.clearRect(0, 0, cv.width, cv.height);
     if (this.overlayTex) this.overlayTex.needsUpdate = true;
     this.drawOverlayBaltic();
   }

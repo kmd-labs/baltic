@@ -39,6 +39,9 @@ export interface Dict {
   collapsePanels: string;
   expandPanels: string;
   layersLabel: string;
+  viewLabel: string;
+  viewGlobe: string;
+  viewBlock: string;
   tour: string;
   tourNext: string;
   tourPrev: string;
@@ -70,7 +73,7 @@ export interface Dict {
   phaseEvents: string;
   badgeModelled: string;
   badgeInterpolated: string;
-  badgeIceNearest: string;
+  badgeIceInterp: string;
   badgeDatum: string;
   badgeDisputed: string;
   badgePsu: (range: string) => string;

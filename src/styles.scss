@@ -8,6 +8,10 @@
   --color-paleo-water-deep: #{palette("info-300")};
   --color-paleo-ice: #{rgba(palette("neutral-0"), 0.92)};
   --color-paleo-ice-band: #{rgba(palette("neutral-0"), 0.45)};
+  // The globe draws ice over water and land, where white reads as ice. The transect panel sits on
+  // the light glass background, where white on white is invisible — so the section gets its own
+  // grey. Same hue as globe-land-fill, to stay in the family.
+  --color-paleo-ice-section: #{rgba(palette("neutral-300"), 0.62)};
   --color-paleo-ice-edge: #{palette("info-300")};
   --color-paleo-fresh: #a6d8c7;
   --color-paleo-brackish: #8dbcdc;
@@ -15,4 +19,12 @@
   --color-paleo-seabed: #e4dccb;
   --color-paleo-earth: #d6cfb9;
   --color-paleo-earth-line: #8c8369;
+  // Hypsometric tint for the block view. With one flat land colour, elevation reads only as shape,
+  // so the most mountainous corner swallows everything else — a 200 m valley floor and a 1500 m
+  // plateau come out identical. Low keeps the globe's land colour for continuity; mid and high stay
+  // in the paleo-earth family; peak is bare rock above the treeline.
+  --color-paleo-land-low: #{palette("neutral-300")};
+  --color-paleo-land-mid: #d6cfb9;
+  --color-paleo-land-high: #a89878;
+  --color-paleo-land-peak: #ece7df;
 }

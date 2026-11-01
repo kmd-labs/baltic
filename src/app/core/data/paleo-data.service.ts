@@ -3,8 +3,9 @@ import type { Feature, Geometry } from 'geojson';
 import * as d3Geo from 'd3-geo';
 import { fetchKmdg, kmdgLayer, KmdgGrid } from './kmdg';
 import { bilinear, rslAt, RslCube } from './paleo';
-import { EVENTS, FRAMES, lakeLevelAt } from './timeline';
+import { EVENTS, FRAMES, lakeLevelAt, nearestFrame } from './timeline';
 import { cellIndex, FrameStats, inside, WATER_LAKE, WATER_OCEAN } from './water';
+import { ICE_KA_MAX, ICE_KA_MIN, iceSignedDistance } from './ice-field';
 import type { WorkerFrame, WorkerInit, WorkerRequest } from './paleo.worker';
 
 export type { FrameStats } from './water';
@@ -62,6 +63,8 @@ export interface TransectSample {
 }
 
 const BASE = 'assets/data/';
+/** Enough for the frames in play plus the ghost-coast lookups; evicted oldest first. */
+const RSL_CACHE_MAX = 48;
 const DEG = Math.PI / 180;
 
 /** Umeå → Gdańsk along the basin axis (mockup transect). */
@@ -72,7 +75,11 @@ export const TRANSECT: readonly [number, number][] = [
 /**
  * DATED-1 slice for the Billingen event sections: the ice margin passes Billingen around
  * 11.7 ka, so "before" keeps the 12 ka outline and "after" takes the 11 ka one. Other
- * sections use the nearest slice. Prototype simplification until ice is interpolated (C-07).
+ * sections use the nearest slice.
+ *
+ * This drives the ice *wall* of the flood fill and the tooltip, which are per-frame and stay on the
+ * 1 ka timeline. The ice body drawn on the globe is interpolated between slices instead — see
+ * `iceBracket` in ice-field.ts.
  */
 const ICE_SLICE_FOR_EVENT: Record<number, number> = Object.fromEntries(
   EVENTS.filter(e => e.id === 'billingen-before' || e.id === 'billingen-after').map(e => [e.t, e.id === 'billingen-before' ? 12 : 11])
@@ -98,6 +105,7 @@ export class PaleoDataService {
   private cube?: RslCube;
   private ice: IceFeature[] = [];
   private iceMasks = new Map<number, Uint8Array>();
+  private iceSdfs = new Map<string, Int16Array>();
   private frames = new Map<number, PaleoFrame>();
   private requested = new Set<number>();
   private prioritised = new Set<number>();
@@ -127,6 +135,7 @@ export class PaleoDataService {
         this.ice = ice.features as IceFeature[];
         this.startWorker();
         this.state.set('ready');
+        this.prefetchIceSdfs();
       })
       .catch(err => {
         console.warn('Could not load paleo data:', err);
@@ -135,15 +144,40 @@ export class PaleoDataService {
     return this.loading;
   }
 
-  /** The frame at t if the worker has delivered it; otherwise requests it with priority. */
+  /**
+   * The frame at t if the worker has delivered it; otherwise requests it with priority.
+   *
+   * Snapped to the timeline: time is continuous since the ice morphs between slices, but the water
+   * mask is only defined on the 1 ka frames, and requesting an arbitrary t would ask the worker for
+   * a new flood fill on every animation tick. Callers that need the sub-frame position use
+   * `bracket()` instead.
+   */
   frame(t: number): PaleoFrame | null {
-    const f = this.frames.get(t);
+    const key = nearestFrame(t);
+    const f = this.frames.get(key);
     if (f) return f;
-    if (!this.prioritised.has(t)) {
-      this.prioritised.add(t);
-      this.request(t, true);
+    if (!this.prioritised.has(key)) {
+      this.prioritised.add(key);
+      this.request(key, true);
     }
     return null;
+  }
+
+  /**
+   * The two timeline frames bracketing t and the blend weight between them: `w` = 0 at `a` (the
+   * older frame), 1 at `b`. Both are on the timeline, so neither costs a new worker job.
+   */
+  bracket(t: number): { a: PaleoFrame | null; b: PaleoFrame | null; w: number } {
+    let older = FRAMES[0];
+    let younger = FRAMES[FRAMES.length - 1];
+    for (const f of FRAMES) {
+      if (f >= t && f < older) older = f;
+      if (f <= t && f > younger) younger = f;
+    }
+    if (t >= FRAMES[0]) older = younger = FRAMES[0];
+    if (t <= FRAMES[FRAMES.length - 1]) older = younger = FRAMES[FRAMES.length - 1];
+    const w = older === younger ? 0 : (older - t) / (older - younger);
+    return { a: this.frame(older), b: this.frame(younger), w };
   }
 
   /** The frame at t if already computed, without requesting it. */
@@ -156,22 +190,72 @@ export class PaleoDataService {
    * defined for event sections, whose t + 1000 is not on the timeline; requested on demand.
    */
   earlier(t: number): PaleoFrame | null {
-    const te = t + 1000;
+    const te = nearestFrame(t) + 1000;
     const f = this.frames.get(te);
     if (!f) this.request(te, false);
     return f ?? null;
   }
 
-  /** RSL field on the 1° grid at t (cal yr BP). Cheap; cached. */
+  /**
+   * RSL field on the 1° grid at t (cal yr BP). Cheap; cached. Time is continuous, so the cache is
+   * bounded — it would otherwise grow by one 3 321-cell field per animation tick.
+   */
   rsl(t: number): Float32Array {
     let r = this.rslCache.get(t);
     if (!r) {
       r = rslAt(this.cube!, t / 1000);
+      if (this.rslCache.size >= RSL_CACHE_MAX) {
+        const oldest = this.rslCache.keys().next();
+        if (!oldest.done) this.rslCache.delete(oldest.value);
+      }
       this.rslCache.set(t, r);
     }
     return r;
   }
 
+/**
+   * Fills the distance-field cache in the background, in the order playback needs it (20 ka
+   * forward, outline before uncertainty band). One field costs ~75 ms, and three of them fall due
+   * each time playback crosses a 1000-year slice — too much to compute on the tick, so the cache
+   * runs ahead of the playhead the same way the worker runs ahead with the water masks.
+   *
+   * `iceSdf` still computes on demand, so jumping somewhere the prefetch has not reached is
+   * correct, just briefly slower.
+   */
+  private prefetchIceSdfs(): void {
+    const jobs: [number, IceVariant][] = [];
+    for (let ka = ICE_KA_MAX; ka >= ICE_KA_MIN; ka--) {
+      for (const variant of ['mc', 'max', 'min'] as IceVariant[]) jobs.push([ka, variant]);
+    }
+    const idle = (globalThis as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void })
+      .requestIdleCallback;
+    const next = (): void => {
+      const job = jobs.shift();
+      if (!job) return;
+      this.iceSdf(job[0], job[1]);
+      if (idle) idle.call(globalThis, next, { timeout: 500 });
+      else setTimeout(next, 16);
+    };
+    if (idle) idle.call(globalThis, next, { timeout: 500 });
+    else setTimeout(next, 16);
+  }
+
+  /**
+   * Signed distance to the margin of one DATED-1 outline, for the 3D ice body (C-07). Computed on
+   * first use and kept: there are only 11 slices × 3 variants, and the pair in view changes once
+   * per 1000 model years.
+   */
+  iceSdf(ka: number, variant: IceVariant): Int16Array {
+    const key = `${ka}:${variant}`;
+    let f = this.iceSdfs.get(key);
+    if (!f) {
+      f = iceSignedDistance(this.ice.find(x => x.properties.ka === ka && x.properties.variant === variant));
+      this.iceSdfs.set(key, f);
+    }
+    return f;
+  }
+
+  /** Nearest-slice outlines for the flood-fill wall and the tooltip; see ICE_SLICE_FOR_EVENT. */
   iceFor(t: number): FrameIce | null {
     const ka = t / 1000;
     if (ka < 9.5) return null;

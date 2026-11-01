@@ -2,6 +2,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ContentService } from '../../core/content/content.service';
 import { PaleoDataService } from '../../core/data/paleo-data.service';
+import { iceBracket } from '../../core/data/ice-field';
 import { EVENTS, eventAt, phaseAt } from '../../core/data/timeline';
 
 /**
@@ -26,8 +27,8 @@ import { EVENTS, eventAt, phaseAt } from '../../core/data/timeline';
         <span class="badge" [attr.data-cls]="ph.cls">{{ c.phases[ph.id].water }}</span>
         <span class="badge">{{ tr.badgePsu(c.phases[ph.id].psu) }}</span>
         <span class="badge">{{ interpolated() ? tr.badgeInterpolated : tr.badgeModelled }}</span>
-        @if (iceNearest()) {
-          <span class="badge">{{ tr.badgeIceNearest }}</span>
+        @if (iceInterpolated()) {
+          <span class="badge">{{ tr.badgeIceInterp }}</span>
         }
         <span class="badge">{{ tr.badgeDatum }}</span>
         @if (event()?.disputed) {
@@ -120,10 +121,11 @@ export class PhaseCardComponent {
   readonly levelOk = computed(() => this.levelDiff() <= 5);
   /** RSL is interpolated in time except at the source steps; 0 ka is a source step. */
   readonly interpolated = computed(() => this.t() !== 0);
-  readonly iceNearest = computed(() => {
-    const ice = this.frame()?.ice;
-    return !!ice && !ice.exact;
-  });
+  /**
+   * The ice body is blended between the two bracketing DATED-1 slices, so it is interpolated
+   * everywhere except exactly on a 1 ka mark — the same rule the RSL badge above follows.
+   */
+  readonly iceInterpolated = computed(() => iceBracket(this.t())?.interpolated ?? false);
 
   signedM(n: number): string {
     const r = Math.round(n);

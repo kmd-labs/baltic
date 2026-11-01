@@ -19,7 +19,7 @@ import { CanvasPanel } from './canvas-panel';
     <div class="legend">
       <span><i class="ln" style="border-color: var(--color-paleo-earth-line)"></i>{{ tr.transectFloor }}</span>
       <span><i class="ln ln--dash"></i>{{ tr.transectToday }}</span>
-      <span><i class="sw" style="background: var(--color-paleo-ice-band)"></i>{{ tr.transectIce }}</span>
+      <span><i class="sw" style="background: var(--color-paleo-ice-section)"></i>{{ tr.transectIce }}</span>
     </div>
     <canvas #cv [attr.aria-label]="tr.transectAria" role="img"></canvas>
   `,
@@ -97,11 +97,30 @@ export class TransectPanelComponent extends CanvasPanel {
         x.globalAlpha = 1;
       }
     }
-    // Ice: no thickness yet (C-07) — a band above the surface marks where the ice lies.
-    x.fillStyle = tok('paleo-ice-band', 'rgba(255,255,255,0.45)');
-    for (let i = 0; i < points.length - 1; i++) {
+    // Ice: a band marking where the sheet lies, not its thickness — this chart spans 780 m while
+    // the sheet is ~3000 m thick (the globe shows the body itself, C-07). Drawn as one rectangle
+    // per contiguous run, so the translucent fill does not double up at the segment joins, with the
+    // margins picked out: that edge is the part worth reading.
+    const iceTop = pad.t;
+    const iceBottom = h - pad.b;
+    x.fillStyle = tok('paleo-ice-section', 'rgba(207,216,227,0.62)');
+    x.strokeStyle = tok('paleo-ice-edge', '#7dd3fc');
+    x.lineWidth = 1;
+    for (let i = 0; i < points.length; i++) {
       if (!points[i].ice) continue;
-      x.fillRect(X(points[i].km), pad.t, X(points[i + 1].km) - X(points[i].km) + 0.5, h - pad.t - pad.b);
+      let j = i;
+      while (j + 1 < points.length && points[j + 1].ice) j++;
+      const x0 = X(points[i].km);
+      const x1 = j + 1 < points.length ? X(points[j + 1].km) : X(total);
+      x.fillRect(x0, iceTop, x1 - x0, iceBottom - iceTop);
+      // Half-pixel offset keeps a 1 px line crisp.
+      x.beginPath();
+      for (const edgeX of [x0, x1]) {
+        x.moveTo(Math.round(edgeX) + 0.5, iceTop);
+        x.lineTo(Math.round(edgeX) + 0.5, iceBottom);
+      }
+      x.stroke();
+      i = j;
     }
 
     x.beginPath();

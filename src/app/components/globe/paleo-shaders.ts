@@ -6,13 +6,16 @@
  * the same bilinear rule as the pipeline (paleo.ts / postglacial.py).
  */
 
-const COMMON = /* glsl */ `
+/** Shared by the paleo patch and the ice body, which rests on the surface the patch draws. */
+export const COMMON = /* glsl */ `
   uniform sampler2D uDemE;
   uniform sampler2D uDemB;
   uniform sampler2D uRsl;
   uniform sampler2D uRslPrev;
   uniform sampler2D uWater;
+  uniform sampler2D uWaterB;
   uniform sampler2D uWaterPrev;
+  uniform float uWaterMix;
   uniform float uLakePrev;
   uniform float uPrevReady;
   uniform vec4 uBoxE;   // west, south, east, north
@@ -37,8 +40,14 @@ const COMMON = /* glsl */ `
     return texture2D(s, boxUv(uBoxR, ll)).r;
   }
   // x: ocean-connected, y: lake (basin) — from the CPU flood fill in the Baltic window.
+  // The fill is only defined on the 1 ka timeline, so the two bracketing frames are blended:
+  // connectivity flips at the midpoint while the shoreline itself moves continuously, because
+  // H_paleo is continuous in time (RSL is interpolated between the source layers).
   vec2 waterMask(vec2 ll, float hp) {
-    if (inBox(uBoxB, ll, 0.05)) return texture2D(uWater, boxUv(uBoxB, ll)).rg;
+    if (inBox(uBoxB, ll, 0.05)) {
+      vec2 uvB = boxUv(uBoxB, ll);
+      return mix(texture2D(uWater, uvB).rg, texture2D(uWaterB, uvB).rg, uWaterMix);
+    }
     return vec2(hp < 0.0 ? 1.0 : 0.0, 0.0);
   }
 `;
