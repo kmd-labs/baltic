@@ -215,6 +215,25 @@ niż szum wejścia.
 → Pokryte przez **`V-02` #41** (bilans rzędnych na progach: „jezioro zaporowe wymaga progu powyżej,
 połączenie morskie poniżej") i **`C-05` #19** (`sills.json`). Tabela wyżej to gotowy przypadek testowy.
 
+> **Korekta z 2026-11-01, po wykonaniu `V-02`.** Powyższa diagnoza przyczyny jest **błędna**, i to
+> pouczająco. Rzędne progów mówią, co robi dany punkt — nie mówią, **którym progiem basen faktycznie
+> przelewa**. Analiza przelewu zapytana wprost (`fillWater` zwraca teraz komórkę sterującą)
+> odpowiada inaczej, niż tabela sugerowała:
+>
+> | faza | próg sterujący modelu | najbliższy wpis katalogu |
+> | :-- | :-- | :-- |
+> | BIL 15–11,75 ka | **12,66–12,84°E, 55,49–55,59°N** — Öresund | `oresund`, 7–9 km |
+> | Yoldia 11 ka | **12,24°E, 58,24°N** — zachodnia Szwecja (okolice Göta älv) | `billingen`, **97 km** |
+> | Ancylus i Mastogloia 10,3–9 ka | **12,09°E, 54,44°N** — południowa trasa przy Darssie | `darss`, 21 km |
+>
+> **Svea nie steruje nigdy.** Przejście tego punktu przez zero między 11 a 10,3 ka jest prawdziwe,
+> ale to nie jest ancylusowy mechanizm modelu — w modelu Ancylus przelewa na południe. Co więcej,
+> `narke` i `svea` bywają zanurzone, wolne od lodu i **poniżej** poziomu jeziora (11–9 ka), a jezioro
+> i tak nie drenuje się przez nie: leżą w osobnych zagłębieniach, poza drogą odpływu basenu.
+> Kontrola `V-02` oznacza takie punkty jako „podejrzane" — to materiał dla `C-05`, nie usterka
+> modelu. Wniosek ogólny: **o trasie rozstrzyga analiza przelewu, nie rzędna w katalogu**, i to jest
+> argument za tym, żeby `sills.json` powstał z niej, a nie z listy nazw.
+
 ### B3 — Pozorna precyzja linii brzegowej
 
 Pole RSL ma **1°** (81 × 41 węzłów) i jest interpolowane biliniowo na DEM **0,025°** — 40–80-krotna
@@ -285,3 +304,24 @@ Kolejność o największym zwrocie:
 2. **`A-04`** + **`A-03`** — zamienia B1 z niespodzianki w pilnowany budżet błędu.
 3. **`V-02` #41** z tabelą progów z B2 — wyłapie połączenia rozstrzygane poniżej szumu.
 4. **`A-05`** — jedyne nowe ustalenie merytoryczne bez pokrycia w planie.
+
+---
+
+# Realizacja (2026-11-01, po audycie)
+
+| Ustalenie | Status |
+| :-- | :-- |
+| `A-01` podpowiedź i przekrój wobec sceny | **naprawione** — `sceneWater(t)` jako jedno źródło pary klatek i poziomu (#70) |
+| `A-02` reguła wody w dwóch egzemplarzach | **naprawione** — `WATER_RULE_GLSL` generowany z `water.ts`, test tłumaczy GLSL na JS (#71) |
+| `A-03` jezioro zaporowe nieosiągalne dla testów | **naprawione** — rasteryzacja bez DOM-u, faza BIL pokryta, `no-ice` usunięty (#72) |
+| `A-04` test ancylusowy sprawdza za mało | **naprawione** — budżet 20 m na wszystkich klatkach jeziornych, z kontrolą negatywną (#73) |
+| `A-05` brak korekty na osady | **niewykonane** (#74) — wymaga Pythona, pobrania `zhang2024_sed` i decyzji o rozkładzie miąższości w czasie |
+| `A-06` pomiary jako skrypt | wykonane; w CI czeka na `0-08` #14 (#75) |
+| `A-07` semantyka cache i higiena `SOURCES.md` | **naprawione** (#76) |
+| `A-08` flaga lodu wobec rysowanej bryły | **naprawione** (#77) — ustalenie z sesji naprawczej |
+| `A-09` skala i zasięg pola odległości lodu | **naprawione** (#78) — ustalenie z sesji naprawczej; pole było 13× zgrubniejsze niż deklaruje |
+| `V-02` #41 bilans rzędnych na progach | **wykonane** na katalogu z `geo.ts`: niezmienniki blokujące + diagnostyka katalogu; zamiana źródła na `sills.json` czeka na `C-05` #19 |
+
+Testy kontraktowe: 24 → **42**. `npm run audit:metrics` liczy teraz z tamą lodową (kolumna `ice_ka`)
+i drukuje próg sterujący per klatka (§4b), więc tabele w §1 i II.2 tego dokumentu należy czytać
+razem z nimi.

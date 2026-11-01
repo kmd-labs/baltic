@@ -133,13 +133,26 @@ export function cellIndex(g: GridGeometry, lon: number, lat: number): number {
   return r * g.nx + c;
 }
 
+/** What one frame's fill produced. `outlet` is −1 when the basin is connected to the ocean. */
+export interface WaterFill {
+  water: Uint8Array;
+  level: number;
+  /**
+   * The cell that sets `level`: the highest point on the cheapest path from the basin to the
+   * ocean, i.e. the outlet the lake spills over. The flood fill knows it — it is the cell whose
+   * elevation the spill level was taken from — and the sill-check (`V-02`) needs it to say
+   * whether the catalogue in geo.ts contains the outlet the model is actually using.
+   */
+  outlet: number;
+}
+
 /**
  * 1. Ocean — cells reachable from the Skagerrak with H_paleo < 0.
  * 2. Basin — priority-flood from the ocean gives every cell its spill level; ice is a wall.
  *    Where the spill level of the deeps is above their floor, the basin is a lake at that
  *    level: the outlet sill sets it, not the ocean (plan §0.1).
  */
-export function fillWater(g: GridGeometry, hp: Float32Array, ice: Uint8Array | null): { water: Uint8Array; level: number } {
+export function fillWater(g: GridGeometry, hp: Float32Array, ice: Uint8Array | null): WaterFill {
   const { nx, ny } = g;
   const n = nx * ny;
   const water = new Uint8Array(n);
@@ -177,6 +190,9 @@ export function fillWater(g: GridGeometry, hp: Float32Array, ice: Uint8Array | n
   }
 
   const spill = new Float32Array(n).fill(Infinity);
+  // Where each cell's spill value came from. Walking it back from a basin seed retraces the
+  // cheapest path to the ocean, and its highest cell is the outlet that sets the level.
+  const from = new Int32Array(n).fill(-1);
   const heap = new MinHeap(n);
   for (let k = 0; k < tail; k++) {
     spill[queue[k]] = 0;
@@ -189,14 +205,27 @@ export function fillWater(g: GridGeometry, hp: Float32Array, ice: Uint8Array | n
       if (ice?.[j] || spill[j] !== Infinity) return;
       const v = Math.max(w, hp[j]);
       spill[j] = v;
+      from[j] = i;
       heap.push(j, v);
     });
   }
 
   let level = 0;
+  let deepest = -1;
   for (const [lon, lat] of BASIN_SEEDS) {
     const i = cellIndex(g, lon, lat);
-    if (i >= 0 && !water[i] && spill[i] !== Infinity && spill[i] > hp[i]) level = Math.max(level, spill[i]);
+    if (i >= 0 && !water[i] && spill[i] !== Infinity && spill[i] > hp[i] && spill[i] > level) {
+      level = spill[i];
+      deepest = i;
+    }
+  }
+
+  // The outlet: the highest cell on the path from that seed back to the ocean. Its elevation is
+  // the spill level by construction, since spill propagates as max(spill of the previous cell,
+  // elevation here).
+  let outlet = -1;
+  for (let i = deepest; i >= 0; i = from[i]) {
+    if (outlet < 0 || hp[i] > hp[outlet]) outlet = i;
   }
   if (level > 0) {
     tail = 0;
@@ -215,7 +244,7 @@ export function fillWater(g: GridGeometry, hp: Float32Array, ice: Uint8Array | n
       });
     }
   }
-  return { water, level };
+  return { water, level, outlet: level > 0 ? outlet : -1 };
 }
 
 export function basinStats(g: GridGeometry, hp: Float32Array, water: Uint8Array, lakeLevel: number): FrameStats {

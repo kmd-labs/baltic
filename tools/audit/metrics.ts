@@ -21,6 +21,7 @@ import { buildResampler, paleoElevation, rslAt } from '../../src/app/core/data/p
 import { basinStats, fillWater, oceanSide } from '../../src/app/core/data/water.ts';
 import { FRAMES, lakeLevelAt, phaseAt } from '../../src/app/core/data/timeline.ts';
 import { iceMaskFor, iceSliceFor } from '../../src/app/core/data/ice-field.ts';
+import { sillCheck } from '../../src/app/core/data/sill-check.ts';
 import { SILLS } from '../../src/app/core/data/geo.ts';
 
 const DATA = join(process.cwd(), 'src', 'assets', 'data');
@@ -144,6 +145,25 @@ for (const s of SILLS) {
     return f1(hp[cell(s.lon, s.lat)], 8, 0);
   });
   console.log('  ' + s.id.padEnd(18) + row.join(''));
+}
+
+// ── 4b. The outlet the model actually spills over ────────────────────────────────────────────
+// `H_paleo` at a catalogue point says what that point is doing; it does not say which outlet holds
+// the lake up. The fill knows: the level is the highest cell on the cheapest path from the deeps to
+// the ocean. Printing it turns the sill-check (`V-02`) from a guess about routes into a measurement
+// — and tells `C-05` which points the catalogue is missing.
+console.log('\n## 4b. Controlling outlet per frame  [the cell the lake spills over]\n');
+console.log('  t(BP)  phase          state      level   outlet            nearest catalogue sill');
+for (const t of [...FRAMES].sort((a, b) => b - a)) {
+  const hp = hpAt(t);
+  const mask = iceAt(t);
+  const check = sillCheck(baltic, t, hp, mask, fillWater(baltic, hp, mask), SILLS);
+  const where = check.outlet ? `${check.outlet.lon.toFixed(2)}E ${check.outlet.lat.toFixed(2)}N` : '—';
+  const near = check.nearest ? `${check.nearest.id} (${check.nearest.km.toFixed(0)} km)` : '—';
+  console.log(
+    String(t).padStart(7), phaseAt(t).id.padEnd(15), check.state.padEnd(10),
+    f1(check.level, 6), ' ' + where.padEnd(18), near + (check.suspect.length ? `   podejrzane: ${check.suspect.join(', ')}` : '')
+  );
 }
 
 // ── 5. Present-day validation, and DEM fidelity at the deeps ─────────────────────────────────
