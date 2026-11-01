@@ -21,7 +21,7 @@ Aplikacja liczy wodę, poziomy progów i metryki sama z siatek (Web Worker), wi�
 | **Usunięte — nie robimy** | `C-02` #16, `C-09` #22, `C-10` #24, `C-11` #25, `C-12` #26, `C-15` #29, `V-07` #46, `V-12` #52 — decyzja użytkownika; **trwałe skasowanie na GitHubie czeka na uprawnienia** (system zablokował `gh issue delete`) |
 | **Zawężone** | `I-01` #50 — siatki, zarysy lodu i manifest, bez plików klatek |
 | **Otwarte** | `0-01` #7, `0-03` #9, `0-04` #10, `0-07` #13, `0-08` #14, `C-05` #19, `C-08` #23, `V-01` #40, `V-02` #41, `V-03` #42, `V-06` #45, `V-08` #47, `V-11` #51 oraz follow-upy #62–#67 |
-| **Nowe z audytu 2026-11-01** | `A-01`…`A-05`, `A-07` — bez numerów GitHub, do założenia. `A-06` wykonane (`tools/audit/metrics.ts`). Priorytet: `A-01` (regresja), potem `A-04` + `A-03` |
+| **Nowe z audytu 2026-11-01** | Wykonane tego samego dnia: `A-01`, `A-02`, `A-03`, `A-04`, `A-07` oraz `A-08` i `A-09` (ustalenia z sesji naprawczej). Otwarte: **`A-05`** (korekta na osady — potrzebny Python, pobranie `zhang2024_sed` i decyzja o rozkładzie miąższości w czasie) i ostatni punkt `A-06` (CI, czeka na `0-08`). Numery GitHub do założenia — `gh` nie jest zainstalowany na maszynie |
 
 Opisy zadań poniżej są historyczne dla pozycji zamkniętych i usuniętych; aktualny zakres jest w issues.
 
@@ -59,7 +59,7 @@ Dwie rzeczy nieobejściowe: **`0-01`** (bez submodułu nie ma builda) i **`0-06`
 | **C** | Postglacjał, 20–0 ka | 15 | rdzeń produktu; fazy morskie (M3) przed jeziornymi (M4) |
 | **V** | Walidacja | 8 | jedna bramka ilościowa (`V-03`), resztę da się liczyć wcześnie |
 | **I** | Kontrakt, emisja, integracja | 5 | `I-03` od pierwszego commita; glob `I-05` równolegle z danymi |
-| **A** | Audyt 2026-11-01 | 7 | wyłącznie ustalenia bez pokrycia w `0`/`C`/`V`/`I`; `A-01` to żywa regresja |
+| **A** | Audyt 2026-11-01 | 9 | ustalenia audytu bez pokrycia w `0`/`C`/`V`/`I` (`A-01`…`A-07`) oraz dwa z sesji naprawczej (`A-08`, `A-09`) |
 
 ---
 
@@ -767,7 +767,7 @@ Decyzja z 2026-10-31: scena to **glob z `kmd-labs/el-nino` — tylko glob i reli
 > Pominięte zgodnie z decyzją: wszystko, co wymagałoby uzyskania licencji, czyli zbiory ❓
 > z `SOURCES.md` (lepsza batymetria, batymetria jezior, `V-08` na `nkg2016lu`, `sgu_strand`, `sincos`).
 
-## `A-01` Realign tooltip and transect with the rendered water rule
+## `A-01` Realign tooltip and transect with the rendered water rule — **wykonane 2026-11-01**
 
 **Epik:** A · **Zależy od:** — · **Blokuje:** — · **Labels:** `app`, `regression`
 
@@ -778,13 +778,13 @@ i jej `lakeLevelM`. Przed zmianą maska renderera równała się najbliższej kl
 komórki. Rozbieżność jest największa przy brzegu — czyli tam, gdzie użytkownik najczęściej najeżdża.
 
 **DoD**
-- [ ] `pointInfo` i `transect` dostają bracket i stosują tę samą regułę co shader
-- [ ] Poziom w obu ścieżkach interpolowany, nie brany z klatki
-- [ ] Test: w klatce pośredniej klasa wody z `pointInfo` zgadza się z regułą sceny na siatce punktów brzegowych
+- [x] `pointInfo` i `transect` dostają bracket i stosują tę samą regułę co shader — przez `sceneWater(t)`, z którego korzystają też oba renderery (jeden właściciel pary klatek i poziomu)
+- [x] Poziom w obu ścieżkach interpolowany, nie brany z klatki; RSL też, przez wspólny `RSL_STEP_YR`
+- [x] Test `mid-interval water class follows the scene rule, not the nearest frame` — 2 046 z 3 819 próbkowanych komórek brzegowych rozstrzygało się inaczej przy odczycie z najbliższej klatki
 
 **Audyt:** I.2 `A-01`
 
-## `A-02` Single source of truth for the water rule
+## `A-02` Single source of truth for the water rule — **wykonane 2026-11-01**
 
 **Epik:** A · **Zależy od:** — · **Blokuje:** — · **Labels:** `app`, `contract`
 
@@ -795,13 +795,13 @@ zmieniłby publikowane liczby. Ta sama klasa ryzyka dotyczy pierwszeństwa `isLa
 przejściu na sumę masek żyje tylko w GLSL.
 
 **DoD**
-- [ ] Jedna definicja granicy basenu i jedna definicja pierwszeństwa jezioro/ocean, generowana albo wstrzykiwana do GLSL
-- [ ] Test wyłapujący rozjazd TS ↔ GLSL (porównanie na siatce punktów kontrolnych)
-- [ ] Udział komórek wykluczanych przez regułę raportowany w `audit:metrics`
+- [x] Jedna definicja: stałe `OCEAN_SIDE` + `MASK_HIT` w `water.ts`, a `WATER_RULE_GLSL` generowany z tych samych liczb i wstrzykiwany do `COMMON` (`paleo-shaders.ts`); `bedAt` w `ice-shaders.ts` przeszedł na `isLakeAt`/`isOceanAt` zamiast trzeciej kopii pierwszeństwa
+- [x] Test `GLSL oceanSide equals the TS one across the window` (117 tys. punktów) i `GLSL lake/ocean precedence equals waterKindAt` — tłumaczą **źródło GLSL** z powrotem na JS i porównują z TS; sprawdzone, że usunięcie strażnika `!isLakeAt` w `isOceanAt` test wywala
+- [x] `audit:metrics` raportuje udział (19,9%) i wskazuje, że druga strona jest generowana
 
 **Audyt:** I.2 `A-02`
 
-## `A-03` Make the ice-dammed lake reachable from tests
+## `A-03` Make the ice-dammed lake reachable from tests — **wykonane 2026-11-01**
 
 **Epik:** A · **Zależy od:** — · **Blokuje:** `A-04` (fazy jeziorne) · **Labels:** `app`, `validation`
 
@@ -811,13 +811,14 @@ inaczej nie potrafi, i cała faza BIL — w której tama *jest* mechanizmem — 
 domknięcie `V-02` po stronie faz jeziornych i ogranicza `npm run audit:metrics` (wiersze `no-ice`).
 
 **DoD**
-- [ ] Rasteryzacja zarysu bez DOM-u, uruchamialna w Node
-- [ ] Ten sam wynik co ścieżka przeglądarkowa na wszystkich przekrojach 10–20 ka (porównanie bit-w-bit albo z tolerancją na komórkę)
-- [ ] `audit:metrics` liczy klatki BIL z tamą i usuwa znacznik `no-ice`
+- [x] `fillPath` / `rasterise` / `iceMaskFor` w `ice-field.ts` — skanlinia nonzero po środkach komórek, zero DOM-u; geometria nadal ze strumienia d3 (to samo przycinanie i zagęszczanie łuków co kontekst `<canvas>`)
+- [x] Zgodność na wszystkich przekrojach 10–20 ka: dokładna wobec niezależnego rzutowania promienia (even-odd, punkt po punkcie), a wobec geodezyjnego `geoContains` z tolerancją jednej komórki przy krawędzi (udokumentowana różnica semantyki: proste w lon/lat vs łuki)
+- [x] `audit:metrics` liczy z tamą (kolumna `ice_ka`, wybór przekroju przez `iceSliceFor` — jedna definicja z aplikacją), znacznik `no-ice` usunięty
+- [x] Pokrycie fazy BIL: test `the Baltic Ice Lake is dammed by the ice, not by topography`
 
 **Audyt:** I.2 `A-03`
 
-## `A-04` Strengthen the water contract tests against literature levels
+## `A-04` Strengthen the water contract tests against literature levels — **wykonane 2026-11-01**
 
 **Epik:** A · **Zależy od:** `A-03` (dla faz zaporowych) · **Labels:** `validation`
 
@@ -827,10 +828,11 @@ przy +100 m. Żaden test nie konfrontuje modelu z literaturą, a rozbieżności 
 w pilnowany budżet błędu**, żeby nie rosła po cichu.
 
 **DoD**
-- [ ] Test porównuje `lakeLevelM` z `lakeLevelAt(t)` dla wszystkich klatek jeziornych
-- [ ] Próg tolerancji ustalony i **uzasadniony w komentarzu**, nie dobrany do bieżącego wyniku
-- [ ] Odchylenie raportowane liczbowo, nie binarnie
-- [ ] Test negatywny: zepsuta analiza przelewu musi go wywalić
+- [x] Test `modelled lake levels stay inside the error budget against the literature` przechodzi po wszystkich klatkach z poziomem (10 klatek), łącznie z jeziorami Yoldii i Mastogloi, których literatura nie przewiduje (B2)
+- [x] Próg 20 m uzasadniony szumem wejścia (średni skok RSL 16–19 m w 16–11 ka, §2 audytu), nie bieżącym wynikiem; aktualny maks. to 13,9 m przy 14 ka
+- [x] Raport liczbowy: wiersz per klatka + maks. i RMSE (10,1 m)
+- [x] Kontrola negatywna `the budget has teeth: breaking the dam puts 13 ka outside it`
+- [x] Klatki fazy jeziornej bez jeziora w modelu są przypięte jawnie (`CONNECTED_IN_LAKE_PHASE` = 16 ka), więc zmiana tego zbioru też wywala test
 
 **Audyt:** I.2 `A-04`, II.2 B1
 
@@ -870,13 +872,44 @@ w czasie, walidacja na dziś.
 - [x] Ograniczenie `no-ice` opisane w nagłówku skryptu i powiązane z `A-03`
 - [ ] Uruchamiany w CI po zmianie zasobów danych (czeka na `0-08`)
 
-## `A-07` Minor: cache semantics and SOURCES hygiene
+## `A-08` Read the ice flag from the field the scene draws — **wykonane 2026-11-01**
+
+**Epik:** A · **Zależy od:** `A-03` · **Labels:** `app` · **Źródło:** ustalenie z sesji naprawczej, nie z audytu
+
+Ten sam rozjazd co `A-01`, warstwę wyżej: bryła lodu powstaje z pola odległości interpolowanego między
+przekrojami DATED-1, a podpowiedź i przekrój czytały maskę jednej klatki (tamę wypełniania). Policzone po
+`A-03`: 232 tys. km² okna przy 10,5 ka, 2,2 tys. km² przy dokładnym przekroju (sama różnica rastrów).
+
+**DoD**
+- [x] `iceDrawnAt(t, lon, lat)` pyta to samo pole i stosuje tę samą regułę co shader (`sdfAt`, `fade`)
+- [x] `pointInfo` i `transect` używają go w obu oknach; `geoContains` na zarysie `mc` usunięty
+- [x] Maska zostaje wejściem modelu (tama, siatka 1 ka) — udokumentowane w `iceSliceFor` i `iceDrawnAt`
+- [x] Testy: pas niezgodności przy dokładnym przekroju i jego wielokrotność w środku przedziału
+
+## `A-09` Fix the scale and the extent of the ice distance field — **wykonane 2026-11-01**
+
+**Epik:** A · **Zależy od:** — · **Labels:** `app`, `regime-c` · **Źródło:** ustalenie z sesji naprawczej
+
+Usterka w `iceSignedDistance` obecna od `C-07`. Prostokąt domeny podawany do `fitWidth`: (1) nawinięty
+odwrotnie do konwencji d3-geo (zewnętrzny pierścień mniejszy od półkuli ma być **zgodny** z ruchem
+wskazówek — odwrotnie niż RFC 7946), więc d3 czytał „cała sfera minus prostokąt" i skalował kulę do
+rastra — **45 km/piksel zamiast 3,4**; (2) niezagęszczony, a brzegi wielokąta sferycznego to łuki
+wielkiego koła, więc łuk 50°N wchodził w środku na 57°N i **południowy Bałtyk wypadał poza bounds
+domeny** — komórki stamtąd rzutowały się pod raster, a resampling przyciągał je do dolnego wiersza.
+
+**DoD**
+- [x] Pierścień domeny nawinięty zgodnie z d3 i zagęszczony co 1°
+- [x] Niezgodność maski i pola przy dokładnym przekroju: 9 653 → 486 komórek, wszystkie ≤ 2,5 km od krawędzi
+- [x] Kopuła 20 ka: 3 037 m przy 415 km od krawędzi (dokumentowane ~2 980 m); zero komórek „bez danych"
+- [x] Oba tryby awarii pilnowane testem (`on an exact slice…`, `the thickest point of the 20 ka sheet…`)
+
+## `A-07` Minor: cache semantics and SOURCES hygiene — **wykonane 2026-11-01**
 
 **Epik:** A · **Labels:** `app`, `docs`
 
 **DoD**
-- [ ] `rslCache` (`:203`) — albo prawdziwe LRU (odświeżanie przy `get`), albo nazwa mówiąca, że to FIFO
-- [ ] Przegląd `SOURCES.md` pod kątem wpisów ✅, które nie mają użycia w kodzie (patrz `A-05`)
+- [x] Prawdziwe LRU: `rsl()` przestawia wpis przy odczycie, więc kolejność `Map` to naprawdę „najdawniej używane pierwsze"; liczy się przy zawróceniu lub skoku playheadu (pole duchowego brzegu z `t + 1000` czytane co tick)
+- [x] Przegląd `SOURCES.md`: `zhang2024_sed`, `rosentau2021`, `steffen2025_rsl_sbaltic`, `esd2025` oznaczone jako **zarejestrowane, nieużywane** wraz z zadaniem, pod które czekają; `kotthoff2022` — zadanie (`V-07`) usunięte. Dodana zasada: status ✅ mówi o licencji, nie o użyciu
 
 **Audyt:** I.2 `A-07`
 

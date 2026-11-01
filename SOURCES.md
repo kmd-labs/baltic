@@ -4,6 +4,8 @@ Rejestr wszystkich zbiorów danych i publikacji, z których korzysta warstwa dan
 
 Zasada: **wpis powstaje razem z pobraniem zbioru** (`fetch.py`, `0-05`), nie na końcu. Zbioru bez wpisu nie wolno użyć w pipeline'ie; zbioru ze statusem ⛔ lub ❓ nie wolno opublikować w żadnej postaci pochodnej.
 
+Status ✅ mówi o licencji, nie o użyciu. Wpis, którego nie ma jeszcze w `tools/` ani `src/`, nosi adnotację **zarejestrowany, nieużywany** razem z zadaniem, pod które czeka — przegląd z 2026-11-01 (`A-07`), żeby dokument nie sugerował użycia, którego nie ma.
+
 ## Status
 
 | | Znaczenie | Publikacja pochodnych |
@@ -41,10 +43,10 @@ Zakres aplikacji od 2026-10-31. Zbiory dla usuniętych reżimów (fanerozoik, cz
 | id | Zbiór | DOI / URL | Licencja | Weryfikacja | Status |
 | :-- | :-- | :-- | :-- | :-- | :-: |
 | `steffen2025_rsl` | Steffen & Kaufmann 2025, RSL northern Europe (ANU-ICE, ICE-5G) — 1°, 10°W–70°E / 45–85°N, 21,4 ka → 0, 19 kroków, 8 modeli Ziemi | `10.5281/zenodo.15481755` | CC BY 4.0 | 2026-10-30, DataCite | ✅ |
-| `steffen2025_rsl_sbaltic` | Steffen & Kaufmann 2025, RSL southern Baltic (ANU-ICE, ICE-5G), 5–25°E / 52–60°N | `10.5281/zenodo.15488259` | CC BY 4.0 | 2026-10-30, DataCite | ✅ |
-| `esd2025` | Miluch i in. 2025, *Paleogeographic numerical modeling of marginal seas for the Holocene*, ESD 16, 585–605 — paleo-DEM-y 0,01°, 11,7–0 ka | `10.5194/esd-16-585-2025` | CC BY 4.0 | 2026-10-30, strona artykułu | ✅ |
-| `zhang2024_sed` | Zhang 2024, Holocene sediment thickness map for the Baltic Sea | `10.17632/k45mff2ccy.1` | CC BY 4.0 | 2026-10-30, DataCite | ✅ |
-| `rosentau2021` | Rosentau i in. 2021, A Holocene relative sea-level database for the Baltic Sea (1099 wskaźników, HOLSEA) | `10.5880/GFZ.1.3.2020.003` | CC BY 4.0 | 2026-10-30, DataCite | ✅ |
+| `steffen2025_rsl_sbaltic` | Steffen & Kaufmann 2025, RSL southern Baltic (ANU-ICE, ICE-5G), 5–25°E / 52–60°N | `10.5281/zenodo.15488259` | CC BY 4.0 | 2026-10-30, DataCite | ✅ · **zarejestrowany, nieużywany** — wejście do `V-03` |
+| `esd2025` | Miluch i in. 2025, *Paleogeographic numerical modeling of marginal seas for the Holocene*, ESD 16, 585–605 — paleo-DEM-y 0,01°, 11,7–0 ka | `10.5194/esd-16-585-2025` | CC BY 4.0 | 2026-10-30, strona artykułu | ✅ · **zarejestrowany, nieużywany** — kontrola paleo-DEM-u (`V-03`) |
+| `zhang2024_sed` | Zhang 2024, Holocene sediment thickness map for the Baltic Sea | `10.17632/k45mff2ccy.1` | CC BY 4.0 | 2026-10-30, DataCite | ✅ · **zarejestrowany, nieużywany** — wejście do `A-05` (korekta na osady); nie ma go też w `registry.json` |
+| `rosentau2021` | Rosentau i in. 2021, A Holocene relative sea-level database for the Baltic Sea (1099 wskaźników, HOLSEA) | `10.5880/GFZ.1.3.2020.003` | CC BY 4.0 | 2026-10-30, DataCite | ✅ · **zarejestrowany, nieużywany** — wejście do `V-03` (RSL wobec obserwacji) |
 | `nkg2016lu` | NKG2016LU, Vestøl i in. 2019, J. Geod. 93, 1759–1779 | `10.1007/s00190-019-01280-8` | CC BY 4.0 (artykuł) | 2026-10-30, repozytorium DUO; **licencja samych siatek** (`_abs`, `_lev`) u Lantmäteriet do sprawdzenia na stronie; fallback: wartości z artykułu | ❓ |
 | `sgu_strand` | SGU Strandförskjutningsmodell | — | — | do sprawdzenia na stronie SGU; fallback: rzędne progów z publikacji | ❓ |
 | `sincos` | Projekt SINCOS, RSL SW Bałtyku | — | — | do sprawdzenia; fallback: `steffen2025_rsl_sbaltic` | ❓ |
@@ -90,7 +92,7 @@ Grubość lodu nie pochodzi z żadnego zbioru — to profil plastyczny liczony o
 
 | id | Zbiór | DOI / URL | Licencja | Weryfikacja | Status |
 | :-- | :-- | :-- | :-- | :-- | :-: |
-| `kotthoff2022` | Kotthoff i in. 2022, IODP Exp. 347 Site M0059 — palinomorfy, okrzemki, geochemia (~8 ka) | `10.1594/PANGAEA.943832` | CC BY 4.0 | 2026-10-30, DataCite | ✅ |
+| `kotthoff2022` | Kotthoff i in. 2022, IODP Exp. 347 Site M0059 — palinomorfy, okrzemki, geochemia (~8 ka) | `10.1594/PANGAEA.943832` | CC BY 4.0 | 2026-10-30, DataCite | ✅ · **nieużywany** — zadanie, pod które był zarejestrowany (`V-07`, taksony i zasolenie), zostało usunięte 2026-10-31 |
 | `helcom_basins` | HELCOM — podział na baseny (ETRS89-LAEA) | https://metadata.helcom.fi | — | — | ❓ |
 
 **Atrybucja (✅):**

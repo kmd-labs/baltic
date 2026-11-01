@@ -25,13 +25,100 @@ export interface FrameStats {
 }
 
 /**
- * Open ocean inside the Baltic window, not basin: west of the Danish straits (North Sea,
- * Skagerrak, Kattegat) and the Norwegian Sea strip in the north-west corner. Used by the
- * metrics and, identically, by the shader for the water colour.
+ * Where the open ocean inside the Baltic window stops and the basin begins: west of the Danish
+ * straits (North Sea, Skagerrak, Kattegat) and the Norwegian Sea strip in the north-west corner.
+ *
+ * The numbers live here once because two sides read them — the basin metrics on the CPU and the
+ * water colour on the GPU — and the rule **excludes 19.9% of today's water cells** from area and
+ * volume (`npm run audit:metrics`). A silent drift between the two copies would move published
+ * figures, so the GLSL side is generated from these constants rather than kept in step by a
+ * comment (`WATER_RULE_GLSL`, `A-02`).
  */
+export const OCEAN_SIDE = {
+  /** North Sea, off the west coast of Jutland. */
+  northSeaLon: 10.3,
+  /** Skagerrak and Kattegat, north of the Danish straits. */
+  kattegatLat: 56.95,
+  kattegatLon: 12.4,
+  /** Norwegian Sea, in the north-west corner of the window. */
+  norwegianLat: 62,
+  norwegianLon: 16.5
+} as const;
+
 export function oceanSide(lon: number, lat: number): boolean {
-  return lon < 10.3 || (lat > 56.95 && lon < 12.4) || (lat > 62 && lon < 16.5);
+  const o = OCEAN_SIDE;
+  return (
+    lon < o.northSeaLon ||
+    (lat > o.kattegatLat && lon < o.kattegatLon) ||
+    (lat > o.norwegianLat && lon < o.norwegianLon)
+  );
 }
+
+export type WaterKind = 'ocean' | 'lake' | 'dry';
+
+/** A mask channel counts as hit above this fraction — the GPU samples the mask, it does not read cells. */
+export const MASK_HIT = 0.5;
+
+/**
+ * What the scene draws, as two separate decisions: the water mask says which cells belong to the
+ * connected water body, H_paleo says where its edge lies. Both halves live here because the
+ * picture is not the only thing that answers them — the tooltip and the transect have to give the
+ * same answer as the pixel under the cursor (`A-01`).
+ *
+ * The mask channel of one frame, unioned across the two frames bracketing a continuous time and
+ * thresholded the way the shader thresholds it. Sampled per frame first and unioned after: that is
+ * the order the shader uses, and max-then-sample is a different function near a boundary. Mask
+ * fractions come from `maskFractionAt` (paleo.ts), which samples by the same bilinear rule as the
+ * GPU's LinearFilter.
+ */
+export function maskHit(frameA: number, frameB: number): boolean {
+  return Math.max(frameA, frameB) > MASK_HIT;
+}
+
+/**
+ * Water class at one point, from the two mask channels and the interpolated lake level.
+ *
+ * Lake before ocean: `lakeLevel` interpolates between the bracketing frames and a frame whose
+ * basin is ocean-connected carries level 0, so this order walks the basin continuously through a
+ * phase change in either direction and hands over seamlessly at `lakeLevel` = 0.
+ */
+export function waterKindAt(maskOcean: boolean, maskLake: boolean, hp: number, lakeLevel: number): WaterKind {
+  if (maskLake && hp < lakeLevel) return 'lake';
+  if (maskOcean && hp < 0) return 'ocean';
+  return 'dry';
+}
+
+/** GLSL has no implicit int→float conversion: `62` is not a float literal there, `62.0` is. */
+function glslFloat(n: number): string {
+  return Number.isInteger(n) ? `${n}.0` : `${n}`;
+}
+
+/**
+ * The same rule for the GPU, generated from the definitions above and injected into the shaders'
+ * COMMON block (paleo-shaders.ts). Generated rather than transcribed because this is where the
+ * picture and the published numbers have to agree: `oceanSide` decides which water the metrics
+ * count, `isLakeAt` / `isOceanAt` decide which surface a cell gets.
+ *
+ * `wm` is the water mask at the point — x the ocean channel, y the lake channel, both already
+ * unioned across the bracketing frames by `waterMask` — and `uLake` the interpolated lake level.
+ * tests/contract/water.test.ts translates this source back to JS and checks it against the TS
+ * functions on a grid of control points, so a structural edit on either side fails there.
+ */
+export const WATER_RULE_GLSL = /* glsl */ `
+  bool oceanSide(vec2 ll) {
+    return ll.x < ${glslFloat(OCEAN_SIDE.northSeaLon)}
+      || (ll.y > ${glslFloat(OCEAN_SIDE.kattegatLat)} && ll.x < ${glslFloat(OCEAN_SIDE.kattegatLon)})
+      || (ll.y > ${glslFloat(OCEAN_SIDE.norwegianLat)} && ll.x < ${glslFloat(OCEAN_SIDE.norwegianLon)});
+  }
+
+  bool isLakeAt(vec2 wm, float hp) {
+    return wm.y > ${glslFloat(MASK_HIT)} && hp < uLake;
+  }
+
+  bool isOceanAt(vec2 wm, float hp) {
+    return !isLakeAt(wm, hp) && wm.x > ${glslFloat(MASK_HIT)} && hp < 0.0;
+  }
+`;
 
 export function inside(g: GridGeometry, lon: number, lat: number): boolean {
   const [west, south, east, north] = g.bbox;

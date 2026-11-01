@@ -9,19 +9,18 @@
  * It reads the committed assets in src/assets/data and the app's own data layer, so what it
  * measures is what the app computes — not a parallel re-implementation.
  *
- * ONE LIMITATION, and it is itself audit finding `A-03`: the ice mask that dams the Baltic Ice
- * Lake is rasterised from the DATED-1 outline with a DOM <canvas> (paleo-data.service.ts), which
- * does not exist here. Every fill below therefore runs WITHOUT the ice wall. Frames where the ice
- * is the dam (roughly 16–11.7 ka) consequently report level 0 and connected = true, where the app
- * itself shows an ice-dammed lake. Those rows are marked `no-ice` and must not be read as the
- * app's output. Closing `A-03` is what would let this script cover them.
+ * The ice wall is included since `A-03`: the DATED-1 outlines rasterise without a DOM
+ * (ice-field.ts `iceMaskFor`), and the slice that answers for a frame is the app's own
+ * `iceSliceFor`, so the ice-dammed frames below are the app's output and not a no-ice stand-in.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { Feature, Geometry } from 'geojson';
 import { decodeKmdg, gunzipIfNeeded, kmdgLayer } from '../../src/app/core/data/kmdg.ts';
 import { buildResampler, paleoElevation, rslAt } from '../../src/app/core/data/paleo.ts';
 import { basinStats, fillWater, oceanSide } from '../../src/app/core/data/water.ts';
 import { FRAMES, lakeLevelAt, phaseAt } from '../../src/app/core/data/timeline.ts';
+import { iceMaskFor, iceSliceFor } from '../../src/app/core/data/ice-field.ts';
 import { SILLS } from '../../src/app/core/data/geo.ts';
 
 const DATA = join(process.cwd(), 'src', 'assets', 'data');
@@ -44,6 +43,25 @@ const [bw, bs, be, bn] = baltic.bbox;
 
 /** H_paleo on the Baltic grid at t cal yr BP. `rslAt` takes ka, not years. */
 const hpAt = (t: number) => paleoElevation(hNow, rslAt(cube, t / 1000), rs);
+
+/**
+ * The ice wall for a frame, by the app's own slice mapping. Cached per slice: the same outline
+ * answers for several frames and rasterising is the expensive part.
+ */
+const ice = JSON.parse(readFileSync(join(DATA, 'prototype', 'ice-dated1.json'), 'utf8')) as {
+  features: Feature<Geometry, { ka: number; variant: string }>[];
+};
+const iceCache = new Map<number, Uint8Array>();
+const iceAt = (t: number): Uint8Array | null => {
+  const ka = iceSliceFor(t);
+  if (ka == null) return null;
+  let mask = iceCache.get(ka);
+  if (!mask) {
+    mask = iceMaskFor(ice.features.find(f => f.properties.ka === ka && f.properties.variant === 'mc'), baltic);
+    iceCache.set(ka, mask);
+  }
+  return mask;
+};
 const cell = (lon: number, lat: number) =>
   Math.floor(((bn - lat) / (bn - bs)) * baltic.ny) * baltic.nx + Math.floor(((lon - bw) / (be - bw)) * baltic.nx);
 
@@ -52,18 +70,18 @@ const f1 = (n: number, w: number, d = 1) => n.toFixed(d).padStart(w);
 // ── 1. Modelled lake level against the literature curve, with the basin metrics ──────────────
 // The level the app renders is the modelled one (PaleoFrame.lakeLevelM); the literature column is
 // timeline.ts LAKE_LEVEL. Their disagreement is audit finding B1.
-console.log('\n## 1. Lake level: model vs literature, and basin metrics  [no-ice, see header]\n');
-console.log('  t(BP)  phase            model_m  lit_m   diff   area_kkm2  vol_kkm3  maxdep_m  conn');
+console.log('\n## 1. Lake level: model vs literature, and basin metrics\n');
+console.log('  t(BP)  phase            model_m  lit_m   diff   area_kkm2  vol_kkm3  maxdep_m  conn  ice_ka');
 for (const t of [...FRAMES].sort((a, b) => b - a)) {
   const hp = hpAt(t);
-  const { water, level } = fillWater(baltic, hp, null);
+  const { water, level } = fillWater(baltic, hp, iceAt(t));
   const s = basinStats(baltic, hp, water, level);
   const lit = lakeLevelAt(t);
   console.log(
     String(t).padStart(7), phaseAt(t).id.padEnd(16),
     f1(level, 7), f1(lit, 7), f1(level - lit, 7),
     f1(s.areaKm2 / 1000, 11, 0), f1(s.volumeKm3 / 1000, 9), f1(s.maxDepthM, 9, 0),
-    String(s.connected).padStart(6)
+    String(s.connected).padStart(6), String(iceSliceFor(t) ?? '—').padStart(7)
   );
 }
 
@@ -170,4 +188,4 @@ for (let r = 0; r < baltic.ny; r++) {
   }
 }
 console.log('\n  oceanSide() excludes', ((ocean / total) * 100).toFixed(1) + '% of present-day water cells from the basin metrics');
-console.log('  (the same rule is duplicated in GLSL — audit finding A-02)\n');
+console.log('  (one definition in water.ts; the GLSL the shaders compile is generated from it — A-02)\n');

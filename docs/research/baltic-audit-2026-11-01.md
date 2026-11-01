@@ -21,12 +21,12 @@ zbiory ze statusem ❓ w `SOURCES.md` — lepsza batymetria (`emodnet_dtm2024`, 
 `sgu_strand`, `sincos`. W zakresie zostaje wszystko na ✅ CC BY: `zhang2024_sed`, `esd2025`,
 `rosentau2021`, `steffen2025_rsl` wraz z 8 modelami Ziemi, `steffen2025_rsl_sbaltic`, `dated1`.
 
-**Jedno ograniczenie samego skryptu pomiarowego jest zarazem ustaleniem audytu (`A-03`):** maska lodu
-dławiąca Bałtyckie Jezioro Lodowe powstaje przez rasteryzację `<canvas>` w przeglądarce, więc poza DOM-em
-nie istnieje. Wszystkie wypełnienia w skrypcie liczą się **bez tamy lodowej**; klatki 16–11,7 ka pokazują
-przez to poziom 0 i `connected = true`, podczas gdy aplikacja rysuje tam jezioro zaporowe. Te wiersze są
-oznaczone `no-ice` i nie wolno ich czytać jako wyjścia aplikacji. Liczby dla BIL w tym dokumencie pochodzą
-z panelu przekroju samej aplikacji.
+**Ograniczenie skryptu pomiarowego, które samo było ustaleniem audytu (`A-03`), zostało usunięte tego
+samego dnia:** rasteryzacja zarysów DATED-1 nie przechodzi już przez `<canvas>`, więc tama lodowa istnieje
+poza przeglądarką. Skrypt liczy klatki z tamą i wybiera przekrój lodu tą samą funkcją co aplikacja
+(`iceSliceFor`), znacznik `no-ice` zniknął, a liczby dla BIL poniżej pochodzą ze skryptu, nie z panelu.
+Przy okazji wyszło, czego panel nie pokazywał: **w 16 ka model nie ma jeszcze jeziora zaporowego** —
+lądolód przykrywa basen, a resztka wody ma połączenie z oceanem. Fazę BIL model odtwarza od 15 ka.
 
 ---
 
@@ -43,7 +43,7 @@ testy kontraktowe (24), w tym porównanie `H_paleo` z pipeline'em z tolerancją 
 
 Numeracja odpowiada pozycjom `A-xx` w backlogu.
 
-### `A-01` Podpowiedź i przekrój rozjechały się ze sceną — **regresja z tej sesji**
+### `A-01` Podpowiedź i przekrój rozjechały się ze sceną — **regresja z tej sesji, naprawiona**
 
 `pointInfo` ([`paleo-data.service.ts:269`](../../src/app/core/data/paleo-data.service.ts)) i `transect`
 (`:296`) czytają `f.water[i]` — surową maskę **najbliższej klatki** — oraz `f.lakeLevelM`, czyli poziom
@@ -55,7 +55,7 @@ się co do komórki. Teraz nie. Najazd kursorem przy brzegu w środku przedział
 gdzie obraz pokazuje wodę; linia wody w panelu przekroju bywa przesunięta względem brzegu na scenie.
 Rozbieżność jest największa dokładnie przy brzegu, czyli tam, gdzie ludzie najczęściej najeżdżają.
 
-### `A-02` Reguła wody istnieje w dwóch egzemplarzach
+### `A-02` Reguła wody istnieje w dwóch egzemplarzach — **naprawione**
 
 `oceanSide()` jest zapisana dwa razy — [`water.ts:33`](../../src/app/core/data/water.ts) (TS, decyduje
 o powierzchni i objętości) i [`paleo-shaders.ts:127`](../../src/app/components/globe/paleo-shaders.ts)
@@ -66,7 +66,7 @@ rozjazd po cichu zmieniłby publikowane powierzchnie i objętości.
 Ta sama klasa ryzyka dotyczy nowego pierwszeństwa `isLakeAt` / `isOceanAt`, które po zmianie na sumę
 masek żyje wyłącznie w GLSL, a strona TS koduje je niejawnie przez odczyt kodu maski.
 
-### `A-03` Jezioro zaporowe jest nieosiągalne dla testów
+### `A-03` Jezioro zaporowe jest nieosiągalne dla testów — **naprawione**
 
 `iceMask()` (`:376`) rasteryzuje zarys DATED-1 przez `document.createElement('canvas')`. Model fizyczny
 zależy więc od API DOM-u i od reguł wypełniania rastra w przeglądarce, a skutek jest poważniejszy niż
@@ -74,11 +74,23 @@ estetyczny: **każdy test kontraktowy wywołuje `fillWater(..., null)`**, bo ina
 BIL — ta, w której tama lodowa *jest* mechanizmem — nie ma żadnego pokrycia testowego. To blokuje też
 sensowne domknięcie `V-02` po stronie faz jeziornych.
 
-### `A-04` Test ancylusowy sprawdza za mało
+Zastąpione własnym wypełnianiem konturu (`ice-field.ts`: `fillPath`, `rasterise`, `iceMaskFor`) —
+skanlinia z regułą nonzero, po środkach komórek. Geometria pozostaje d3: ten sam strumień projekcji,
+więc to samo przycinanie i to samo zagęszczanie łuków, co miał kontekst `<canvas>`. Test porównuje
+wynik z niezależnym rzutowaniem promienia (even-odd, punkt po punkcie) — zgodność jest dokładna — oraz
+z `geoContains` d3 (geodezyjnym) z tolerancją komórki przy samej krawędzi.
+
+### `A-04` Test ancylusowy sprawdza za mało — **naprawione**
 
 [`tests/contract/water.test.ts:48`](../../tests/contract/water.test.ts) asercja to `level > 0`. Przechodzi
 przy rzeczywistych +22 m i przeszedłby przy +100 m. Żaden test nie konfrontuje modelu z literaturą — dziura
 dokładnie tam, gdzie merytoryka jest najsłabsza (II.2).
+
+Rozbieżność jest teraz **pilnowanym budżetem**: test przechodzi po wszystkich klatkach jeziornych,
+raportuje odchylenie liczbowo (10 klatek, maks. 13,9 m przy 14 ka, RMSE 10,1 m) i wywala się powyżej
+20 m. Próg nie jest dobrany do wyniku — to szum wejścia tej epoki: średni skok RSL między sąsiednimi
+węzłami w 16–11 ka wynosi 16–19 m (§2 poniżej), a modelowany poziom jest rzędną progu czytaną z tego
+pola. Kontrola negatywna: usunięcie tamy lodowej w 13 ka wypycha poziom poza budżet.
 
 ### `A-05` `zhang2024_sed` figuruje jako używany, a nie jest
 
@@ -92,11 +104,43 @@ Narzędziowy odpowiednik tego dokumentu: `tools/audit/metrics.ts`, wpięty jako 
 Liczy z zatwierdzonych zasobów i warstwy danych aplikacji, nie z równoległej reimplementacji. Pozostaje
 wpięcie w CI po zmianie zasobów — czeka na `0-08`.
 
-### `A-07` Drobiazg
+### `A-07` Drobiazg — **naprawione**
 
 `rslCache` (`:203`) eksmituje `keys().next()`, czyli w kolejności wstawienia; `get` nie odświeża pozycji,
 więc to FIFO, nie LRU. Przy 3 321-komórkowych polach i tym rozmiarze cache bez znaczenia dla działania —
 myli tylko nazwą.
+
+### `A-08` Flaga lodu w podpowiedzi opisywała inną bryłę, niż scena rysuje — **znalezione i naprawione przy `A-01`**
+
+Ten sam rozjazd co `A-01`, warstwę wyżej. Bryła lodu na globie powstaje z pola odległości
+**interpolowanego** między dwoma przekrojami DATED-1 (`iceBracket`, `sdfAt`), a podpowiedź i przekrój
+czytały maskę **jednej klatki** — tę, która jest tamą wypełniania. Pomiar po usunięciu DOM-u (`A-03`)
+pozwolił to policzyć: przy 10,5 ka obie odpowiedzi różnią się na **232 tys. km²** okna, przy 20 ka
+(dokładny przekrój, więc sama różnica rastrów) na 2,2 tys. km².
+
+Odczyty pytają teraz o to samo pole, z którego zbudowana jest bryła (`iceDrawnAt`). Maska zostaje tym,
+czym była — wejściem modelu, tamą na siatce 1 ka — i to jest udokumentowane w obu miejscach.
+
+### `A-09` Pole odległości lodu było 13× zgrubniejsze niż deklaruje, a na południowym Bałtyku zmyślone — **znalezione i naprawione przy `A-08`**
+
+Szukając źródła `A-08` wyszła usterka w samym `iceSignedDistance`, obecna od `C-07`. Prostokąt domeny
+podawany do `fitWidth` miał dwa błędy naraz:
+
+1. **Nawinięcie.** d3-geo czyta pierścień zewnętrzny mniejszy od półkuli jako **zgodny z ruchem
+   wskazówek** — odwrotnie niż RFC 7946. Pierścień przeciwny d3 rozumie jako „cała sfera minus
+   prostokąt", więc `fitWidth` wpisywał w raster kulę ziemską: **45 km na piksel zamiast 3,4 km**.
+   Profil plastyczny `h = K√d` zamieniał to w skok grubości ~1 km na pierwszym pikselu od krawędzi.
+2. **Krawędzie sferyczne.** Brzegi wielokąta sferycznego to łuki wielkiego koła: łuk z (−10°, 50°) do
+   (70°, 50°) wchodzi w środku na 57°N, więc **południowy Bałtyk wypadał poza własne bounds domeny**.
+   Komórki stamtąd rzutowały się pod raster, a resampling przyciągał je do dolnego wiersza — pole
+   odległości pokazywało tam lity lód.
+
+Po naprawie (pierścień nawinięty zgodnie z d3 i zagęszczony co 1°) niezgodność maski i pola przy
+dokładnym przekroju spada z 9 653 do 486 komórek, wszystkie w pasie **2,5 km** od krawędzi, czyli w
+rozdzielczości rastra. Kopuła 20 ka wychodzi na **3 037 m przy 415 km** od krawędzi — zgodnie z
+dokumentowaną wartością ~2 980 m. Oba tryby awarii pilnuje teraz test kontraktowy.
+
+To zmienia obraz: bryła lodu na globie i w widoku rzeźby ma od teraz inny, dokładniejszy kształt.
 
 ---
 
@@ -139,7 +183,8 @@ publikowanych, Öresund −9 m przy −8 m.
 | | model | literatura | różnica |
 | :-- | --: | --: | --: |
 | Ancylus, maksimum 10,3 ka | **+22,1 m** | +10 m | +12,1 m |
-| BIL 13 ka *(z panelu aplikacji)* | **+36 m** | +25 m | +11 m |
+| BIL 13 ka | **+36,5 m** | +25 m | +11,5 m |
+| BIL, maksimum modelu 14 ka | **+38,9 m** | +25 m | +13,9 m |
 
 Scena rysuje `lakeLevelM`, czyli model. Rozbieżność trafia do bocznej karty fazy jako „rozbieżny o X m",
 co jest uczciwe, ale nierównoważne: obraz ma pełną powagę wizualną, zastrzeżenie — nie.

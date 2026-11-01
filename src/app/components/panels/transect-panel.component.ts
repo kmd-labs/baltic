@@ -35,10 +35,11 @@ export class TransectPanelComponent extends CanvasPanel {
   readonly meta = computed(() => {
     this.data.version();
     if (this.data.state() !== 'ready') return '';
-    const f = this.data.frame(this.t());
-    if (!f) return '';
+    // The interpolated level, the one the scene draws — not the nearest frame's (`A-01`).
+    const s = this.data.sceneWater(this.t());
+    if (!s) return '';
     const tr = this.i18n.t();
-    return f.lakeLevelM > 0 ? tr.transectMetaLake('+' + Math.round(f.lakeLevelM)) : tr.transectMetaOcean;
+    return s.lakeLevelM > 0 ? tr.transectMetaLake('+' + Math.round(s.lakeLevelM)) : tr.transectMetaOcean;
   });
 
   constructor() {
@@ -55,9 +56,9 @@ export class TransectPanelComponent extends CanvasPanel {
   protected draw(x: CanvasRenderingContext2D, w: number, h: number): void {
     if (this.data.state() !== 'ready') return;
     const t = this.t();
-    const f = this.data.frame(t);
-    if (!f) return;
-    const { total, points } = this.data.transect(f);
+    const profile = this.data.transect(t);
+    if (!profile) return;
+    const { total, points } = profile;
     const tok = (k: string, fb: string) => this.theme.getTokenColor(k, fb);
     const font = this.theme.getFontFamily();
     const pad = { l: 34, r: 6, t: 8, b: 16 };

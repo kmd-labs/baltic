@@ -47,6 +47,15 @@ export function rslAt(cube: RslCube, ka: number): Float32Array {
 
 /** Cell-registered bilinear sample, clamped at the edge. */
 export function bilinear(layer: ArrayLike<number>, g: GridGeometry, lon: number, lat: number): number {
+  return bilinearBy(i => layer[i], g, lon, lat);
+}
+
+/**
+ * The same sample, from a value derived per cell instead of stored. Lets a water-mask channel be
+ * read the way the GPU reads it — the mask textures use LinearFilter — without materialising the
+ * channel as an array (water.ts `sceneMaskAt`).
+ */
+export function bilinearBy(get: (i: number) => number, g: GridGeometry, lon: number, lat: number): number {
   const [west, south, east, north] = g.bbox;
   const fx = ((lon - west) / (east - west)) * g.nx - 0.5;
   const fy = ((north - lat) / (north - south)) * g.ny - 0.5;
@@ -58,9 +67,19 @@ export function bilinear(layer: ArrayLike<number>, g: GridGeometry, lon: number,
   const x1 = clampInt(fx0 + 1, g.nx);
   const y0 = clampInt(fy0, g.ny);
   const y1 = clampInt(fy0 + 1, g.ny);
-  const top = layer[y0 * g.nx + x0] * (1 - tx) + layer[y0 * g.nx + x1] * tx;
-  const bot = layer[y1 * g.nx + x0] * (1 - tx) + layer[y1 * g.nx + x1] * tx;
+  const top = get(y0 * g.nx + x0) * (1 - tx) + get(y0 * g.nx + x1) * tx;
+  const bot = get(y1 * g.nx + x0) * (1 - tx) + get(y1 * g.nx + x1) * tx;
   return top * (1 - ty) + bot * ty;
+}
+
+/**
+ * Fraction of a coded mask (WATER_*) equal to `code` at (lon, lat), 0…1. The water-mask textures
+ * are uploaded one channel per code and sampled with LinearFilter, so reading a channel on the CPU
+ * has to interpolate it too — a nearest-cell read disagrees with the picture within half a cell of
+ * a mask boundary, which is exactly the coast (`A-01`). Thresholded by water.ts `maskHit`.
+ */
+export function maskFractionAt(mask: Uint8Array, g: GridGeometry, code: number, lon: number, lat: number): number {
+  return bilinearBy(i => (mask[i] === code ? 1 : 0), g, lon, lat);
 }
 
 /**

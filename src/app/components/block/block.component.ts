@@ -18,7 +18,7 @@ import { ThemeService } from '@kmd/design-system/services/theme.service';
 import { isAtMost } from '@kmd/design-system/utils/breakpoints';
 
 import { I18nService } from '../../core/i18n/i18n.service';
-import { IceVariant, PaleoDataService, PaleoFrame } from '../../core/data/paleo-data.service';
+import { IceVariant, PaleoDataService, PaleoFrame, RSL_STEP_YR } from '../../core/data/paleo-data.service';
 import { nearestFrame, phaseAt, WaterClass } from '../../core/data/timeline';
 import { bilinear } from '../../core/data/paleo';
 import { inside, WATER_LAKE, WATER_OCEAN } from '../../core/data/water';
@@ -41,9 +41,6 @@ import {
   WATER_FRAGMENT,
   WATER_VERTEX
 } from './block-shaders';
-
-/** RSL is resampled at this granularity so scrubbing reuses cached fields. */
-const RSL_STEP_YR = 25;
 
 /**
  * Depth of the plinth in metres. Below the data (the block bottoms out at −1742 m), so it reads as
@@ -611,21 +608,24 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
       this.showIce(t);
     }
 
-    const { a, b, w } = this.data.bracket(t);
-    if (a && a !== this.frame) {
-      this.frame = a;
-      this.fillWater(this.waterTex!, a.water);
+    // The pair in play and the level between them come from the data layer, so the picture, the
+    // tooltip and the transect cannot answer differently (`A-01`).
+    const s = this.data.sceneWater(t);
+    if (s) {
+      if (s.a !== this.frame) {
+        this.frame = s.a;
+        this.fillWater(this.waterTex!, s.a.water);
+      }
+      // The shader unions the two fills, so the second texture must never be left holding a frame
+      // from somewhere else on the timeline — a stale one would now contribute instead of being
+      // weighted out. With no bracket on the other side it mirrors the first.
+      const second = s.b ?? s.a;
+      if (second !== this.frameB) {
+        this.frameB = second;
+        this.fillWater(this.waterBTex!, second.water);
+      }
+      for (const u of us) u['uLake'].value = s.lakeLevelM;
     }
-    // The shader unions the two fills, so the second texture must never be left holding a frame
-    // from somewhere else on the timeline — a stale one would now contribute instead of being
-    // weighted out. With no bracket on the other side it mirrors the first.
-    const second = b ?? a;
-    if (second && second !== this.frameB) {
-      this.frameB = second;
-      this.fillWater(this.waterBTex!, second.water);
-    }
-    const lake = this.frame ? (b ? this.frame.lakeLevelM + (b.lakeLevelM - this.frame.lakeLevelM) * w : this.frame.lakeLevelM) : 0;
-    for (const u of us) u['uLake'].value = lake;
 
     // The ghost coast stays on the 1 ka grid: following it continuously would ask the worker for a
     // new flood fill on every tick.
