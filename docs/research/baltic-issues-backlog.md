@@ -872,13 +872,13 @@ w czasie, walidacja na dziś.
 - [x] Ograniczenie `no-ice` opisane w nagłówku skryptu i powiązane z `A-03`
 - [ ] Uruchamiany w CI po zmianie zasobów danych (czeka na `0-08`)
 
-## `A-07` Minor: cache semantics and SOURCES hygiene
+## `A-07` Minor: cache semantics and SOURCES hygiene — **wykonane 2026-11-01**
 
 **Epik:** A · **Labels:** `app`, `docs`
 
 **DoD**
-- [ ] `rslCache` (`:203`) — albo prawdziwe LRU (odświeżanie przy `get`), albo nazwa mówiąca, że to FIFO
-- [ ] Przegląd `SOURCES.md` pod kątem wpisów ✅, które nie mają użycia w kodzie (patrz `A-05`)
+- [x] Prawdziwe LRU: `rsl()` przestawia wpis przy odczycie, więc kolejność `Map` to naprawdę „najdawniej używane pierwsze"; liczy się przy zawróceniu lub skoku playheadu (pole duchowego brzegu z `t + 1000` czytane co tick)
+- [x] Przegląd `SOURCES.md`: `zhang2024_sed`, `rosentau2021`, `steffen2025_rsl_sbaltic`, `esd2025` oznaczone jako **zarejestrowane, nieużywane** wraz z zadaniem, pod które czekają; `kotthoff2022` — zadanie (`V-07`) usunięte. Dodana zasada: status ✅ mówi o licencji, nie o użyciu
 
 **Audyt:** I.2 `A-07`
 

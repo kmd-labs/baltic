@@ -78,7 +78,7 @@ export interface TransectSample {
 }
 
 const BASE = 'assets/data/';
-/** Enough for the frames in play plus the ghost-coast lookups; evicted oldest first. */
+/** Enough for the frames in play plus the ghost-coast lookups; least recently used evicted. */
 const RSL_CACHE_MAX = 48;
 /**
  * Continuous time is quantised to this step before an RSL field is computed, so scrubbing reuses
@@ -208,20 +208,28 @@ export class PaleoDataService {
   }
 
   /**
-   * RSL field on the 1° grid at t (cal yr BP). Cheap; cached. Time is continuous, so the cache is
-   * bounded — it would otherwise grow by one 3 321-cell field per animation tick.
+   * RSL field on the 1° grid at t (cal yr BP). Cheap; cached, least recently used evicted. Time is
+   * continuous, so the cache has to be bounded — it would otherwise grow by one 3 321-cell field
+   * per animation tick.
    */
   rsl(t: number): Float32Array {
-    let r = this.rslCache.get(t);
-    if (!r) {
-      r = rslAt(this.cube!, t / 1000);
-      if (this.rslCache.size >= RSL_CACHE_MAX) {
-        const oldest = this.rslCache.keys().next();
-        if (!oldest.done) this.rslCache.delete(oldest.value);
-      }
-      this.rslCache.set(t, r);
+    const hit = this.rslCache.get(t);
+    if (hit) {
+      // Re-insert, so Map order is least-recently-used first and the eviction below is an LRU
+      // rather than the FIFO it would otherwise be. It matters when the playhead turns around or
+      // jumps: the ghost-coast field at t + 1000 is read on every tick and would be evicted by
+      // the walk that keeps using it.
+      this.rslCache.delete(t);
+      this.rslCache.set(t, hit);
+      return hit;
     }
-    return r;
+    const field = rslAt(this.cube!, t / 1000);
+    if (this.rslCache.size >= RSL_CACHE_MAX) {
+      const lru = this.rslCache.keys().next();
+      if (!lru.done) this.rslCache.delete(lru.value);
+    }
+    this.rslCache.set(t, field);
+    return field;
   }
 
 /**

@@ -104,7 +104,7 @@ Narzędziowy odpowiednik tego dokumentu: `tools/audit/metrics.ts`, wpięty jako 
 Liczy z zatwierdzonych zasobów i warstwy danych aplikacji, nie z równoległej reimplementacji. Pozostaje
 wpięcie w CI po zmianie zasobów — czeka na `0-08`.
 
-### `A-07` Drobiazg
+### `A-07` Drobiazg — **naprawione**
 
 `rslCache` (`:203`) eksmituje `keys().next()`, czyli w kolejności wstawienia; `get` nie odświeża pozycji,
 więc to FIFO, nie LRU. Przy 3 321-komórkowych polach i tym rozmiarze cache bez znaczenia dla działania —
