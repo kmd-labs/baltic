@@ -11,6 +11,7 @@
     "data:fetch": "python tools/data/fetch.py",
     "test:contract": "node --test --experimental-strip-types --no-warnings \"tests/contract/*.test.ts\" && tsc -p tsconfig.contract.json",
     "test:data": "python -m unittest discover -s tools/data/tests -t .",
+    "audit:metrics": "node --experimental-strip-types --no-warnings tools/audit/metrics.ts",
     "contract:validate": "python tools/data/contract.py"
   },
   "private": true,
