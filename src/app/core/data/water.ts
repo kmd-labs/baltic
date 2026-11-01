@@ -33,6 +33,38 @@ export function oceanSide(lon: number, lat: number): boolean {
   return lon < 10.3 || (lat > 56.95 && lon < 12.4) || (lat > 62 && lon < 16.5);
 }
 
+export type WaterKind = 'ocean' | 'lake' | 'dry';
+
+/**
+ * What the scene draws, as two separate decisions: the water mask says which cells belong to the
+ * connected water body, H_paleo says where its edge lies. Both halves live here because the
+ * picture is not the only thing that answers them — the tooltip and the transect have to give the
+ * same answer as the pixel under the cursor (`A-01`).
+ *
+ * The mask channel of one frame, unioned across the two frames bracketing a continuous time and
+ * thresholded the way the shader thresholds it. Sampled per frame first and unioned after: that is
+ * the order the shader uses, and max-then-sample is a different function near a boundary. Mask
+ * fractions come from `maskFractionAt` (paleo.ts), which samples by the same bilinear rule as the
+ * GPU's LinearFilter.
+ */
+export function maskHit(frameA: number, frameB: number): boolean {
+  return Math.max(frameA, frameB) > 0.5;
+}
+
+/**
+ * Water class at one point, from the two mask channels and the interpolated lake level.
+ *
+ * Lake before ocean: `lakeLevel` interpolates between the bracketing frames and a frame whose
+ * basin is ocean-connected carries level 0, so this order walks the basin continuously through a
+ * phase change in either direction and hands over seamlessly at `lakeLevel` = 0 (the GLSL twin is
+ * `isLakeAt` / `isOceanAt` in paleo-shaders.ts).
+ */
+export function waterKindAt(maskOcean: boolean, maskLake: boolean, hp: number, lakeLevel: number): WaterKind {
+  if (maskLake && hp < lakeLevel) return 'lake';
+  if (maskOcean && hp < 0) return 'ocean';
+  return 'dry';
+}
+
 export function inside(g: GridGeometry, lon: number, lat: number): boolean {
   const [west, south, east, north] = g.bbox;
   return lon >= west && lon < east && lat > south && lat <= north;

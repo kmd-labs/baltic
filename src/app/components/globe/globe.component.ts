@@ -17,16 +17,13 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { ThemeService } from '@kmd/design-system/services/theme.service';
 import { isAtMost, isMobileLandscape } from '@kmd/design-system/utils/breakpoints';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { IceVariant, PaleoDataService, PaleoFrame, TRANSECT } from '../../core/data/paleo-data.service';
+import { IceVariant, PaleoDataService, PaleoFrame, RSL_STEP_YR, TRANSECT } from '../../core/data/paleo-data.service';
 import { WATER_LAKE, WATER_OCEAN } from '../../core/data/water';
 import { nearestFrame, phaseAt, WaterClass } from '../../core/data/timeline';
 import { SILLS } from '../../core/data/geo';
 import { PATCH_FRAGMENT, PATCH_VERTEX } from './paleo-shaders';
 import { ICE_FRAGMENT, ICE_VERTEX } from './ice-shaders';
 import { ICE_DOMAIN, ICE_PROFILE_K, ICE_SDF_SCALE, iceBracket } from '../../core/data/ice-field';
-
-/** RSL is resampled at this granularity so scrubbing reuses cached fields. */
-const RSL_STEP_YR = 25;
 
 export interface GlobeLayers {
   ice: boolean;
@@ -556,22 +553,23 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
       this.showIce(t);
     }
 
-    const { a, b, w } = this.data.bracket(t);
-    if (a && a !== this.frame) {
-      this.frame = a;
-      this.fillWaterTex(this.waterTex!, a.water);
-    }
-    // The shader unions the two fills, so the second texture must never be left holding a frame
-    // from somewhere else on the timeline — a stale one would now contribute instead of being
-    // weighted out. With no bracket on the other side it mirrors the first.
-    const second = b ?? a;
-    if (second && second !== this.frameB) {
-      this.frameB = second;
-      this.fillWaterTex(this.waterBTex!, second.water);
-    }
-    if (this.frame) {
-      const la = this.frame.lakeLevelM;
-      u['uLake'].value = b ? la + (b.lakeLevelM - la) * w : la;
+    // The pair in play and the level between them come from the data layer, so the picture, the
+    // tooltip and the transect cannot answer differently (`A-01`).
+    const s = this.data.sceneWater(t);
+    if (s) {
+      if (s.a !== this.frame) {
+        this.frame = s.a;
+        this.fillWaterTex(this.waterTex!, s.a.water);
+      }
+      // The shader unions the two fills, so the second texture must never be left holding a frame
+      // from somewhere else on the timeline — a stale one would now contribute instead of being
+      // weighted out. With no bracket on the other side it mirrors the first.
+      const second = s.b ?? s.a;
+      if (second !== this.frameB) {
+        this.frameB = second;
+        this.fillWaterTex(this.waterBTex!, second.water);
+      }
+      u['uLake'].value = s.lakeLevelM;
     }
 
     // The ghost coast is a reference contour, so it stays on the 1 ka grid: following it

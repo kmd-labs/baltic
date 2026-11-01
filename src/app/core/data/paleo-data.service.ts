@@ -2,13 +2,13 @@ import { Injectable, signal } from '@angular/core';
 import type { Feature, Geometry } from 'geojson';
 import * as d3Geo from 'd3-geo';
 import { fetchKmdg, kmdgLayer, KmdgGrid } from './kmdg';
-import { bilinear, rslAt, RslCube } from './paleo';
+import { bilinear, maskFractionAt, rslAt, RslCube } from './paleo';
 import { EVENTS, FRAMES, lakeLevelAt, nearestFrame } from './timeline';
-import { cellIndex, FrameStats, inside, WATER_LAKE, WATER_OCEAN } from './water';
+import { cellIndex, FrameStats, inside, maskHit, WaterKind, waterKindAt, WATER_LAKE, WATER_OCEAN } from './water';
 import { ICE_KA_MAX, ICE_KA_MIN, iceSignedDistance } from './ice-field';
 import type { WorkerFrame, WorkerInit, WorkerRequest } from './paleo.worker';
 
-export type { FrameStats } from './water';
+export type { FrameStats, WaterKind } from './water';
 export { oceanSide } from './water';
 
 export type IceVariant = 'mc' | 'min' | 'max';
@@ -40,12 +40,27 @@ export interface PaleoFrame {
   stats: FrameStats;
 }
 
+/**
+ * The two frames the scene has in play at a continuous time, and the lake level between them.
+ * One answer for the picture and for every readout about it (`A-01`).
+ */
+export interface SceneWater {
+  /** Older bracketing frame, and the only one when t sits on the timeline. */
+  a: PaleoFrame;
+  /** The younger one, null while the worker has not delivered it. */
+  b: PaleoFrame | null;
+  /** Blend weight between the two: 0 at `a`, 1 at `b`. */
+  w: number;
+  /** Lake level interpolated between the frames — the shader's `uLake`. */
+  lakeLevelM: number;
+}
+
 export interface PointInfo {
   lon: number;
   lat: number;
   hNow: number;
   hPaleo: number;
-  water: 'ocean' | 'lake' | 'dry';
+  water: WaterKind;
   ice: boolean;
   /** RSL at the point; positive = sea higher than today. */
   rsl: number;
@@ -65,6 +80,13 @@ export interface TransectSample {
 const BASE = 'assets/data/';
 /** Enough for the frames in play plus the ghost-coast lookups; evicted oldest first. */
 const RSL_CACHE_MAX = 48;
+/**
+ * Continuous time is quantised to this step before an RSL field is computed, so scrubbing reuses
+ * cached fields: 25 years is far below one pixel of the timeline and well inside the 1 m agreement
+ * the pipeline is checked against (I-01). The renderers upload the field for this step and
+ * `rslFor` reads it, so a readout cannot sit a tick away from the picture.
+ */
+export const RSL_STEP_YR = 25;
 const DEG = Math.PI / 180;
 
 /** Umeå → Gdańsk along the basin axis (mockup transect). */
@@ -166,8 +188,10 @@ export class PaleoDataService {
   /**
    * The two timeline frames bracketing t and the blend weight between them: `w` = 0 at `a` (the
    * older frame), 1 at `b`. Both are on the timeline, so neither costs a new worker job.
+   *
+   * Private: callers want `sceneWater`, which also carries the level between the two.
    */
-  bracket(t: number): { a: PaleoFrame | null; b: PaleoFrame | null; w: number } {
+  private bracket(t: number): { a: PaleoFrame | null; b: PaleoFrame | null; w: number } {
     let older = FRAMES[0];
     let younger = FRAMES[FRAMES.length - 1];
     for (const f of FRAMES) {
@@ -265,36 +289,78 @@ export class PaleoDataService {
     return { ka: slice, exact: Math.abs(ka - slice) < 1e-6, features };
   }
 
+  /**
+   * What the scene draws at t. Time is continuous while the water mask is defined only on the 1 ka
+   * timeline, so the picture takes the two bracketing frames: their masks are **unioned**, not
+   * blended (paleo-shaders.ts `waterMask`), and the lake level is interpolated between them.
+   *
+   * Everything that has to agree with the picture goes through here — the renderers for the
+   * `uLake` uniform, `pointInfo` and `transect` for their readouts (`A-01`).
+   */
+  sceneWater(t: number): SceneWater | null {
+    const { a, b, w } = this.bracket(t);
+    const first = a ?? b;
+    if (!first) return null;
+    const second = b && b !== first ? b : null;
+    const la = first.lakeLevelM;
+    return { a: first, b: second, w, lakeLevelM: second ? la + (second.lakeLevelM - la) * w : la };
+  }
+
+  /**
+   * RSL field for a continuous time, quantised to `RSL_STEP_YR` so scrubbing reuses the cache —
+   * the same field the renderers upload, so a readout cannot drift from the picture by a tick.
+   */
+  private rslFor(t: number): Float32Array {
+    return this.rsl(Math.round(t / RSL_STEP_YR) * RSL_STEP_YR);
+  }
+
+  /** Water class at one point of the Baltic grid, by the rule the shader draws with. */
+  private kindAt(s: SceneWater, lon: number, lat: number, hp: number): WaterKind {
+    const g = this.baltic!;
+    const hit = (code: number) => {
+      const fa = maskFractionAt(s.a.water, g, code, lon, lat);
+      return maskHit(fa, s.b ? maskFractionAt(s.b.water, g, code, lon, lat) : fa);
+    };
+    return waterKindAt(hit(WATER_OCEAN), hit(WATER_LAKE), hp, s.lakeLevelM);
+  }
+
   /** What is under a point (tooltip). */
-  pointInfo(f: PaleoFrame, lon: number, lat: number): PointInfo | null {
+  pointInfo(t: number, lon: number, lat: number): PointInfo | null {
+    const s = this.sceneWater(t);
+    if (!s) return null;
     const b = this.baltic!;
     const e = this.europe!;
-    const rsl = bilinear(this.rsl(f.t), this.rslGrid!, lon, lat);
+    const rsl = bilinear(this.rslFor(t), this.rslGrid!, lon, lat);
     if (inside(b, lon, lat)) {
-      const i = cellIndex(b, lon, lat);
       const hNow = bilinear(this.hNowBaltic!, b, lon, lat);
-      const code = f.water[i];
+      const hPaleo = hNow - rsl;
+      // The ice wall of the flood fill, and this flag with it, stay on the 1 ka timeline — see
+      // ICE_SLICE_FOR_EVENT; the body drawn on the globe is interpolated between slices instead.
+      const mask = this.frame(t)?.iceMask;
       return {
         lon,
         lat,
         hNow,
-        hPaleo: hNow - rsl,
-        water: code === WATER_OCEAN ? 'ocean' : code === WATER_LAKE ? 'lake' : 'dry',
-        ice: !!f.iceMask?.[i],
+        hPaleo,
+        water: this.kindAt(s, lon, lat, hPaleo),
+        ice: !!mask?.[cellIndex(b, lon, lat)],
         rsl
       };
     }
     if (inside(e, lon, lat)) {
       const hNow = bilinear(this.hNowEurope!, e, lon, lat);
       const hPaleo = hNow - rsl;
-      const mc = f.ice?.features.mc;
+      // Outside the Baltic window there is no fill, and the shader falls back to hp < 0 as well.
+      const mc = this.frame(t)?.ice?.features.mc;
       return { lon, lat, hNow, hPaleo, water: hPaleo < 0 ? 'ocean' : 'dry', ice: !!mc && d3Geo.geoContains(mc, [lon, lat]), rsl };
     }
     return null;
   }
 
-  /** Profile along TRANSECT in the Baltic window. */
-  transect(f: PaleoFrame, samples = 260): { total: number; points: TransectSample[] } {
+  /** Profile along TRANSECT in the Baltic window. Null until the bracketing frames arrive. */
+  transect(t: number, samples = 260): { total: number; points: TransectSample[] } | null {
+    const s = this.sceneWater(t);
+    if (!s) return null;
     const seg: number[] = [];
     let total = 0;
     for (let n = 0; n + 1 < TRANSECT.length; n++) {
@@ -303,28 +369,29 @@ export class PaleoDataService {
       total += d;
     }
     const b = this.baltic!;
-    const rsl = this.rsl(f.t);
+    const rsl = this.rslFor(t);
+    const iceMask = this.frame(t)?.iceMask;
     const points: TransectSample[] = [];
     for (let q = 0; q <= samples; q++) {
-      let s = (q / samples) * total;
+      let d = (q / samples) * total;
       let n = 0;
-      while (n < seg.length - 1 && s > seg[n]) s -= seg[n++];
-      const u = Math.min(1, s / seg[n]);
+      while (n < seg.length - 1 && d > seg[n]) d -= seg[n++];
+      const u = Math.min(1, d / seg[n]);
       const [a0, a1] = TRANSECT[n];
       const [b0, b1] = TRANSECT[n + 1];
       const lon = a0 + (b0 - a0) * u;
       const lat = a1 + (b1 - a1) * u;
-      const i = cellIndex(b, lon, lat);
       const hNow = bilinear(this.hNowBaltic!, b, lon, lat);
-      const code = f.water[i];
+      const hPaleo = hNow - bilinear(rsl, this.rslGrid!, lon, lat);
+      const kind = this.kindAt(s, lon, lat, hPaleo);
       points.push({
         km: (q / samples) * total,
         lon,
         lat,
         hNow,
-        hPaleo: hNow - bilinear(rsl, this.rslGrid!, lon, lat),
-        level: code === WATER_OCEAN ? 0 : code === WATER_LAKE ? f.lakeLevelM : null,
-        ice: !!f.iceMask?.[i]
+        hPaleo,
+        level: kind === 'lake' ? s.lakeLevelM : kind === 'ocean' ? 0 : null,
+        ice: !!iceMask?.[cellIndex(b, lon, lat)]
       });
     }
     return { total, points };

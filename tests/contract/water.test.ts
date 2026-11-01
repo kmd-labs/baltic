@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { decodeKmdg, gunzipIfNeeded, kmdgLayer } from '../../src/app/core/data/kmdg.ts';
-import { buildResampler, paleoElevation, rslAt } from '../../src/app/core/data/paleo.ts';
-import { basinStats, fillWater, WATER_LAKE, WATER_OCEAN } from '../../src/app/core/data/water.ts';
+import { buildResampler, maskFractionAt, paleoElevation, rslAt } from '../../src/app/core/data/paleo.ts';
+import { basinStats, fillWater, maskHit, waterKindAt, WATER_LAKE, WATER_OCEAN } from '../../src/app/core/data/water.ts';
 
 test('ocean water stops at a sill above the ocean level', () => {
   // 9 × 5 cells west→east: ocean | sill at +12 m | depression at −40 m | high ground.
@@ -50,4 +50,58 @@ test('Ancylus maximum (10.3 ka): the basin is a lake above the ocean', () => {
   const { water, level } = fillWater(baltic, hp, null);
   assert.ok(level > 0, `level ${level}`);
   assert.ok(water.some(w => w === WATER_LAKE));
+});
+
+// ── A-01: the readouts and the picture are the same rule ─────────────────────────────────────────
+// Time is continuous, the water mask is not: the scene unions the two bracketing frames' masks and
+// interpolates the lake level between them (paleo-shaders.ts `waterMask`, `isLakeAt`). `pointInfo`
+// and `transect` are built from the primitives exercised here — `maskFractionAt` for the channel,
+// `maskHit` for the union, `waterKindAt` for the class — so reading them is reading what the
+// tooltip reads. The service itself needs Angular and a Worker and cannot be loaded in Node.
+test('mid-interval water class follows the scene rule, not the nearest frame', () => {
+  const tA = 11000;
+  const tB = 10300;
+  const t = 10600; // between the two frames, and nearer tB — so the old rule had a wrong level too
+  const w = (tA - t) / (tA - tB);
+  const a = fillWater(baltic, paleoElevation(hNow, rslAt(cube, tA / 1000), rs), null);
+  const b = fillWater(baltic, paleoElevation(hNow, rslAt(cube, tB / 1000), rs), null);
+  const level = a.level + (b.level - a.level) * w;
+  assert.ok(level > Math.min(a.level, b.level) && level < Math.max(a.level, b.level), `level ${level}`);
+
+  const hp = paleoElevation(hNow, rslAt(cube, t / 1000), rs);
+  const [west, south, east, north] = baltic.bbox;
+  const dLon = (east - west) / baltic.nx;
+  const dLat = (north - south) / baltic.ny;
+
+  // Where the two frames disagree about a cell, the union is what the picture uses — and that is
+  // where a nearest-frame read is free to say something else. Strided to keep the test quick.
+  const candidates: number[] = [];
+  for (let i = 0; i < hp.length; i++) if (a.water[i] !== b.water[i]) candidates.push(i);
+  assert.ok(candidates.length > 1000, `only ${candidates.length} cells differ between the frames`);
+  const stride = Math.ceil(candidates.length / 4000);
+
+  let divergent = 0;
+  for (let k = 0; k < candidates.length; k += stride) {
+    const i = candidates[k];
+    const lon = west + ((i % baltic.nx) + 0.5) * dLon;
+    const lat = north - (Math.floor(i / baltic.nx) + 0.5) * dLat;
+    const hit = (code: number) =>
+      maskHit(maskFractionAt(a.water, baltic, code, lon, lat), maskFractionAt(b.water, baltic, code, lon, lat));
+    const ocean = hit(WATER_OCEAN);
+    const lake = hit(WATER_LAKE);
+    const h = hp[i];
+    // The rule, stated here independently of the implementation under test.
+    const expected = lake && h < level ? 'lake' : ocean && h < 0 ? 'ocean' : 'dry';
+    assert.equal(waterKindAt(ocean, lake, h, level), expected, `cell ${i} at ${lon.toFixed(3)} ${lat.toFixed(3)}`);
+
+    // The reading this replaced: the nearest frame's raw mask and that frame's own level.
+    const near = b; // nearestFrame(10600) === 10300
+    const code = near.water[i];
+    const old = code === WATER_LAKE && h < near.level ? 'lake' : code === WATER_OCEAN ? 'ocean' : 'dry';
+    if (old !== expected) divergent++;
+  }
+  // If this ever reaches zero the two rules have converged and the guard below is worthless — far
+  // more likely is that someone moved a readout back onto the nearest frame.
+  assert.ok(divergent > 0, 'no cell distinguishes the scene rule from the nearest-frame read');
+  console.log(`    A-01: ${divergent} of ${Math.ceil(candidates.length / stride)} sampled coastal cells disagree with a nearest-frame read`);
 });

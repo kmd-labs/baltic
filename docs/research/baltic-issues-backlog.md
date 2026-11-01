@@ -767,7 +767,7 @@ Decyzja z 2026-10-31: scena to **glob z `kmd-labs/el-nino` — tylko glob i reli
 > Pominięte zgodnie z decyzją: wszystko, co wymagałoby uzyskania licencji, czyli zbiory ❓
 > z `SOURCES.md` (lepsza batymetria, batymetria jezior, `V-08` na `nkg2016lu`, `sgu_strand`, `sincos`).
 
-## `A-01` Realign tooltip and transect with the rendered water rule
+## `A-01` Realign tooltip and transect with the rendered water rule — **wykonane 2026-11-01**
 
 **Epik:** A · **Zależy od:** — · **Blokuje:** — · **Labels:** `app`, `regression`
 
@@ -778,9 +778,9 @@ i jej `lakeLevelM`. Przed zmianą maska renderera równała się najbliższej kl
 komórki. Rozbieżność jest największa przy brzegu — czyli tam, gdzie użytkownik najczęściej najeżdża.
 
 **DoD**
-- [ ] `pointInfo` i `transect` dostają bracket i stosują tę samą regułę co shader
-- [ ] Poziom w obu ścieżkach interpolowany, nie brany z klatki
-- [ ] Test: w klatce pośredniej klasa wody z `pointInfo` zgadza się z regułą sceny na siatce punktów brzegowych
+- [x] `pointInfo` i `transect` dostają bracket i stosują tę samą regułę co shader — przez `sceneWater(t)`, z którego korzystają też oba renderery (jeden właściciel pary klatek i poziomu)
+- [x] Poziom w obu ścieżkach interpolowany, nie brany z klatki; RSL też, przez wspólny `RSL_STEP_YR`
+- [x] Test `mid-interval water class follows the scene rule, not the nearest frame` — 2 046 z 3 819 próbkowanych komórek brzegowych rozstrzygało się inaczej przy odczycie z najbliższej klatki
 
 **Audyt:** I.2 `A-01`
 

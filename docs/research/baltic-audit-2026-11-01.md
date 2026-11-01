@@ -43,7 +43,7 @@ testy kontraktowe (24), w tym porównanie `H_paleo` z pipeline'em z tolerancją 
 
 Numeracja odpowiada pozycjom `A-xx` w backlogu.
 
-### `A-01` Podpowiedź i przekrój rozjechały się ze sceną — **regresja z tej sesji**
+### `A-01` Podpowiedź i przekrój rozjechały się ze sceną — **regresja z tej sesji, naprawiona**
 
 `pointInfo` ([`paleo-data.service.ts:269`](../../src/app/core/data/paleo-data.service.ts)) i `transect`
 (`:296`) czytają `f.water[i]` — surową maskę **najbliższej klatki** — oraz `f.lakeLevelM`, czyli poziom
