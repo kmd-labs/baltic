@@ -16,11 +16,11 @@ Aplikacja liczy wodę, poziomy progów i metryki sama z siatek (Web Worker), wi�
 
 | Status | Zadania |
 | :-- | :-- |
-| **Zamknięte — wykonane** | `0-01` #7, `0-02` #8, `0-06` #12, `0-08` #14, `C-01` #15, `C-04` #18, `C-05` #19, `C-08` #23, `C-06b` #62, `I-05` #58 oraz epik `A`: `A-01` #70, `A-02` #71, `A-03` #72, `A-04` #73, `A-06` #75, `A-07` #76, `A-08` #77, `A-09` #78 |
+| **Zamknięte — wykonane** | `0-01` #7, `0-02` #8, `0-06` #12, `0-08` #14, `C-01` #15, `C-04` #18, `C-05` #19, `C-08` #23, `V-01` #40, `V-06` #45, `C-06b` #62, `I-05` #58 oraz epik `A`: `A-01` #70, `A-02` #71, `A-03` #72, `A-04` #73, `A-06` #75, `A-07` #76, `A-08` #77, `A-09` #78 |
 | **Zamknięte — wykonane z follow-upem** | `C-03` #17 (reszta → `I-01`, `0-07`, `V-03`), `C-06` #20 i `C-14` #27 (→ `C-06b` #62), `C-07` #21 (→ `C-07b` #63), `C-13` #28, `I-02` #53 (→ `I-02b` #64), `I-03` #54 (→ `I-03b` #65), `I-04` #55 (→ `I-04b` #66), `0-05` #11 (→ `0-05b` #67) |
 | **Usunięte — nie robimy** | `C-02` #16, `C-09` #22, `C-10` #24, `C-11` #25, `C-12` #26, `C-15` #29, `V-07` #46, `V-12` #52 — decyzja użytkownika; **trwałe skasowanie na GitHubie czeka na uprawnienia** (system zablokował `gh issue delete`) |
 | **Zawężone** | `I-01` #50 — siatki, zarysy lodu i manifest, bez plików klatek |
-| **Otwarte** | `0-03` #9, `0-04` #10, `0-07` #13, `V-01` #40, `V-03` #42, `V-06` #45, `V-08` #47, `V-11` #51 oraz follow-upy #63–#67 |
+| **Otwarte** | `0-03` #9, `0-04` #10, `0-07` #13, `V-03` #42, `V-08` #47, `V-11` #51 oraz follow-upy #63–#67 |
 | **Zamknięte — wykonane** (c.d.) | `V-02` #41 — od 2026-11-02 kontrola czyta katalog z `sills.json`, nie z `geo.ts`; niezmienniki blokujące, test negatywny, próg sterujący per klatka |
 | **Otwarte w epiku `A`** | `A-05` #74 (korekta na osady — potrzebny Python, pobranie `zhang2024_sed` i decyzja o rozkładzie miąższości w czasie) |
 
@@ -77,12 +77,57 @@ z pierwszej komórki wiersza tabeli i z nagłówka wypunktowania. Bez tego „ka
 cytowaniem" jest ozdobą. Sprawdzone podrzuconym `not_a_real_source` — pada z nazwą granicy.
 `kotthoff2022` przestał być „zarejestrowany, nieużywany": to źródło onsetu w Małym Bełcie.
 
-**Następne w kolejce** (stan 2026-11-02): **`V-06` #45** jest teraz odblokowane — ma wszystko,
-czego potrzebowało: spadek Billingen z `fillWater`, highstand 7,5–6,5 ka z klatek i lokalny onset
-Małego Bełtu z `timeline.json`, zamiast granicy basenowej, o którą by fałszywie padało. Brakuje mu
-tylko `V-01` #40 (rejestr testów i raport), który jest mały i też bez pobrań. Alternatywa bez
-pobrań: `I-04b` #66 (panel źródeł generowany z `SOURCES.md` — parser do tego już istnieje w
-teście). `V-03` #42 nadal czeka na odtworzenie środowiska Pythona i ~1 GB pobrań.
+### Co weszło 2026-11-02, część trzecia — `V-01` #40 + `V-06` #45
+
+**Rejestr walidacji jest w TypeScripcie, nie w `validate.py` — i to świadome odstępstwo od §7
+planu.** Plan pisano, gdy pipeline emitował gotowe klatki; dziś aplikacja liczy maskę wody, poziom,
+próg sterujący i metryki sama, w `src/app/core/data`. Walidator w Pythonie musiałby więc
+reimplementować regułę wody, żeby mieć co sprawdzać — a repo zapłaciło za ten błąd już dwa razy
+(`A-02` reguła wody w dwóch kopiach, `A-03` mapowanie przekrojów lodu w dwóch; obie się rozjechały).
+Kontrola, która sama wyprowadza to, co waliduje, mierzy własną kopię. W Pythonie zostaje to, co do
+Pythona należy: czytanie NetCDF-a i zapis siatek.
+
+Dwa statusy: `blocking` przerywa przebieg (niezmiennik modelu albo porównanie z literaturą z
+budżetem, który obecny stan spełnia — żeby regresja padła), `reporting` tylko mierzy i drukuje.
+Każdy wiersz niesie odchylenie **liczbowo**, także gdy przechodzi: inaczej rozmiar rozbieżności
+schowałby się pod zieloną fajką.
+
+Stan: **4 z 4 bramek blokujących zielone, 2 pomiary raportowane.**
+
+| kontrola | model | oczekiwanie | odchylenie |
+| :-- | :-- | :-- | :-- |
+| `sill-balance` | 27 z 27 klatek | niezmiennik §0.1 / §0.2 | 0 klatek |
+| `billingen-drop` | **31,3 m** (31,3 → 0,0 przy 11 750 → 11 650 BP) | 25–28 m | **+3,3 m** poza pasmem, budżet 8 m |
+| `holocene-highstand` | Blekinge 5,70 ka, Öland 5,70 ka, **Gotlandia 6,80 ka** | maksimum w 7,5–6,5 ka w pasie przejściowym i nigdzie więcej | najgorsze −0,8 ka, przy węźle pola 1,1 ka |
+| `little-belt-littorina` | **7489 cal BP** | 7400 cal BP (onset lokalny) | **+89 lat**, budżet 600 |
+| `lake-level-vs-literature` | RMSE 12,2 m / 11 klatek | BIL +25, Ancylus do +10 | najgorsze −25,0 m przy 16 000 BP |
+| `outlet-catalogue-distance` | 10 klatek jeziornych | każda trasa z nazwą w pobliżu | 21 km (`darss`, 10 300 BP) |
+
+Trzy rzeczy w tej tabeli warte uwagi:
+
+1. **Mały Bełt wychodzi bardzo dobrze — 89 lat.** Przejście jest rozwiązywane *między* klatkami
+   (bisekcja `H_paleo = 0` w widełkach, w których maska przechodzi w wodę połączoną z oceanem), więc
+   nie jest przyciągnięte do siatki 1 ka. Porównanie idzie do **lokalnego** onsetu z `timeline.json`,
+   nie do granicy basenowej starszej o ~1 ka — czyli dokładnie po to `C-08` rozdzielił te dwa pola.
+2. **Highstand ma twardy limit rozdzielczości, nie błąd 0,8 ka.** Maksimum RSL może wypaść tylko na
+   węźle pola, a okno 7,5–6,5 ka zawiera dokładnie jeden węzeł (6,8 ka). Gotlandia trafia w okno;
+   Blekinge i Öland są o jeden węzeł młodsze. Raportuję to jako „jeden węzeł", bo „0,8 ka" sugeruje
+   precyzję, której pole nie ma.
+3. **Kontrola highstandu jest różnicująca, nie spełniona przez dowolne pole.** Wymaga też, żeby pas
+   był pasem: punkty czystego wypiętrzania (Umeå, Sztokholm) muszą mieć maksimum w deglacjacji, a
+   zapadający południe (Gdańsk, Szczecin) nie może mieć holoceńskiego highstandu. Bez tego byłaby to
+   bramka, którą przepuszcza wszystko.
+
+Budżety są uzasadnione, nie okrągłe: 8 m na spadek Billingen to połowa budżetu poziomów (20 m,
+`A-04`), bo spadek jest różnicą dwóch poziomów i dziedziczy część błędu B1; 600 lat na Mały Bełt
+siedzi dobrze poniżej odstępu węzłów RSL w tej epoce (1,0 ka), który jest faktyczną podłogą
+precyzji. Oba zacieśnią się, gdy `V-03` wybierze model Ziemi.
+
+**Następne w kolejce** (stan 2026-11-02): bez pobrań zostaje **`I-04b` #66** (panel źródeł
+generowany z `SOURCES.md` — parser do tego już istnieje w `tests/contract/timeline.test.ts`) oraz
+**`V-11` #51** w części topologicznej (budżet rozmiaru już działa, zostaje CRS i samoprzecięcia —
+ale to ma sens dopiero z `I-01` #50). Największą wartość merytoryczną nadal ma **`V-03` #42**,
+bo zamyka B1 i B3, i nadal wymaga odtworzenia środowiska Pythona oraz ~1 GB pobrań.
 
 ## Jak czytać
 
@@ -578,14 +623,14 @@ Klatki faz `deglaciation`, `bil`, `ancylus` (12 → 20 ka co 1 ka) oraz przekroj
 
 `tools/data/validate.py` produkuje raport i **kończy się błędem** przy przekroczeniu progów.
 
-## `V-01` validate.py skeleton and CI gate
+## `V-01` validate.py skeleton and CI gate — **wykonane 2026-11-02, w TypeScripcie**
 
 **Epik:** V · **Zależy od:** `0-04`, `0-06` · **Blokuje:** pozostałe zadania V · **Labels:** `validation`, `ci`
 
 **DoD**
-- [ ] Rejestr testów z progami, uruchamiany z `npm run data:build`
-- [ ] Raport w czytelnej formie (tabela per test)
-- [ ] Niezaliczony test o statusie `blocking` przerywa build
+- [x] Rejestr testów z progami (`tools/validate/checks.ts`), uruchamiany `npm run validate`; `data:build` zawoła go, gdy powstanie (`0-04` #10)
+- [x] Raport w czytelnej formie — wiersz per test: model, oczekiwanie, odchylenie, ograniczenie porównania
+- [x] Niezaliczony test o statusie `blocking` przerywa build — sprawdzone zaciśnięciem budżetu, exit 1; w CI jako krok `Validation report'
 
 **Plan:** §7
 
@@ -628,7 +673,7 @@ Policzony poziom w punktach bazy Rosentau i in. 2021 (1099 wskaźników, GFZ `10
 
 **Plan:** §7
 
-## `V-06` Event checks
+## `V-06` Event checks — **wykonane 2026-11-02**
 
 **Epik:** V · **Zależy od:** `V-01`, `C-06`, `C-10`, `C-14` · **Labels:** `validation`
 
@@ -637,8 +682,8 @@ Policzony poziom w punktach bazy Rosentau i in. 2021 (1099 wskaźników, GFZ `10
 - Przejście do Littoriny w Małym Bełcie **~7,4 ka cal BP** — porównywane z lokalnym onsetem z `timeline.json` (`C-08`), nie z basenową granicą fazy (~8 500 BP).
 
 **DoD**
-- [ ] Trzy testy z tolerancjami w `validate.py`
-- [ ] Odchylenie raportowane liczbowo, nie binarnie
+- [x] Trzy testy z tolerancjami w rejestrze: spadek Billingen, highstand, Mały Bełt
+- [x] Odchylenie raportowane liczbowo, nie binarnie — pilnuje tego osobny test (kolumna musi zawierać liczbę)
 
 **Plan:** §7
 
