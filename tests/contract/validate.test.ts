@@ -12,6 +12,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { context, runChecks } from '../../tools/validate/checks.ts';
+import { checkBbox, checkGeometry, selfIntersections } from '../../tools/validate/topology.ts';
 
 const ctx = await context();
 const results = await runChecks(ctx);
@@ -68,4 +69,100 @@ test('the highstand check is discriminating, not satisfied by any field', () => 
   assert.equal(r.pass, true);
   assert.doesNotMatch(r.note ?? '', /peaks at|shows a/, `the belt is misplaced: ${r.note}`);
   assert.match(r.value, /gotland-w 6\.8\d ka/, `Gotland no longer peaks inside the window: ${r.value}`);
+});
+
+// V-11: the topology gate, and that it would notice.
+//
+// The published outlines pass because the pipeline runs `make_valid` and `set_precision`. A gate
+// that only ever sees valid data proves nothing about itself, so these feed it the two defects it
+// exists to catch. The reason it matters is that the outlines are the *wall* of the flood fill
+// (`A-03`): a bow tie in a margin is a lake draining the wrong way, not a cosmetic defect.
+const ring = (points: number[][]) => ({ points, where: 'test' });
+
+test('a bow tie is found, a plain square is not', () => {
+  const square = ring([
+    [0, 0],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+    [0, 0]
+  ]);
+  assert.equal(selfIntersections(square).length, 0);
+
+  // The same four corners in an order that crosses itself.
+  const bowTie = ring([
+    [0, 0],
+    [1, 1],
+    [1, 0],
+    [0, 1],
+    [0, 0]
+  ]);
+  assert.ok(selfIntersections(bowTie).length > 0, 'a self-crossing ring must be reported');
+
+  // Touching at a shared vertex is not a crossing: adjacent segments always share an endpoint.
+  const spike = ring([
+    [0, 0],
+    [2, 0],
+    [1, 0],
+    [1, 2],
+    [0, 0]
+  ]);
+  assert.equal(selfIntersections(spike).length, 0, 'collinear backtracking is degenerate, not crossing');
+});
+
+test('a feature collection with a defect is reported, with where', () => {
+  const broken = {
+    features: [
+      {
+        properties: { ka: 12, variant: 'mc' },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 0],
+              [1, 1],
+              [1, 0],
+              [0, 1],
+              [0, 0]
+            ]
+          ]
+        }
+      },
+      // Not closed, and far outside EPSG:4326 — a projected coordinate pair would look like this.
+      {
+        properties: { ka: 11, variant: 'mc' },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [400000, 6000000],
+              [400100, 6000000],
+              [400100, 6000100]
+            ]
+          ]
+        }
+      }
+    ]
+  };
+  const r = checkGeometry(broken);
+  assert.equal(r.selfIntersecting.length, 1);
+  assert.match(r.selfIntersecting[0].where, /"ka":12/);
+  assert.equal(r.malformed.length, 1, `malformed: ${r.malformed.join('; ')}`);
+  assert.equal(r.outOfRange.length, 1, `outOfRange: ${r.outOfRange.join('; ')}`);
+});
+
+test('a bbox that is not degrees is rejected', () => {
+  assert.deepEqual(checkBbox([9, 53, 33, 67]), []);
+  assert.ok(checkBbox([33, 53, 9, 67]).some(s => /not west of east/.test(s)));
+  assert.ok(checkBbox([9, 67, 33, 53]).some(s => /not south of north/.test(s)));
+  // A UTM window: plausible numbers, wrong system.
+  assert.ok(checkBbox([400000, 6000000, 500000, 6100000]).length >= 2);
+});
+
+test('the published outlines are clean, and the gate says so numerically', () => {
+  const r = byId.get('topology-crs-checksums');
+  assert.ok(r);
+  assert.equal(r.pass, true, r.note);
+  assert.match(r.value, /\d+ rings \/ \d+ points/);
+  assert.equal(r.deviation, '0 problem(s)');
 });

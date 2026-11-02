@@ -193,7 +193,7 @@ test('GLSL lake/ocean precedence equals waterKindAt', () => {
 // The outlines rasterise without a DOM now (ice-field.ts), so the phase where the ice *is* the
 // mechanism is finally reachable from here. Before that every test in this file passed
 // `fillWater(..., null)` and the whole Baltic Ice Lake went uncovered.
-const ice = JSON.parse(readFileSync(join(DATA, 'prototype', 'ice-dated1.json'), 'utf8')) as {
+const ice = JSON.parse(readFileSync(join(DATA, 'ice', 'dated1.json'), 'utf8')) as {
   features: Feature<Geometry, { ka: number; variant: string }>[];
 };
 const iceCache = new Map<number, Uint8Array>();

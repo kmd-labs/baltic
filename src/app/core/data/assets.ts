@@ -10,6 +10,22 @@
 /** Prefix under the built app; `src/assets` is copied to `assets` by the Angular builder. */
 export const ASSET_BASE = 'assets/data/';
 
+/** The index the app reads first; everything else is located through it (`I-02b`). */
+export const MANIFEST = 'manifest.json';
+
+/**
+ * Grid ids as `manifest.json` keys them. The app asks for a grid by what it is and the manifest
+ * says where it lives, so moving or renaming a grid in the data does not need a code change — and
+ * a grid the app needs but the manifest does not publish fails with a sentence instead of an empty
+ * scene. The paths below stay the declaration the generator builds the manifest from, and
+ * `tests/contract/manifest.test.ts` holds the two to each other.
+ */
+export const GRID_ID = {
+  demEurope: 'dem-europe',
+  demBaltic: 'dem-baltic',
+  rsl: 'rsl'
+} as const;
+
 /**
  * Fetched in parallel by `PaleoDataService.load()` before the first frame. Everything else is
  * either computed in the Web Worker from these (water masks, metrics) or pulled lazily.
@@ -18,7 +34,7 @@ export const ASSETS = {
   demEurope: 'grid/dem-europe.bin.gz',
   demBaltic: 'grid/dem-baltic.bin.gz',
   rsl: 'grid/rsl.bin.gz',
-  ice: 'prototype/ice-dated1.json',
+  ice: 'ice/dated1.json',
   /** 4 KB, and every frame's phase card needs it to name the outlet — eager rather than lazy. */
   sills: 'sills.json'
 } as const;

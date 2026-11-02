@@ -185,7 +185,7 @@ test('fillPath leaves a hole where the inner ring is wound the other way', () =>
 });
 
 const BALTIC = await grid('grid/dem-baltic.bin.gz');
-const ICE = JSON.parse(readFileSync(join(DATA, 'prototype', 'ice-dated1.json'), 'utf8')) as {
+const ICE = JSON.parse(readFileSync(join(DATA, 'ice', 'dated1.json'), 'utf8')) as {
   features: Feature<Geometry, { ka: number; variant: string }>[];
 };
 const mcAt = (ka: number) => ICE.features.find(f => f.properties.ka === ka && f.properties.variant === 'mc')!;

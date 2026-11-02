@@ -1,0 +1,18 @@
+# Line endings are LF in the working tree on every platform, not only in the object store.
+#
+# This is not tidiness. Since `I-01` the manifest records the byte size and the SHA-256 of every
+# published file, and the Angular builder copies `src/assets` into `dist` verbatim — so with the
+# default Windows checkout the same commit produces a different manifest on a developer's machine
+# than in CI (sills.json: 4 325 bytes against 4 149, and a different hash on every text asset).
+# The regenerate-and-diff gate would fail for the platform rather than for the data, and the
+# checksums would describe bytes nobody is served.
+#
+# Git already stores LF; this only stops the checkout from converting it.
+* text=auto eol=lf
+
+# Binary, never converted or diffed.
+*.bin.gz binary
+*.gz binary
+*.png binary
+*.jpg binary
+*.svg text eol=lf

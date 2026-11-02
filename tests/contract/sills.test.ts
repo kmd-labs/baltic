@@ -35,7 +35,7 @@ const cube = {
 };
 const hNow = kmdgLayer(baltic, 0);
 const rs = buildResampler(rslGrid, baltic);
-const ice = JSON.parse(readFileSync(join(DATA, 'prototype', 'ice-dated1.json'), 'utf8')) as {
+const ice = JSON.parse(readFileSync(join(DATA, 'ice', 'dated1.json'), 'utf8')) as {
   features: Feature<Geometry, { ka: number; variant: string }>[];
 };
 const iceCache = new Map<number, Uint8Array>();

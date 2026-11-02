@@ -36,7 +36,13 @@ export const ICE_DOMAIN: GridGeometry = {
 /** Distances are stored as Int16: kilometres x 10 (100 m steps, +-3276 km). */
 export const ICE_SDF_SCALE = 10;
 
-const TAU0 = 1e5; // Pa — basal shear stress
+/**
+ * Basal shear stress of the plastic profile, Pa. Exported because `manifest.json` has to record
+ * it (`C-07b`, `I-01`): it is the one parameter that decides the thickness the app reports, so a
+ * reader of the published data cannot interpret that number without it.
+ */
+export const ICE_TAU0_PA = 1e5;
+const TAU0 = ICE_TAU0_PA;
 const RHO_ICE = 917; // kg m-3
 const G = 9.81;
 

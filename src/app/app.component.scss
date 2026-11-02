@@ -345,6 +345,21 @@
   color: color("text-dim");
 
   &--error { color: color("error"); }
+
+  // The reason the load failed, next to the fact that it did (I-02b). Clipped rather than wrapped
+  // so a long path cannot push the dock around; the full text is on the title attribute.
+  &__why {
+    display: inline-block;
+    max-width: 42ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+    font-family: $font-family-mono;
+    opacity: 0.85;
+
+    &::before { content: " · "; }
+  }
 }
 
 .tabbar {
