@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import type { Feature, Geometry } from 'geojson';
+import { ASSET_BASE, ASSETS } from './assets';
 import { fetchKmdg, kmdgLayer, KmdgGrid } from './kmdg';
 import { bilinear, maskFractionAt, rslAt, RslCube } from './paleo';
 import { FRAMES, lakeLevelAt, nearestFrame } from './timeline';
@@ -76,7 +77,6 @@ export interface TransectSample {
   ice: boolean;
 }
 
-const BASE = 'assets/data/';
 /** Enough for the frames in play plus the ghost-coast lookups; least recently used evicted. */
 const RSL_CACHE_MAX = 48;
 /**
@@ -125,10 +125,10 @@ export class PaleoDataService {
     if (this.loading) return this.loading;
     this.state.set('loading');
     this.loading = Promise.all([
-      fetchKmdg(BASE + 'grid/dem-europe.bin.gz'),
-      fetchKmdg(BASE + 'grid/dem-baltic.bin.gz'),
-      fetchKmdg(BASE + 'grid/rsl.bin.gz'),
-      fetch(BASE + 'prototype/ice-dated1.json').then(r => {
+      fetchKmdg(ASSET_BASE + ASSETS.demEurope),
+      fetchKmdg(ASSET_BASE + ASSETS.demBaltic),
+      fetchKmdg(ASSET_BASE + ASSETS.rsl),
+      fetch(ASSET_BASE + ASSETS.ice).then(r => {
         if (!r.ok) throw new Error(`ice: HTTP ${r.status}`);
         return r.json();
       })

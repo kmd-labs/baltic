@@ -1,0 +1,86 @@
+name: CI
+
+# Gate on pull requests to main (0-08). Until this existed, the only workflow on the repo ran on
+# push to main — the contract tests passed because somebody remembered to run them.
+#
+# It never fetches raw data. `data/raw/` is ~1 GB and lives outside git by design, so there is no
+# pipeline run to reproduce here: CI checks the assets that are committed in src/assets/data/.
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Build, contract tests and asset budget
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with Design System submodule
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # `angular.json` resolves SCSS through src/design-system, so an uninitialised submodule fails
+      # the build with an unreadable import error several minutes in. Fail in five seconds instead,
+      # and say which commit is checked out (0-01).
+      - name: Verify the Design System submodule is checked out
+        run: |
+          test -f src/design-system/_variables.scss \
+            || { echo "::error::src/design-system is empty — clone with --recurse-submodules (see README)"; exit 1; }
+          git submodule status src/design-system
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Contract tests
+        run: npm run test:contract
+
+      # Weighs src/assets/data against the plan's limits: 25 MiB total, 4 MiB on first load.
+      - name: Asset budget
+        run: npm run assets:check
+
+      # The audit's numbers recomputed from the committed assets, so a change to a grid or to the
+      # water rule that moves a published figure shows up on the PR that moves it (A-06).
+      - name: Audit metrics
+        run: npm run audit:metrics
+
+  data:
+    name: Data contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+
+      # The contract-time subset: JSON Schema plus numpy. The pipeline's GDAL-backed half is only
+      # needed to turn downloads into assets, and nothing here downloads.
+      - name: Install contract dependencies
+        run: pip install -r tools/data/requirements-contract.txt
+
+      # Same commands as `npm run contract:validate` and `npm run test:data`, without an npm ci
+      # this job has no other use for.
+      - name: Validate committed assets against the contract
+        run: python tools/data/contract.py
+
+      - name: Pipeline contract tests
+        run: python -m unittest discover -s tools/data/tests -t .

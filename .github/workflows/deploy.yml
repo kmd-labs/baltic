@@ -1,12 +1,13 @@
 name: Deploy to GitHub Pages
 
+# Deploys the commit as recorded in git, submodule pin included (0-01). Design-system updates
+# arrive as their own commit on main, opened by sync-design-system.yml, so a push to main is the
+# only signal that anything to deploy has changed — the six-hourly schedule and the
+# design-system-updated dispatch that used to pick up submodule drift would now rebuild an
+# identical tree.
 on:
   push:
     branches: [ main ]
-  schedule:
-    - cron: '0 */6 * * *'
-  repository_dispatch:
-    types: [design-system-updated]
   workflow_dispatch:
 
 permissions:
@@ -28,8 +29,14 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Pull latest Design System changes
-        run: git submodule update --remote --force src/design-system
+      # Without it the build fails later on an unreadable SCSS import; fail here, where the cause
+      # is legible. `git submodule update --remote` used to run instead, which built whatever
+      # design-system main happened to be — a deploy that no commit in this repo describes.
+      - name: Verify the Design System submodule is checked out
+        run: |
+          test -f src/design-system/_variables.scss \
+            || { echo "::error::src/design-system is empty — checkout did not fetch the submodule"; exit 1; }
+          git submodule status src/design-system
 
       - name: Generate GitHub App Token
         id: app-token
