@@ -29,7 +29,7 @@ import { PHASES } from '../../core/data/timeline';
     } @else {
     <div class="ticks" aria-hidden="true">
       @for (k of ticks; track k) {
-        <span [style.left.%]="pos(k)">{{ k === 0 ? '0' : k / 1000 + ' ka' }}</span>
+        <span [style.left.%]="pos(k)">{{ k === 0 ? '0' : i18n.t().unitKa(k / 1000 + '') }}</span>
       }
     </div>
     }

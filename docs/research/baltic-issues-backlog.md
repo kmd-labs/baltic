@@ -16,11 +16,11 @@ Aplikacja liczy wodę, poziomy progów i metryki sama z siatek (Web Worker), wi�
 
 | Status | Zadania |
 | :-- | :-- |
-| **Zamknięte — wykonane** | `0-01` #7, `0-02` #8, `0-06` #12, `0-08` #14, `C-01` #15, `C-04` #18, `C-05` #19, `C-08` #23, `V-01` #40, `V-06` #45, `C-06b` #62, `I-05` #58 oraz epik `A`: `A-01` #70, `A-02` #71, `A-03` #72, `A-04` #73, `A-06` #75, `A-07` #76, `A-08` #77, `A-09` #78 |
+| **Zamknięte — wykonane** | `0-01` #7, `0-02` #8, `0-06` #12, `0-08` #14, `C-01` #15, `C-04` #18, `C-05` #19, `C-08` #23, `V-01` #40, `V-06` #45, `V-08` #47, `C-06b` #62, `I-03b` #65, `I-05` #58 oraz epik `A`: `A-01` #70, `A-02` #71, `A-03` #72, `A-04` #73, `A-06` #75, `A-07` #76, `A-08` #77, `A-09` #78 |
 | **Zamknięte — wykonane z follow-upem** | `C-03` #17 (reszta → `I-01`, `0-07`, `V-03`), `C-06` #20 i `C-14` #27 (→ `C-06b` #62), `C-07` #21 (→ `C-07b` #63), `C-13` #28, `I-02` #53 (→ `I-02b` #64), `I-03` #54 (→ `I-03b` #65), `I-04` #55 (→ `I-04b` #66), `0-05` #11 (→ `0-05b` #67) |
 | **Usunięte — nie robimy** | `C-02` #16, `C-09` #22, `C-10` #24, `C-11` #25, `C-12` #26, `C-15` #29, `V-07` #46, `V-12` #52 — decyzja użytkownika; **trwałe skasowanie na GitHubie czeka na uprawnienia** (system zablokował `gh issue delete`) |
 | **Zawężone** | `I-01` #50 — siatki, zarysy lodu i manifest, bez plików klatek |
-| **Otwarte** | `0-03` #9, `0-04` #10, `0-07` #13, `V-03` #42, `V-08` #47, `V-11` #51 oraz follow-upy #63–#67 |
+| **Otwarte** | `0-03` #9, `0-04` #10, `0-07` #13, `V-03` #42, `V-11` #51 oraz follow-upy: `C-07b` #63 (zostało τ₀ w manifeście), `I-02b` #64, `I-04b` #66, `0-05b` #67 |
 | **Zamknięte — wykonane** (c.d.) | `V-02` #41 — od 2026-11-02 kontrola czyta katalog z `sills.json`, nie z `geo.ts`; niezmienniki blokujące, test negatywny, próg sterujący per klatka |
 | **Otwarte w epiku `A`** | `A-05` #74 (korekta na osady — potrzebny Python, pobranie `zhang2024_sed` i decyzja o rozkładzie miąższości w czasie) |
 
@@ -122,6 +122,44 @@ Budżety są uzasadnione, nie okrągłe: 8 m na spadek Billingen to połowa bud�
 `A-04`), bo spadek jest różnicą dwóch poziomów i dziedziczy część błędu B1; 600 lat na Mały Bełt
 siedzi dobrze poniżej odstępu węzłów RSL w tej epoce (1,0 ka), który jest faktyczną podłogą
 precyzji. Oba zacieśnią się, gdy `V-03` wybierze model Ziemi.
+
+### Co weszło 2026-11-02, część czwarta — etap 1 planu domknięcia (`V-08` #47, `C-07b` #63 częściowo, `I-03b` #65)
+
+**`V-08` #47 — piąta bramka blokująca, bez żadnych pobrań.** Korekta wcześniejszego założenia:
+gradient liczy się wprost z zacommitowanej kostki (węzły 0,9 i 0 ka), a wartości odniesienia są
+publikowane w artykule NKG2016LU. Umeå **8,89 mm/rok** wobec publikowanych maks. 10,3 — i to
+niedoszacowanie jest **oczekiwane, nie błędem**: model daje średnią z ostatnich ~900 lat, a średnia
+procesu hamującego jest niższa od jego wartości bieżącej, więc model trafiający w 10,3 byłby
+podejrzany, nie lepszy. Wybrzeże PL/DE: 0,24–0,39 mm/rok, linia zerowa przy ~10°E i ~22°E.
+Punkt DoD „mapa reszt" zostaje **otwarty i oznaczony** — bez siatek NKG2016LU (❓, `0-03` #9) nie ma
+wobec czego liczyć reszt; raport daje zamiast tego gradient w nazwanych punktach i skan wzdłuż
+54,5°N.
+
+**`C-07b` #63 — grubość lodu w przekroju i tooltipie.** Profil plastyczny był policzony, ale
+czytały go tylko shadery. `iceThicknessAt(t, lon, lat)` pyta to samo pole odległości, które globus
+ekstruduje, a `iceThickness(d)` w `ice-field.ts` jest jedynym właścicielem wzoru — test tłumaczy
+GLSL z powrotem na JS i trzyma oba razem (ten sam wzorzec co reguła wody w `A-02`; sprawdzone
+podmianą `sqrt(d)` na `d` — pada). W przekroju **nie rysuję lodu w skali osi** i to jest świadome:
+wykres obejmuje 780 m, a lądolód ma ~3000 m. Zamiast tego w paśmie lodu jest **kształt** profilu,
+znormalizowany do własnego maksimum i podpisany tym maksimum w metrach — czytelnik dostaje to, co
+profil plastyczny faktycznie mówi (lód grubieje w głąb lądu), bez sugerowania, że 3000 m mieści się
+w 780 m osi. Pierwszy punkt DoD (przekroje zdarzeniowe z interpolowanym lodem) był już spełniony
+przez `A-08`/`A-09`: bryła powstaje z pola interpolowanego między przekrojami, a karta fazy pokazuje
+odznakę. **Issue zostaje otwarte** na ostatni punkt — τ₀ w manifeście, czyli `I-01` #50.
+
+**`I-03b` #65 — ostatnie zahardkodowane napisy i bramka w buildzie.** Poszły: `aria-label` przycisku
+marki, nazwa aplikacji, `cal BP` i ` ka` w panelach, znaczniki `A ·` / `· B` oraz **zapasowe nazwy
+miejsc** w przekroju — te ostatnie usunięte bez zastąpienia, bo wykres narysowany przed wczytaniem
+treści ma nie mieć podpisów, a nie mieć angielskie w polskiej sesji. `npm run build` i
+`build:gh-pages` wołają teraz `test:i18n`, więc brak tłumaczenia przerywa build (kompletność `Dict`
+pilnuje TypeScript, zgodność plików treści — test).
+
+Doszła też **bramka przeciw nawrotom**: test skanuje *sam szablon* (plik `.html` albo ciało
+`template:`, nie komentarze w kodzie) i odrzuca dosłowny `aria-label`/`title`/`alt` oraz wklejone
+jednostki. Ma własny test, że w ogóle coś znalazł — regex, który po cichu nie pasuje do niczego,
+zrobiłby z obu kontroli atrapę. Sprawdzone przywróceniem literału: pada z nazwą pliku.
+
+Testy: **64/64**. Pięć bramek blokujących zielonych.
 
 **Następne w kolejce** (stan 2026-11-02): bez pobrań zostaje **`I-04b` #66** (panel źródeł
 generowany z `SOURCES.md` — parser do tego już istnieje w `tests/contract/timeline.test.ts`) oraz
@@ -702,7 +740,7 @@ Gatunki wskaźnikowe jako **niezależna kontrola** rekonstrukcji: *Portlandia (Y
 
 **Plan:** §3.4, §7, §2
 
-## `V-08` Present-day uplift gradient versus NKG2016LU
+## `V-08` Present-day uplift gradient versus NKG2016LU — **wykonane 2026-11-02**
 
 **Epik:** V · **Zależy od:** `V-01`, `C-03`, `C-12` · **Labels:** `validation`
 
@@ -711,8 +749,8 @@ Steffen i Kaufmann nie publikują pola współczesnej prędkości wypiętrzania,
 Gradient z modelu GIA vs NKG2016LU: maks. **~10,3 mm/rok przy Umeå**, **linia zerowa na wybrzeżu Niemiec i Polski**.
 
 **DoD**
-- [ ] Oba punkty kontrolne zaliczone z tolerancją
-- [ ] Mapa reszt gradientu w raporcie
+- [x] Oba punkty kontrolne zaliczone z tolerancją — Umeå 8,89 mm/rok wobec 10,3 (budżet 3), wybrzeże PL/DE ≤ 0,4 mm/rok (tolerancja ±1,5)
+- [~] Mapa reszt gradientu w raporcie — **nie da się bez siatek NKG2016LU, które są ❓ (`0-03` #9)**. Raport pokazuje zamiast tego gradient modelu w nazwanych punktach i skan wzdłuż 54,5°N; reszty wobec pola wracają razem z licencją
 
 **Plan:** §7
 

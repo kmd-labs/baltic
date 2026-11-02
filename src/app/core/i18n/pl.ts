@@ -116,6 +116,13 @@ export const PL: Dict = {
   tipRelOcean: 'wysokość wzgl. ówczesnego oceanu',
   tipToday: 'dziś',
   tipRsl: 'RSL',
+  appName: 'Baltic',
+  brandAria: 'KMD Labs – o nas',
+  unitKa: ka => `${ka} ka`,
+  transectPointA: place => `A · ${place}`,
+  transectPointB: place => `${place} · B`,
+  tipIceThickness: 'grubość lodu (model)',
+  transectIceMax: m => `lód do ${m} m (model)`,
   dataLoading: 'Wczytywanie danych…',
   dataError: 'Nie udało się wczytać danych paleo'
 };

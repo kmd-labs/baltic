@@ -98,10 +98,14 @@ export class TransectPanelComponent extends CanvasPanel {
         x.globalAlpha = 1;
       }
     }
-    // Ice: a band marking where the sheet lies, not its thickness — this chart spans 780 m while
-    // the sheet is ~3000 m thick (the globe shows the body itself, C-07). Drawn as one rectangle
-    // per contiguous run, so the translucent fill does not double up at the segment joins, with the
-    // margins picked out: that edge is the part worth reading.
+    // Ice: a band marking where the sheet lies. The band cannot be drawn to the elevation axis —
+    // this chart spans 780 m and the sheet is ~3000 m thick (the globe shows the body itself,
+    // C-07) — so the *shape* goes inside it instead: a profile normalised to its own maximum,
+    // labelled with that maximum in metres (C-07b). The reader gets what the plastic profile
+    // actually says, which is that the sheet thickens inland, without the chart implying that
+    // 3000 m of ice fits in 780 m of axis. Drawn as one rectangle per contiguous run, so the
+    // translucent fill does not double up at the segment joins, with the margins picked out:
+    // that edge is the part worth reading.
     const iceTop = pad.t;
     const iceBottom = h - pad.b;
     x.fillStyle = tok('paleo-ice-section', 'rgba(207,216,227,0.62)');
@@ -122,6 +126,34 @@ export class TransectPanelComponent extends CanvasPanel {
       }
       x.stroke();
       i = j;
+    }
+
+    // The thickness profile inside the band, normalised to the maximum over the whole transect so
+    // the two runs of a split margin stay comparable, plus that maximum as a label.
+    const iceMax = points.reduce((m, p) => Math.max(m, p.iceM), 0);
+    if (iceMax > 0) {
+      const base = iceBottom - 4;
+      const span = iceBottom - iceTop - 12;
+      x.beginPath();
+      let open = false;
+      for (const p of points) {
+        if (p.iceM <= 0) {
+          open = false;
+          continue;
+        }
+        const px = X(p.km);
+        const py = base - (p.iceM / iceMax) * span;
+        if (open) x.lineTo(px, py);
+        else x.moveTo(px, py);
+        open = true;
+      }
+      x.strokeStyle = tok('paleo-ice-edge', '#7dd3fc');
+      x.lineWidth = 1.5;
+      x.stroke();
+      x.fillStyle = tok('text-secondary', '#5b6472');
+      x.font = `11px ${this.theme.getFontFamily()}`;
+      x.textAlign = 'left';
+      x.fillText(this.i18n.t().transectIceMax(Math.round(iceMax).toLocaleString(this.i18n.t().numberLocale)), pad.l + 6, iceTop + 13);
     }
 
     x.beginPath();
@@ -145,16 +177,22 @@ export class TransectPanelComponent extends CanvasPanel {
     x.stroke();
     x.setLineDash([]);
 
+    // Place names and the A/B markers come from the content file and the dictionary; there are no
+    // fallback literals, so a chart drawn before the content arrives carries no labels rather than
+    // English ones in a Polish session (`I-03b`).
     const places = this.content.content()?.places;
-    x.font = `600 10px ${font}`;
-    x.fillStyle = tok('text-desc', '#334155');
-    x.textBaseline = 'alphabetic';
-    x.textAlign = 'left';
-    x.fillText(`A · ${places?.umea ?? 'Umeå'}`, pad.l + 2, h - 3);
-    x.textAlign = 'right';
-    x.fillText(`${places?.gdansk ?? 'Gdańsk'} · B`, w - pad.r, h - 3);
-    const g = points.reduce((best, p) => (Math.abs(p.lat - 57.3) < Math.abs(best.lat - 57.3) ? p : best), points[0]);
-    x.textAlign = 'center';
-    x.fillText(places?.gotland ?? 'Gotland', X(g.km), h - 3);
+    if (places) {
+      const tr = this.i18n.t();
+      x.font = `600 10px ${font}`;
+      x.fillStyle = tok('text-desc', '#334155');
+      x.textBaseline = 'alphabetic';
+      x.textAlign = 'left';
+      x.fillText(tr.transectPointA(places.umea), pad.l + 2, h - 3);
+      x.textAlign = 'right';
+      x.fillText(tr.transectPointB(places.gdansk), w - pad.r, h - 3);
+      const g = points.reduce((best, p) => (Math.abs(p.lat - 57.3) < Math.abs(best.lat - 57.3) ? p : best), points[0]);
+      x.textAlign = 'center';
+      x.fillText(places.gotland, X(g.km), h - 3);
+    }
   }
 }

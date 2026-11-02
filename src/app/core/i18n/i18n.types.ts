@@ -119,6 +119,15 @@ export interface Dict {
   tipRelOcean: string;
   tipToday: string;
   tipRsl: string;
+  /** Product name and the brand button label — no user-facing text outside the dictionaries (I-03b). */
+  appName: string;
+  brandAria: string;
+  unitKa: (ka: string) => string;
+  transectPointA: (place: string) => string;
+  transectPointB: (place: string) => string;
+  /** Ice thickness from the plastic profile (`C-07b`); schematic, not measured. */
+  tipIceThickness: string;
+  transectIceMax: (m: string) => string;
   dataLoading: string;
   dataError: string;
 }

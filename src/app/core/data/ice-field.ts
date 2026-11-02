@@ -43,6 +43,20 @@ const G = 9.81;
 /** h(d) = ICE_PROFILE_K * sqrt(d in km), in metres. ~149 m at 1 km, ~2982 m at 400 km. */
 export const ICE_PROFILE_K = Math.sqrt((2 * TAU0 * 1000) / (RHO_ICE * G));
 
+/**
+ * The plastic profile itself, in metres, from the distance to the margin in km (`C-07`). It is a
+ * schematic and not a measurement: DATED-1 publishes margins, not thickness, and the only model
+ * that ships thickness is licence-barred (`0-02`), so this is what the shape of a sheet in
+ * equilibrium with a basal shear stress of τ₀ ≈ 100 kPa implies. Reported as `modelled`.
+ *
+ * One owner, because the globe draws the body with the same rule in GLSL (`ice-shaders.ts`
+ * `iceThickness`) and `tests/contract/ice.test.ts` holds the two to each other — the readouts and
+ * the picture disagreeing about the ice is exactly the class of bug `A-08` was.
+ */
+export function iceThickness(dKm: number): number {
+  return dKm > 0 ? ICE_PROFILE_K * Math.sqrt(dKm) : 0;
+}
+
 /** DATED-1 covers 25 -> 10 ka; the prototype ships 20 -> 10 ka. */
 export const ICE_KA_MAX = 20;
 export const ICE_KA_MIN = 10;

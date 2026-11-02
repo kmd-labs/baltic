@@ -23,6 +23,7 @@ for (const r of results) {
   console.log(`      expected  ${r.expected}`);
   console.log(`      deviation ${r.deviation}`);
   if (r.note) console.log(`      note      ${r.note}`);
+  for (const line of r.detail ?? []) console.log(`      ${line}`);
   console.log();
 }
 

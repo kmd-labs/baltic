@@ -7,7 +7,7 @@ import { fetchKmdg, kmdgLayer, KmdgGrid } from './kmdg';
 import { bilinear, maskFractionAt, rslAt, RslCube } from './paleo';
 import { FRAMES, lakeLevelAt, nearestFrame } from './timeline';
 import { FrameStats, inside, maskHit, WaterKind, waterKindAt, WATER_LAKE, WATER_OCEAN } from './water';
-import { ICE_DOMAIN, ICE_KA_MAX, ICE_KA_MIN, iceBracket, iceMaskFor, iceSignedDistance, iceSliceFor } from './ice-field';
+import { ICE_DOMAIN, ICE_KA_MAX, ICE_KA_MIN, ICE_SDF_SCALE, iceBracket, iceMaskFor, iceSignedDistance, iceSliceFor, iceThickness } from './ice-field';
 import type { WorkerFrame, WorkerInit, WorkerRequest } from './paleo.worker';
 
 export type { FrameStats, WaterKind } from './water';
@@ -81,6 +81,8 @@ export interface PointInfo {
   hPaleo: number;
   water: WaterKind;
   ice: boolean;
+  /** Thickness of the drawn ice body, metres; 0 where there is none (`C-07b`). */
+  iceM: number;
   /** RSL at the point; positive = sea higher than today. */
   rsl: number;
 }
@@ -94,6 +96,8 @@ export interface TransectSample {
   /** Water surface relative to the contemporaneous ocean, or null when dry. */
   level: number | null;
   ice: boolean;
+  /** Thickness of the drawn ice body above this point, metres; 0 where there is none. */
+  iceM: number;
 }
 
 /** Enough for the frames in play plus the ghost-coast lookups; least recently used evicted. */
@@ -347,12 +351,33 @@ export class PaleoDataService {
    * mismatch as `A-01`, one layer up (`A-08`).
    */
   iceDrawnAt(t: number, lon: number, lat: number): boolean {
+    return this.iceDistanceKm(t, lon, lat) > 0;
+  }
+
+  /**
+   * Distance from the margin of the drawn body, km, positive inside. The blend the shader does
+   * (`sdfAt` = mix of the two bracketing slices), divided by the Int16 scale the textures are
+   * uploaded with, so one number answers for the picture, the tooltip and the transect.
+   */
+  private iceDistanceKm(t: number, lon: number, lat: number): number {
     const b = iceBracket(t);
-    if (!b || b.fade <= 0 || !inside(ICE_DOMAIN, lon, lat)) return false;
+    if (!b || b.fade <= 0 || !inside(ICE_DOMAIN, lon, lat)) return 0;
     const a = bilinear(this.iceSdf(b.kaA, 'mc'), ICE_DOMAIN, lon, lat);
     const c = b.kaA === b.kaB ? a : bilinear(this.iceSdf(b.kaB, 'mc'), ICE_DOMAIN, lon, lat);
-    // Only the sign matters, so the Int16 scale cancels.
-    return a * (1 - b.w) + c * b.w > 0;
+    return (a * (1 - b.w) + c * b.w) / ICE_SDF_SCALE;
+  }
+
+  /**
+   * Ice thickness where the scene draws the body, metres, 0 outside it (`C-07b`). The plastic
+   * profile of `ice-field.ts` over the same distance field the globe extrudes, so the number in
+   * the tooltip is the height of the body under the cursor and not a second estimate of it.
+   *
+   * Below 10 ka the body is the 10 ka geometry drawn progressively transparent (`ICE_FADE_KA`) —
+   * a stand-in for remnants DATED-1 does not cover. The fade is opacity only, so the thickness
+   * reported there is the 10 ka profile, which is what is on screen.
+   */
+  iceThicknessAt(t: number, lon: number, lat: number): number {
+    return iceThickness(this.iceDistanceKm(t, lon, lat));
   }
 
   /** Water class at one point of the Baltic grid, by the rule the shader draws with. */
@@ -382,6 +407,7 @@ export class PaleoDataService {
         hPaleo,
         water: this.kindAt(s, lon, lat, hPaleo),
         ice: this.iceDrawnAt(t, lon, lat),
+        iceM: this.iceThicknessAt(t, lon, lat),
         rsl
       };
     }
@@ -389,7 +415,16 @@ export class PaleoDataService {
       const hNow = bilinear(this.hNowEurope!, e, lon, lat);
       const hPaleo = hNow - rsl;
       // Outside the Baltic window there is no fill, and the shader falls back to hp < 0 as well.
-      return { lon, lat, hNow, hPaleo, water: hPaleo < 0 ? 'ocean' : 'dry', ice: this.iceDrawnAt(t, lon, lat), rsl };
+      return {
+        lon,
+        lat,
+        hNow,
+        hPaleo,
+        water: hPaleo < 0 ? 'ocean' : 'dry',
+        ice: this.iceDrawnAt(t, lon, lat),
+        iceM: this.iceThicknessAt(t, lon, lat),
+        rsl
+      };
     }
     return null;
   }
@@ -427,7 +462,8 @@ export class PaleoDataService {
         hNow,
         hPaleo,
         level: kind === 'lake' ? s.lakeLevelM : kind === 'ocean' ? 0 : null,
-        ice: this.iceDrawnAt(t, lon, lat)
+        ice: this.iceDrawnAt(t, lon, lat),
+        iceM: this.iceThicknessAt(t, lon, lat)
       });
     }
     return { total, points };
