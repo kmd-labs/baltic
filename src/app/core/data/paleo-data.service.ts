@@ -1,6 +1,8 @@
 import { Injectable, computed, signal } from '@angular/core';
 import type { Feature, Geometry } from 'geojson';
-import { ASSET_BASE, ASSETS } from './assets';
+import { ASSET_BASE, ASSETS, GRID_ID, MANIFEST } from './assets';
+import { filePath, gridPath, parseManifest } from './manifest';
+import type { Manifest } from './manifest';
 import { nearestSill, parseSills } from './sills';
 import type { SillCatalogue, SillEntry } from './sills';
 import { fetchKmdg, kmdgLayer, KmdgGrid } from './kmdg';
@@ -130,6 +132,14 @@ export class PaleoDataService {
   /** The sill catalogue (`C-05`), null before it loads. Positions on the globe come from it. */
   readonly catalogue = signal<SillCatalogue | null>(null);
   readonly sills = computed<readonly SillEntry[]>(() => this.catalogue()?.sills ?? []);
+  /** The published index (`I-01`): where the files are and what produced them. */
+  readonly manifest = signal<Manifest | null>(null);
+  /**
+   * Why the load failed, in the words of whatever failed — a wrong `schemaVersion`, a file the
+   * manifest does not publish, an HTTP status. Shown in the dock, because the alternative is a
+   * scene that renders nothing and explains nothing (`I-02b`).
+   */
+  readonly error = signal('');
 
   europe?: KmdgGrid;
   baltic?: KmdgGrid;
@@ -147,22 +157,38 @@ export class PaleoDataService {
   private worker?: Worker;
   private loading?: Promise<void>;
 
+  /** JSON from the asset directory, with the HTTP status in the error rather than a thrown `null`. */
+  private async json(path: string): Promise<unknown> {
+    const r = await fetch(ASSET_BASE + path);
+    if (!r.ok) throw new Error(`${path}: HTTP ${r.status}`);
+    return r.json();
+  }
+
+  /**
+   * Reads `manifest.json` first and locates everything else through it (`I-02b`).
+   *
+   * Grids are asked for by id, so relocating one in the data needs no change here. The ice outlines
+   * and the sill catalogue are asked for by path, which the manifest still has to publish — there
+   * is no id for a non-grid file in the contract — so a rename produces a sentence instead of a 404
+   * behind an empty scene. A `schemaVersion` from another major stops the load before any of it,
+   * and the message reaches the dock.
+   */
   load(): Promise<void> {
     if (this.loading) return this.loading;
     this.state.set('loading');
-    this.loading = Promise.all([
-      fetchKmdg(ASSET_BASE + ASSETS.demEurope),
-      fetchKmdg(ASSET_BASE + ASSETS.demBaltic),
-      fetchKmdg(ASSET_BASE + ASSETS.rsl),
-      fetch(ASSET_BASE + ASSETS.ice).then(r => {
-        if (!r.ok) throw new Error(`ice: HTTP ${r.status}`);
-        return r.json();
-      }),
-      fetch(ASSET_BASE + ASSETS.sills).then(r => {
-        if (!r.ok) throw new Error(`sills: HTTP ${r.status}`);
-        return r.json().then(parseSills);
+    this.error.set('');
+    this.loading = this.json(MANIFEST)
+      .then(raw => {
+        const m = parseManifest(raw);
+        this.manifest.set(m);
+        return Promise.all([
+          fetchKmdg(ASSET_BASE + gridPath(m, GRID_ID.demEurope)),
+          fetchKmdg(ASSET_BASE + gridPath(m, GRID_ID.demBaltic)),
+          fetchKmdg(ASSET_BASE + gridPath(m, GRID_ID.rsl)),
+          this.json(filePath(m, ASSETS.ice)),
+          this.json(filePath(m, ASSETS.sills)).then(parseSills)
+        ]);
       })
-    ])
       .then(([europe, baltic, rsl, ice, sills]) => {
         this.europe = europe;
         this.baltic = baltic;
@@ -170,7 +196,7 @@ export class PaleoDataService {
         this.hNowEurope = kmdgLayer(europe, 0);
         this.hNowBaltic = kmdgLayer(baltic, 0);
         this.cube = { geometry: rsl, times: [...rsl.times], layers: Array.from({ length: rsl.nt }, (_, i) => kmdgLayer(rsl, i)) };
-        this.ice = ice.features as IceFeature[];
+        this.ice = (ice as { features: IceFeature[] }).features;
         this.catalogue.set(sills);
         this.startWorker();
         this.state.set('ready');
@@ -178,6 +204,7 @@ export class PaleoDataService {
       })
       .catch(err => {
         console.warn('Could not load paleo data:', err);
+        this.error.set(err instanceof Error ? err.message : String(err));
         this.state.set('error');
       });
     return this.loading;

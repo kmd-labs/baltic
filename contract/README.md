@@ -4,7 +4,7 @@ Umowa między pipeline'em (`tools/data/`) a aplikacją (`src/`). Opisuje wszystk
 
 | Plik w `src/assets/data/` | Schemat |
 | :-- | :-- |
-| `manifest.json` | [`schema/manifest.schema.json`](schema/manifest.schema.json) |
+| `manifest.json` | [`schema/manifest.schema.json`](schema/manifest.schema.json) — **zacommitowany**, generowany przez `npm run data:manifest`; wejście aplikacji |
 | `frames/f-<tBP>.json` | [`schema/frame.schema.json`](schema/frame.schema.json) |
 | `timeline.json` | [`schema/timeline.schema.json`](schema/timeline.schema.json) — **zacommitowany**, pisany ręcznie (literatura), importowany przez `timeline.ts` |
 | `sills.json` | [`schema/sills.schema.json`](schema/sills.schema.json) — **zacommitowany**, generowany przez `npm run data:sills` |
@@ -30,7 +30,9 @@ Wspólne definicje (`datum`, `stageId`, `gia`, `dataQuality`, `psuRange` …) s�
 
 ## Wersjonowanie (`schemaVersion`)
 
-Semver `MAJOR.MINOR.PATCH`, dziś `1.2.0`.
+Semver `MAJOR.MINOR.PATCH`, dziś `1.3.0`.
+
+`1.3.0` (2026-11-02, `I-01`) w `manifest.json`: `frames` **przestało być wymagane** — aplikacja liczy klatki sama z siatek, pipeline nie emituje plików klatek, a manifest wymieniający je wymieniałby pliki, których nie ma; doszło `files[].firstLoad`, bo `grids[].firstLoad` mówi tylko o siatkach KMDG, a zarysy lodu też są na pierwszym wejściu. Żaden manifest nie był dotąd opublikowany, więc poluzowanie `required` nie może nic zepsuć — dlatego MINOR.
 
 `1.2.0` (2026-11-02, `C-08`) dodało w `timeline.json` opcjonalne `method` (tak samo i z tego samego powodu) oraz `events[].disputed` — flagę, że zdarzenie niesie twierdzenie sporne w literaturze; **co** jest sporne jest treścią (`events.<id>.note`), nie danymi.
 

@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.3.0",
+  "datum": "contemporaneous-geoid",
+  "gia": {
+    "source": "steffen2025_rsl",
+    "earthModel": "sk1",
+    "spatialInterpolation": "bilinear",
+    "timeInterpolation": "linear"
+  },
+  "ice": {
+    "source": "dated1",
+    "tau0Pa": 100000
+  },
+  "budgets": {
+    "totalBytes": 26214400,
+    "firstLoadBytes": 4194304
+  },
+  "grids": {
+    "dem-europe": {
+      "path": "grid/dem-europe.bin.gz",
+      "format": "kmdg/1",
+      "quantity": "elevation",
+      "unit": "m",
+      "datum": "present-day",
+      "firstLoad": true
+    },
+    "dem-baltic": {
+      "path": "grid/dem-baltic.bin.gz",
+      "format": "kmdg/1",
+      "quantity": "elevation",
+      "unit": "m",
+      "datum": "present-day",
+      "firstLoad": true
+    },
+    "rsl": {
+      "path": "grid/rsl.bin.gz",
+      "format": "kmdg/1",
+      "quantity": "rsl",
+      "unit": "m",
+      "datum": "present-day",
+      "firstLoad": true
+    }
+  },
+  "files": [
+    {
+      "path": "grid/dem-baltic.bin.gz",
+      "bytes": 624780,
+      "sha256": "78ccb630ae66664617c824efed81acae838c19404bff1a7c1ac40b6c15b058ca",
+      "firstLoad": true
+    },
+    {
+      "path": "grid/dem-europe.bin.gz",
+      "bytes": 1642023,
+      "sha256": "3c24f2fabb3c69ecc8f6676c685e119a68ca62519a475eb5898ffcfce46e4654",
+      "firstLoad": true
+    },
+    {
+      "path": "grid/rsl.bin.gz",
+      "bytes": 104770,
+      "sha256": "0f5349d62be15d6f6990171cf76b328d792a1788ea3b63f6c74dfd73889e3153",
+      "firstLoad": true
+    },
+    {
+      "path": "ice/dated1.json",
+      "bytes": 316504,
+      "sha256": "ef369fc531eb969dddec84c2854b6c852d721733a2b85db83cb5cb2fe89cc2dc",
+      "firstLoad": true
+    },
+    {
+      "path": "sills.json",
+      "bytes": 4149,
+      "sha256": "3325d03a53f8315882294de8fe5f5a5f6cd9975b22fa4ce8b286eee48c0bee77",
+      "firstLoad": true
+    },
+    {
+      "path": "timeline.json",
+      "bytes": 3426,
+      "sha256": "c83931bdbda5b946860b4dfb0cce59a95ae5620c11d20a185e626ca6ce203ad0"
+    }
+  ],
+  "sources": [
+    "andren2011",
+    "bjorck1995",
+    "dated1",
+    "gebco2024",
+    "kotthoff2022",
+    "steffen2025_rsl"
+  ]
+}

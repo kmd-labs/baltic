@@ -1,5 +1,9 @@
 // The app recomputes H_paleo = H_now − RSL(t) from the published grids and must agree with the
-// pipeline (tools/data/postglacial.py → prototype/checkpoints.json). I-01 DoD: within 1 m.
+// pipeline (tools/data/postglacial.py → contract/fixtures/paleo/checkpoints.json). I-01 DoD: 1 m.
+//
+// The checkpoints sit with the fixtures rather than in src/assets/data: they are the pipeline's own
+// answer for this test to compare against, never something the app fetches, and since I-01 the
+// asset directory holds only what the app serves — manifest.json accounts for all of it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -23,7 +27,9 @@ const cube: RslCube = {
   times: [...rslGrid.times],
   layers: Array.from({ length: rslGrid.nt }, (_, i) => kmdgLayer(rslGrid, i)),
 };
-const checkpoints = JSON.parse(readFileSync(join(DATA, 'prototype', 'checkpoints.json'), 'utf8'));
+const checkpoints = JSON.parse(
+  readFileSync(join(import.meta.dirname, '..', '..', 'contract', 'fixtures', 'paleo', 'checkpoints.json'), 'utf8')
+);
 
 test('checkpoints cover several places and times', () => {
   assert.ok(checkpoints.points.length >= 30);

@@ -45,9 +45,10 @@ git submodule status      # bez wiodącego '-' i '+' przy SHA
 | `npm run test:i18n` | zgodność kluczy treści EN↔PL i brak zahardkodowanych napisów — wołane przez `build` |
 | `npm run contract:validate` | walidacja JSON-ów z `src/assets/data/` schematami z `contract/schema/` |
 | `npm run assets:check` | waży `src/assets/data/` wobec budżetu (25 MiB całość, 4 MiB pierwsze wejście) |
-| `npm run validate` | raport walidacyjny (`V-01`): niezmienniki modelu i kontrole zdarzeń, z odchyleniem liczbowym |
+| `npm run validate` | raport walidacyjny (`V-01`, `V-06`, `V-08`, `V-11`): niezmienniki modelu, kontrole zdarzeń, topologia i sumy kontrolne — z odchyleniem liczbowym |
 | `npm run audit:metrics` | przelicza liczby cytowane w audycie z zacommitowanych zasobów |
 | `npm run data:sills` | generuje `src/assets/data/sills.json` z analizy przelewu (`-- --report` tylko drukuje) |
+| `npm run data:manifest` | generuje `src/assets/data/manifest.json` — indeks z sumami SHA-256 i parametrami |
 | `npm run data:fetch` | pobiera surowe zbiory do `data/raw/` (poza gitem) |
 | `npm run test:data` | testy pipeline'u (Python) |
 
@@ -71,12 +72,13 @@ py -m venv .venv
 | :-- | :-- |
 | `src/app/core/data/` | czytnik siatek KMDG, paleo-DEM, reguła wody, pole lodu, sill-check — czyste funkcje bez DOM-u, współdzielone z workerem i testami |
 | `src/app/components/` | glob, blok rzeźby, dolny dok, karty faz, przekrój, samouczek |
-| `src/assets/data/` | zacommitowane zasoby: siatki `grid/*.bin.gz`, katalogi `sills.json` i `timeline.json`, prototyp `prototype/*.json` |
+| `src/assets/data/` | **publikowane dane i nic więcej**, wszystko rozliczone w `manifest.json`: siatki `grid/*.bin.gz`, zarysy lodu `ice/dated1.json`, katalogi `sills.json` i `timeline.json` |
 | `contract/` | kontrakt danych (`0-06`): schematy JSON i fixture'y |
 | `tools/data/` | pipeline (`fetch.py`, `postglacial.py`, `contract.py`, `kmdg.py`) |
 | `tools/lib/` | `frames.ts` — wczytanie zasobów i klatka liczona tak, jak liczy ją aplikacja |
 | `tools/sills/` | `build.ts` — generator katalogu progów (`C-05`) |
-| `tools/validate/` | `checks.ts`, `run.ts` — rejestr walidacji i raport (`V-01`, `V-06`) |
+| `tools/manifest/` | `build.ts` — generator manifestu (`I-01`) |
+| `tools/validate/` | `checks.ts`, `run.ts`, `topology.ts` — rejestr walidacji, raport i kontrole geometrii (`V-01`, `V-06`, `V-08`, `V-11`) |
 | `tools/assets/` | `budget.ts` — bramka rozmiaru zasobów |
 | `tools/audit/` | `metrics.ts` — liczby audytu jako skrypt |
 | `tests/contract/` | testy kontraktu i reguły wody |

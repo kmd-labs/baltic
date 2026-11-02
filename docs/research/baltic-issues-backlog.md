@@ -16,11 +16,11 @@ Aplikacja liczy wodę, poziomy progów i metryki sama z siatek (Web Worker), wi�
 
 | Status | Zadania |
 | :-- | :-- |
-| **Zamknięte — wykonane** | `0-01` #7, `0-02` #8, `0-06` #12, `0-08` #14, `C-01` #15, `C-04` #18, `C-05` #19, `C-08` #23, `V-01` #40, `V-06` #45, `V-08` #47, `C-06b` #62, `I-03b` #65, `I-05` #58 oraz epik `A`: `A-01` #70, `A-02` #71, `A-03` #72, `A-04` #73, `A-06` #75, `A-07` #76, `A-08` #77, `A-09` #78 |
+| **Zamknięte — wykonane** | `0-01` #7, `0-02` #8, `0-06` #12, `0-08` #14, `C-01` #15, `C-04` #18, `C-05` #19, `C-08` #23, `V-01` #40, `V-06` #45, `V-08` #47, `V-11` #51, `C-06b` #62, `C-07b` #63, `I-02b` #64, `I-03b` #65, `I-05` #58 oraz epik `A`: `A-01` #70, `A-02` #71, `A-03` #72, `A-04` #73, `A-06` #75, `A-07` #76, `A-08` #77, `A-09` #78 |
 | **Zamknięte — wykonane z follow-upem** | `C-03` #17 (reszta → `I-01`, `0-07`, `V-03`), `C-06` #20 i `C-14` #27 (→ `C-06b` #62), `C-07` #21 (→ `C-07b` #63), `C-13` #28, `I-02` #53 (→ `I-02b` #64), `I-03` #54 (→ `I-03b` #65), `I-04` #55 (→ `I-04b` #66), `0-05` #11 (→ `0-05b` #67) |
 | **Usunięte — nie robimy** | `C-02` #16, `C-09` #22, `C-10` #24, `C-11` #25, `C-12` #26, `C-15` #29, `V-07` #46, `V-12` #52 — decyzja użytkownika; **trwałe skasowanie na GitHubie czeka na uprawnienia** (system zablokował `gh issue delete`) |
-| **Zawężone** | `I-01` #50 — siatki, zarysy lodu i manifest, bez plików klatek |
-| **Otwarte** | `0-03` #9, `0-04` #10, `0-07` #13, `V-03` #42, `V-11` #51 oraz follow-upy: `C-07b` #63 (zostało τ₀ w manifeście), `I-02b` #64, `I-04b` #66, `0-05b` #67 |
+| **Zawężone — wykonane** | `I-01` #50 — siatki, zarysy lodu i manifest, bez plików klatek; zamknięte 2026-11-02 |
+| **Otwarte** | `0-03` #9, `0-04` #10, `0-07` #13, `V-03` #42 oraz follow-upy: `I-04b` #66, `0-05b` #67 |
 | **Zamknięte — wykonane** (c.d.) | `V-02` #41 — od 2026-11-02 kontrola czyta katalog z `sills.json`, nie z `geo.ts`; niezmienniki blokujące, test negatywny, próg sterujący per klatka |
 | **Otwarte w epiku `A`** | `A-05` #74 (korekta na osady — potrzebny Python, pobranie `zhang2024_sed` i decyzja o rozkładzie miąższości w czasie) |
 
@@ -160,6 +160,46 @@ jednostki. Ma własny test, że w ogóle coś znalazł — regex, który po cich
 zrobiłby z obu kontroli atrapę. Sprawdzone przywróceniem literału: pada z nazwą pliku.
 
 Testy: **64/64**. Pięć bramek blokujących zielonych.
+
+### Co weszło 2026-11-02, część piąta — etap 2 planu domknięcia (`I-01` #50, `I-02b` #64, `V-11` #51)
+
+**`manifest.json` istnieje i jest wejściem aplikacji.** Generowany (`npm run data:manifest`),
+nie pisany: zapisuje model Ziemi, interpolację przestrzenną i czasową, τ₀, `datum`, budżety oraz
+SHA-256 i rozmiar każdego publikowanego pliku. Generator jest w TypeScripcie z tego samego powodu
+co walidator — **prawie wszystko, co manifest ma zapisać, mieszka w warstwie danych aplikacji**
+(budżety i zbiór startowy w `assets.ts`, τ₀ w `ice-field.ts`, interpolacja to reguła `paleo.ts`), a
+w Pythonie byłoby to drugą deklaracją każdej z tych rzeczy. Jedyne, co należy do Pythona — który
+model Ziemi zbudował kostkę — **nie jest tu przepisane**: pipeline zapisuje to obok punktów
+kontrolnych, a generator czyta stamtąd, i test pilnuje, że manifest opisuje ten model, a nie inny.
+
+**Katalog zasobów zawiera teraz publikowane dane i nic więcej.** `prototype/ice-dated1.json` →
+`ice/dated1.json`, a `prototype/checkpoints.json` → `contract/fixtures/paleo/checkpoints.json`, bo
+to odpowiedź pipeline'u dla testu, nie dane, które aplikacja pobiera. Lista wyjątków w
+`contract:validate` skurczyła się z dwóch pozycji do jednej (GeoJSON zarysów, dla którego kontrakt
+nie ma jeszcze schematu).
+
+**`I-02b`:** aplikacja czyta najpierw manifest, siatki bierze **po id** (więc przeniesienie siatki
+w danych nie wymaga zmiany w kodzie), a pozostałe pliki po ścieżce, którą manifest musi
+opublikować — więc zmiana nazwy daje zdanie, nie 404 za pustą scenę. Niezgodny `schemaVersion`
+zatrzymuje wczytywanie przed czymkolwiek, a **treść wyjątku trafia do docka** obok komunikatu.
+
+**`V-11`:** `topology-crs-checksums` to szósta bramka blokująca — brak samoprzecięć, współrzędne w
+stopniach EPSG:4326, sumy kontrolne zgodne z plikami. Na opublikowanych zarysach: **164 pierścienie,
+19 896 punktów, zero usterek, 25 ms.** Kontrola, która widzi tylko poprawne dane, nie dowodzi nic o
+sobie, więc testy karmią ją muszką (`bow tie`), pierścieniem niezamkniętym i prostokątem w UTM-ie —
+każde łapane z nazwą cechy. To nie jest higiena: zarysy są **tamą flood-fillu** (`A-03`), więc
+muszka w marginesie to jezioro drenujące się w złą stronę.
+
+**`C-07b` #63 domyka się przy okazji:** jego ostatnim otwartym punktem było τ₀ w manifeście, a
+manifest je zapisuje — i test sprawdza, że to ta sama wartość, której używa `ice-field.ts`.
+
+#### Przy okazji: `.gitattributes`, i to nie była kosmetyka
+
+Manifest zapisuje rozmiary i sumy, a builder Angulara kopiuje `src/assets` dosłownie — więc przy
+domyślnym checkoucie na Windowsie **ten sam commit dawał inny manifest u mnie niż w CI**
+(`sills.json`: 4 325 bajtów wobec 4 149, inny hash na każdym pliku tekstowym). Bramka regeneracji
+padałaby za platformę, a sumy opisywałyby bajty, których nikt nie dostaje. `* text=auto eol=lf`
+rozwiązuje to u źródła; git i tak przechowywał LF.
 
 **Następne w kolejce** (stan 2026-11-02): bez pobrań zostaje **`I-04b` #66** (panel źródeł
 generowany z `SOURCES.md` — parser do tego już istnieje w `tests/contract/timeline.test.ts`) oraz
@@ -754,7 +794,7 @@ Gradient z modelu GIA vs NKG2016LU: maks. **~10,3 mm/rok przy Umeå**, **linia z
 
 **Plan:** §7
 
-## `V-11` Topology, CRS and asset-budget gate
+## `V-11` Topology, CRS and asset-budget gate — **wykonane 2026-11-02**
 
 **Epik:** V · **Zależy od:** `V-01`, `I-01`, `0-08` · **Labels:** `validation`, `ci`
 
@@ -766,8 +806,8 @@ Gradient z modelu GIA vs NKG2016LU: maks. **~10,3 mm/rok przy Umeå**, **linia z
 Deploy idzie na GitHub Pages (`npm run build:gh-pages`), więc rozmiar jest realnym ograniczeniem — pilnowanym w CI, nie w dobrych intencjach.
 
 **DoD**
-- [ ] Bramka w CI, status `blocking`
-- [ ] Raport rozmiaru per chunk
+- [x] Bramka w CI, status `blocking` — `topology-crs-checksums` w rejestrze `V-01`, plus regeneracja manifestu i katalogu w `ci.yml'
+- [x] Raport rozmiaru per chunk — `npm run assets:check` (plik po pliku, pierwsze wejście osobno) oraz `budgets` w manifeście
 
 **Plan:** §5, §7
 
@@ -793,7 +833,7 @@ Nałożenie klatek na mapy etapów z **Björcka 1995 / Andréna i in. 2011** dla
 
 # EPIC I · Kontrakt, emisja, integracja
 
-## `I-01` emit.py — grids, RSL cube and vector frames
+## `I-01` emit.py — grids, RSL cube and vector frames — **wykonane 2026-11-02 jako manifest, w TypeScripcie**
 
 **Epik:** I · **Zależy od:** `C-11` · **Blokuje:** `I-02`, `V-11` · **Labels:** `data-pipeline`, `contract`
 
@@ -809,10 +849,10 @@ Nałożenie klatek na mapy etapów z **Björcka 1995 / Andréna i in. 2011** dla
 | `frames/f-<tBP>.json` | poziom, odpływ, stany progów, zasolenie per basen, metryki | < 5 KB |
 
 **DoD**
-- [ ] Format siatek zgodny z `0-06`, parametry kwantyzacji i uproszczenia w `manifest.json`
-- [ ] Aplikacja odtwarza `H_paleo` z siatki i kostki RSL z błędem ≤ 1 m wobec pipeline'u (test)
-- [ ] `emit.py` sprawdza topologię po uproszczeniu lokalnie (bramka CI to `V-11`)
-- [ ] Pierwsze wejście ≤ 4 MB
+- [x] Format siatek zgodny z `0-06`; w manifeście model Ziemi, interpolacja przestrzenna i czasowa, τ₀, `datum`, budżety i SHA-256 każdego pliku
+- [x] Aplikacja odtwarza `H_paleo` z siatki i kostki RSL z błędem ≤ 1 m wobec pipeline'u — spełnione z zapasem (< 5 cm), `tests/contract/paleo.test.ts`
+- [x] Topologia sprawdzana po uproszczeniu — `tools/validate/topology.ts`, bramka `V-11` w rejestrze i w CI
+- [x] Pierwsze wejście ≤ 4 MB — 2,57 MiB, liczone z `firstLoad` w manifeście
 
 **Plan:** §5
 

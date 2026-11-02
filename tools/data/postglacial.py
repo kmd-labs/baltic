@@ -7,7 +7,7 @@ Writes to src/assets/data/:
     grid/dem-europe.bin.gz         H_now, GEBCO 2024, RSL domain 10°W–70°E / 45–85°N, 0.05°, KMDG/1 int16 (m)
     grid/dem-baltic.bin.gz         H_now, GEBCO 2024, Baltic window 9–33°E / 53–67°N, 1/40°, KMDG/1 int16 (m)
     grid/rsl.bin.gz                RSL(t) of one Steffen & Kaufmann 2025 earth model, 1°, 19 layers, int16 × 0.01 m
-    prototype/ice-dated1.json      DATED-1 outlines (mc, min, max) for 20 → 10 ka, simplified GeoJSON
+    ice/dated1.json                DATED-1 outlines (mc, min, max) for 20 → 10 ka, simplified GeoJSON
 
 The app derives H_paleo = H_now − RSL(t) itself (contract §5); there is no separate
 eustatic term because RSL already contains it (0-02, C-03).
@@ -42,6 +42,10 @@ from tools.data import kmdg
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "data" / "raw"
 OUT = ROOT / "src" / "assets" / "data"
+# Checkpoints are the pipeline's answer for tests/contract/paleo.test.ts to compare against, not
+# something the app fetches, so they go with the fixtures: since I-01 the asset directory holds
+# only published data, and manifest.json accounts for all of it.
+FIXTURES = ROOT / "contract" / "fixtures" / "paleo"
 
 # GEBCO tiles as (west, east, file); the RSL domain spans both.
 GEBCO_TILES = [
@@ -160,7 +164,8 @@ def main(argv: list[str]) -> int:
     args = ap.parse_args(argv)
 
     (OUT / "grid").mkdir(parents=True, exist_ok=True)
-    (OUT / "prototype").mkdir(parents=True, exist_ok=True)
+    (OUT / "ice").mkdir(parents=True, exist_ok=True)
+    FIXTURES.mkdir(parents=True, exist_ok=True)
 
     dem = build_dem()
     kmdg.write(OUT / "grid" / "dem-europe.bin.gz", dem)
@@ -168,10 +173,10 @@ def main(argv: list[str]) -> int:
     rsl = build_rsl(args.model)
     kmdg.write(OUT / "grid" / "rsl.bin.gz", rsl)
     ice = build_ice()
-    (OUT / "prototype" / "ice-dated1.json").write_text(
+    (OUT / "ice" / "dated1.json").write_text(
         json.dumps(ice, separators=(",", ":"), sort_keys=True), encoding="utf-8", newline="\n")
 
-    for f in ("grid/dem-europe.bin.gz", "grid/dem-baltic.bin.gz", "grid/rsl.bin.gz", "prototype/ice-dated1.json"):
+    for f in ("grid/dem-europe.bin.gz", "grid/dem-baltic.bin.gz", "grid/rsl.bin.gz", "ice/dated1.json"):
         print(f"  {f}: {(OUT / f).stat().st_size / 1024:.0f} KB")
 
     # Checkpoints: H_paleo computed with the app's sampling rules. tests/contract/paleo.test.ts
@@ -183,7 +188,7 @@ def main(argv: list[str]) -> int:
             r = bilinear_layer(rsl_at(rsl, ka), rsl, lon, lat)
             points.append({"name": name, "lon": lon, "lat": lat, "ka": ka,
                            "hNowM": round(h, 3), "rslM": round(r, 3), "hPaleoM": round(h - r, 3)})
-    (OUT / "prototype" / "checkpoints.json").write_text(
+    (FIXTURES / "checkpoints.json").write_text(
         json.dumps({"model": args.model, "points": points}, indent=1) + "\n", encoding="utf-8", newline="\n")
     for q in points:
         if q["ka"] in (11.3, 8.9, 7.8):

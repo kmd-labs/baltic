@@ -33,8 +33,11 @@ import { cellIndex, fillWater, WATER_OCEAN } from '../../src/app/core/data/water
 import { assertBalance, sillCheck } from '../../src/app/core/data/sill-check.ts';
 import { parseSills } from '../../src/app/core/data/sills.ts';
 import { FRAMES, LOCAL_ONSETS, lakeLevelAt, phaseAt } from '../../src/app/core/data/timeline.ts';
+import { ASSETS, MANIFEST as MANIFEST_FILE } from '../../src/app/core/data/assets.ts';
 import { loadFrames, DATA } from '../lib/frames.ts';
-import { readFileSync } from 'node:fs';
+import { checkBbox, checkGeometry } from './topology.ts';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export type Status = 'blocking' | 'reporting';
@@ -348,6 +351,62 @@ function upliftGradient(ctx: Context): CheckResult {
   };
 }
 
+/**
+ * `V-11`: the published geometry is well formed, everything is in one reference system, and the
+ * manifest's checksums describe the files that are there.
+ *
+ * The self-intersection half is not hygiene. The ice outlines are rasterised as the **wall** of
+ * the flood fill (`A-03`), under a nonzero winding rule, so a bow tie in a margin is a lake that
+ * drains the wrong way rather than a cosmetic defect. It passes today because the pipeline runs
+ * `make_valid` and `set_precision` — and that is exactly the kind of guarantee worth a gate, since
+ * nothing else would notice if a later simplification step dropped it.
+ */
+function topologyAndChecksums(ctx: Context): CheckResult {
+  const fc = JSON.parse(readFileSync(join(DATA, ASSETS.ice), 'utf8')) as Parameters<typeof checkGeometry>[0];
+  const geo = checkGeometry(fc);
+
+  const bboxBad: string[] = [];
+  for (const [id, g] of [
+    ['dem-baltic', ctx.frames.baltic],
+    ['rsl', ctx.frames.cube.geometry]
+  ] as const) {
+    for (const problem of checkBbox(g.bbox)) bboxBad.push(`${id}: ${problem}`);
+  }
+
+  const manifest = JSON.parse(readFileSync(join(DATA, MANIFEST_FILE), 'utf8')) as {
+    files: { path: string; bytes: number; sha256: string }[];
+  };
+  const checksumBad: string[] = [];
+  for (const f of manifest.files) {
+    const p = join(DATA, f.path);
+    if (!existsSync(p)) {
+      checksumBad.push(`${f.path} is listed and missing`);
+      continue;
+    }
+    const buf = readFileSync(p);
+    if (buf.length !== f.bytes) checksumBad.push(`${f.path}: ${buf.length} bytes, manifest says ${f.bytes}`);
+    else if (createHash('sha256').update(buf).digest('hex') !== f.sha256) checksumBad.push(`${f.path}: sha256 differs`);
+  }
+
+  const problems = [
+    ...geo.malformed,
+    ...geo.outOfRange,
+    ...geo.selfIntersecting.map(s => `${s.where}: ${s.count} self-intersection(s)`),
+    ...bboxBad,
+    ...checksumBad
+  ];
+
+  return {
+    id: 'topology-crs-checksums',
+    status: 'blocking',
+    pass: problems.length === 0,
+    value: `${geo.rings} rings / ${geo.points} points, ${manifest.files.length} files checksummed`,
+    expected: 'no self-intersections, degrees in EPSG:4326, checksums match the files',
+    deviation: `${problems.length} problem(s)`,
+    note: problems.length ? problems.slice(0, 3).join('; ') : undefined
+  };
+}
+
 /** Reporting: the model against the literature lake-level curve, as audit §1 tabulates it. */
 function lakeLevelSpread(ctx: Context): CheckResult {
   const { baltic, hpAt, iceAt } = ctx.frames;
@@ -403,6 +462,7 @@ export const CHECKS: readonly ((ctx: Context) => CheckResult)[] = [
   holoceneHighstand,
   littleBeltLittorina,
   upliftGradient,
+  topologyAndChecksums,
   lakeLevelSpread,
   outletCatalogue
 ];

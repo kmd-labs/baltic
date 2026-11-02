@@ -36,8 +36,7 @@ LAYOUT: tuple[tuple[str, str], ...] = (
 # Assets that predate the contract and have no schema. Listed one by one, with the task that
 # retires each, so a new unrecognised file fails the walk instead of slipping past it.
 UNCONTRACTED: dict[str, str] = {
-    "prototype/ice-dated1.json": "DATED-1 outlines, prototype shape — contract form lands with I-01",
-    "prototype/checkpoints.json": "H_paleo control points consumed by test:contract, not by the app",
+    "ice/dated1.json": "DATED-1 outlines — GeoJSON, and the contract has no schema for a feature collection yet",
 }
 
 

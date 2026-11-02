@@ -154,7 +154,9 @@
         @if (data.state() === 'loading') {
           <span class="status">{{ tr.dataLoading }}</span>
         } @else if (data.state() === 'error') {
-          <span class="status status--error" role="alert">{{ tr.dataError }}</span>
+          <span class="status status--error" role="alert" [title]="data.error()">
+            {{ tr.dataError }}@if (data.error()) { <span class="status__why">{{ data.error() }}</span> }
+          </span>
         }
       </div>
 

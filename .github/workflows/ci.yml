@@ -67,14 +67,17 @@ jobs:
       - name: Validation report
         run: npm run validate
 
-      # sills.json is generated from the spill analysis on those same assets (C-05), so it is a
-      # claim the repo can settle: regenerate it and the file must not move. Catches a catalogue
-      # edited by hand and a catalogue left stale after the grids or the water rule changed.
-      - name: The sill catalogue still matches the model
+      # sills.json is generated from the spill analysis on those same assets (C-05), and
+      # manifest.json from the directory itself (I-01), so both are claims the repo can settle:
+      # regenerate and neither file may move. Catches one edited by hand and one left stale after
+      # the grids or the water rule changed. The checksums make this strict — a byte anywhere in
+      # src/assets/data moves the manifest.
+      - name: The generated data files still match their inputs
         run: |
           npm run data:sills
-          git diff --exit-code -- src/assets/data/sills.json \
-            || { echo "::error::sills.json is out of date — run npm run data:sills and commit the result"; exit 1; }
+          npm run data:manifest
+          git diff --exit-code -- src/assets/data/ \
+            || { echo "::error::a generated data file is out of date — run npm run data:sills && npm run data:manifest and commit"; exit 1; }
 
   data:
     name: Data contract
