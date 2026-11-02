@@ -55,7 +55,7 @@ export function bilinear(layer: ArrayLike<number>, g: GridGeometry, lon: number,
  * read the way the GPU reads it — the mask textures use LinearFilter — without materialising the
  * channel as an array (water.ts `sceneMaskAt`).
  */
-export function bilinearBy(get: (i: number) => number, g: GridGeometry, lon: number, lat: number): number {
+function bilinearBy(get: (i: number) => number, g: GridGeometry, lon: number, lat: number): number {
   const [west, south, east, north] = g.bbox;
   const fx = ((lon - west) / (east - west)) * g.nx - 0.5;
   const fy = ((north - lat) / (north - south)) * g.ny - 0.5;

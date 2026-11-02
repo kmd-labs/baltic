@@ -4,8 +4,24 @@ Layout is described in contract/README.md. The TypeScript reader is
 src/app/core/data/kmdg.ts; both sides are tested against the same fixtures in
 contract/fixtures/grid/.
 
-Writing is deterministic (gzip mtime = 0), so a rerun of the pipeline produces
-byte-identical files.
+Writing is deterministic (gzip mtime = 0, compresslevel fixed), so a rerun of the
+pipeline on the same machine produces byte-identical files.
+
+**The limit of that, measured 2026-11-02.** Determinism holds for the *payload*,
+not for the gzip container across zlib versions. Rebuilding the committed RSL cube
+on a newer Python produced a file of 104 104 bytes against the committed 104 770,
+and decoding both gave 0 of 63 099 raw cells differing — identical data, different
+compression. So:
+
+- the manifest's SHA-256 identifies the bytes that are served, which is what it is
+  for, and remains exact;
+- but a regenerated grid may differ from the committed one without the data having
+  changed, and a byte comparison would report that as a data change.
+
+This is why CI regenerates `sills.json` and `manifest.json` and never the grids:
+those are derived from the committed bytes rather than from the raw downloads, so
+their diff means what it says. When a grid is rebuilt, compare the decoded payload
+(as `tests/contract/paleo.test.ts` does through the checkpoints), not the file.
 """
 
 from __future__ import annotations

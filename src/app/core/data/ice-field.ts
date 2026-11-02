@@ -201,7 +201,7 @@ const DENSIFY_DEG = 0.1;
  * the projected raster to the RFC's reading, so the ice wall of the flood fill and the body drawn
  * on the globe follow one outline (`A-09`).
  */
-export function densify(feature: IceGeometry, step = DENSIFY_DEG): IceGeometry {
+function densify(feature: IceGeometry, step = DENSIFY_DEG): IceGeometry {
   const ring = (r: number[][]): number[][] => {
     const out: number[][] = [];
     for (let i = 0; i + 1 < r.length; i++) {

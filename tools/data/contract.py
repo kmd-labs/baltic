@@ -21,13 +21,14 @@ from referencing import Registry, Resource
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_DIR = ROOT / "contract" / "schema"
 ASSET_DIR = ROOT / "src" / "assets" / "data"
-KINDS = ("frame", "manifest", "timeline", "sills", "taxa", "curve")
+KINDS = ("frame", "manifest", "timeline", "sills", "taxa", "curve", "sources")
 
 # Path conventions from contract/README.md, as patterns on the path relative to src/assets/data.
 LAYOUT: tuple[tuple[str, str], ...] = (
     (r"^manifest\.json$", "manifest"),
     (r"^timeline\.json$", "timeline"),
     (r"^sills\.json$", "sills"),
+    (r"^sources\.json$", "sources"),
     (r"^taxa\.json$", "taxa"),
     (r"^frames/f-\d+\.json$", "frame"),
     (r"^curves/[a-z0-9-]+\.json$", "curve"),
