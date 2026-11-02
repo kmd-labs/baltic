@@ -9,3 +9,6 @@ data/raw/
 data/interim/
 .venv/
 __pycache__/
+
+# working notes that are not project documentation
+linkedin.md
