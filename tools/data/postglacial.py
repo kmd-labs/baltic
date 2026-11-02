@@ -158,10 +158,63 @@ def bilinear_layer(v: np.ndarray, grid: kmdg.Grid, lon: float, lat: float) -> fl
     return float(top * (1 - ty) + bot * ty)
 
 
+def write_checkpoints(dem: kmdg.Grid, rsl: kmdg.Grid, model: str) -> list[dict]:
+    """
+    H_paleo at the control points, by the app's sampling rules. tests/contract/paleo.test.ts
+    recomputes them from the published grids and must agree within 1 m (`I-01`); measured agreement
+    is under 5 cm, which is what licenses the Python-sampled table of `V-03` to stand in for the
+    app's own values.
+    """
+    points = []
+    for name, lon, lat in CHECKPOINTS:
+        h = bilinear(dem, 0, lon, lat)
+        for ka in CHECK_KA:
+            r = bilinear_layer(rsl_at(rsl, ka), rsl, lon, lat)
+            points.append({"name": name, "lon": lon, "lat": lat, "ka": ka,
+                           "hNowM": round(h, 3), "rslM": round(r, 3), "hPaleoM": round(h - r, 3)})
+    FIXTURES.mkdir(parents=True, exist_ok=True)
+    (FIXTURES / "checkpoints.json").write_text(
+        json.dumps({"model": model, "points": points}, indent=1) + "\n", encoding="utf-8", newline="\n")
+    return points
+
+
+def rsl_only(model: str) -> int:
+    """
+    Swap the earth model without touching the bathymetry.
+
+    The DEM is read back from the published grid rather than rebuilt from GEBCO, so this runs on the
+    2 MB RSL download alone. That matters because the model is chosen by measurement (`V-03`), and a
+    decision backed by data should not be gated on a 1.87 GB file that has nothing to do with it.
+    """
+    dem_path = OUT / "grid" / "dem-europe.bin.gz"
+    if not dem_path.exists():
+        print(f"missing {dem_path} — run the full build once")
+        return 1
+    dem = kmdg.read(dem_path)
+    rsl = build_rsl(model)
+    kmdg.write(OUT / "grid" / "rsl.bin.gz", rsl)
+    points = write_checkpoints(dem, rsl, model)
+    print(f"  grid/rsl.bin.gz: model {model}, {(OUT / 'grid' / 'rsl.bin.gz').stat().st_size / 1024:.0f} KB")
+    for q in points:
+        if q["ka"] in (11.3, 8.9, 7.8):
+            print(f"  {q['name']} {q['ka']} ka: RSL {q['rslM']:+.1f} m, H_paleo {q['hPaleoM']:+.0f} m")
+    return 0
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--model", default="sk1", choices=["f75", "g76", "j88", "l79", "p79", "sk1", "sk2", "sk3"])
+    ap.add_argument("--model", default="p79", choices=["f75", "g76", "j88", "l79", "p79", "sk1", "sk2", "sk3"])
+    ap.add_argument(
+        "--rsl-only",
+        action="store_true",
+        help="Rebuild only grid/rsl.bin.gz and the checkpoints, reading H_now from the committed "
+             "DEM instead of GEBCO. Changing the earth model (V-03) needs the 2 MB NetCDF, not the "
+             "1.87 GB bathymetry, and this is the path that does not ask for the latter.",
+    )
     args = ap.parse_args(argv)
+
+    if args.rsl_only:
+        return rsl_only(args.model)
 
     (OUT / "grid").mkdir(parents=True, exist_ok=True)
     (OUT / "ice").mkdir(parents=True, exist_ok=True)
@@ -179,17 +232,7 @@ def main(argv: list[str]) -> int:
     for f in ("grid/dem-europe.bin.gz", "grid/dem-baltic.bin.gz", "grid/rsl.bin.gz", "ice/dated1.json"):
         print(f"  {f}: {(OUT / f).stat().st_size / 1024:.0f} KB")
 
-    # Checkpoints: H_paleo computed with the app's sampling rules. tests/contract/paleo.test.ts
-    # recomputes them from the published grids and must agree within 1 m (I-01).
-    points = []
-    for name, lon, lat in CHECKPOINTS:
-        h = bilinear(dem, 0, lon, lat)
-        for ka in CHECK_KA:
-            r = bilinear_layer(rsl_at(rsl, ka), rsl, lon, lat)
-            points.append({"name": name, "lon": lon, "lat": lat, "ka": ka,
-                           "hNowM": round(h, 3), "rslM": round(r, 3), "hPaleoM": round(h - r, 3)})
-    (FIXTURES / "checkpoints.json").write_text(
-        json.dumps({"model": args.model, "points": points}, indent=1) + "\n", encoding="utf-8", newline="\n")
+    points = write_checkpoints(dem, rsl, args.model)
     for q in points:
         if q["ka"] in (11.3, 8.9, 7.8):
             print(f"  {q['name']} {q['ka']} ka: RSL {q['rslM']:+.1f} m, H_now {q['hNowM']:+.0f} m, H_paleo {q['hPaleoM']:+.0f} m")

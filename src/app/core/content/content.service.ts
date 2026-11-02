@@ -17,8 +17,13 @@ export interface PostglacialContent {
   sills: Record<string, string | undefined>;
   places: Record<PlaceId, string>;
   glossary: [string, string][];
-  /** What each dataset is used for, where it comes from, its licence and what we changed. */
-  sources: { name: string; use: string; origin: string; licence: string; note: string }[];
+  /**
+   * What each dataset is used for, where it comes from and what we changed — prose, per language.
+   * The **licence is not here**: it comes from `sources.json`, generated from `SOURCES.md` (`I-04b`),
+   * because a licence retyped into translated prose is a licence that goes stale. `sourceId` links
+   * the two; it is null for entries that describe cited facts rather than a licensed file.
+   */
+  sources: { sourceId: string | null; name: string; use: string; origin: string; note: string }[];
   about: string[];
 }
 

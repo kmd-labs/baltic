@@ -36,7 +36,7 @@ import { BlockComponent } from './components/block/block.component';
 import { GlobeComponent, GlobeLabel, GlobeLayers, GlobePointer } from './components/globe/globe.component';
 import { PaleoDataService } from './core/data/paleo-data.service';
 import { ContentService } from './core/content/content.service';
-import { FRAMES, phaseAt } from './core/data/timeline';
+import { FRAMES, phaseAt, calendarYear } from './core/data/timeline';
 import { PLACES } from './core/data/geo';
 import { PhaseCardComponent } from './components/panels/phase-card.component';
 import { TransectPanelComponent } from './components/panels/transect-panel.component';
@@ -166,7 +166,7 @@ export class AppComponent implements OnDestroy {
   });
 
   readonly readout = computed(() => this.i18n.t().calBp(this.fmt(this.t())));
-  readonly calendar = computed(() => this.i18n.t().calendar(1950 - this.t(), n => this.fmt(n)));
+  readonly calendar = computed(() => this.i18n.t().calendar(calendarYear(this.t()), n => this.fmt(n)));
 
   readonly tooltip = computed(() => {
     const p = this.pointer();

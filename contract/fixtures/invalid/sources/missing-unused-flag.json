@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.4.0",
+  "sources": [
+    {
+      "id": "dated1",
+      "title": "DATED-1",
+      "licence": "CC BY 3.0",
+      "status": "ok"
+    }
+  ]
+}

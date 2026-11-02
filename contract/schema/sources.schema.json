@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kmd-labs.github.io/baltic/contract/sources.schema.json",
+  "title": "Source registry — sources.json",
+  "description": "Generated from SOURCES.md by `npm run data:sources` (I-04b). The machine-readable half of the registry: licence, verification, status and the attribution each licence requires. The Sources panel's prose is bilingual UI text and lives in assets/content/{lang}, keyed by the same ids — a licence registry cannot be translated, and translated prose cannot be the licence of record. Added in 1.4.0.",
+  "type": "object",
+  "required": ["schemaVersion", "sources"],
+  "properties": {
+    "schemaVersion": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "$comment": { "type": "string" },
+    "sources": {
+      "description": "Datasets the project may use. A status other than `ok` or `limited` must not reach published data — SOURCES.md's own rule (0-02, 0-03).",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "licence", "status", "unused"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/sourceId" },
+          "title": { "type": "string", "minLength": 1 },
+          "ref": { "description": "DOI or URL as the registry records it.", "type": "string", "minLength": 1 },
+          "licence": { "type": "string", "minLength": 1 },
+          "verified": { "description": "Where and when the licence was checked.", "type": "string", "minLength": 1 },
+          "status": {
+            "description": "ok = verified and usable; limited = usable within a stated restriction; unresolved = licence unknown, publication forbidden; excluded = licence rules the planned use out.",
+            "enum": ["ok", "limited", "unresolved", "excluded"]
+          },
+          "attribution": { "description": "Verbatim text the licence requires, where it requires one.", "type": "string", "minLength": 1 },
+          "unused": {
+            "description": "Registered but not yet used anywhere in tools/ or src/. Status speaks about the licence, never about use.",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "citations": {
+      "description": "Publications whose numbers enter the contract — phase boundaries, sill elevations, lake levels. Facts are not copyrightable, so these carry a citation and no licence.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "text"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/sourceId" },
+          "text": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "rejected": {
+      "description": "Ids kept on record as rejected, so a reader can see what was considered and why SOURCES.md says it was dropped.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/sourceId" },
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false
+}

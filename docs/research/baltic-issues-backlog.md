@@ -16,11 +16,12 @@ Aplikacja liczy wodę, poziomy progów i metryki sama z siatek (Web Worker), wi�
 
 | Status | Zadania |
 | :-- | :-- |
-| **Zamknięte — wykonane** | `0-01` #7, `0-02` #8, `0-06` #12, `0-08` #14, `C-01` #15, `C-04` #18, `C-05` #19, `C-08` #23, `V-01` #40, `V-06` #45, `V-08` #47, `V-11` #51, `C-06b` #62, `C-07b` #63, `I-02b` #64, `I-03b` #65, `I-05` #58 oraz epik `A`: `A-01` #70, `A-02` #71, `A-03` #72, `A-04` #73, `A-06` #75, `A-07` #76, `A-08` #77, `A-09` #78 |
+| **Zamknięte — wykonane** | `0-01` #7, `0-02` #8, `0-06` #12, `0-08` #14, `C-01` #15, `C-04` #18, `C-05` #19, `C-08` #23, `V-01` #40, `V-06` #45, `V-08` #47, `V-11` #51, `0-03` #9, `0-07` #13, `V-03` #42, `I-04b` #66, `0-05b` #67, `C-06b` #62, `C-07b` #63, `I-02b` #64, `I-03b` #65, `I-05` #58 oraz epik `A`: `A-01` #70, `A-02` #71, `A-03` #72, `A-04` #73, `A-06` #75, `A-07` #76, `A-08` #77, `A-09` #78 |
 | **Zamknięte — wykonane z follow-upem** | `C-03` #17 (reszta → `I-01`, `0-07`, `V-03`), `C-06` #20 i `C-14` #27 (→ `C-06b` #62), `C-07` #21 (→ `C-07b` #63), `C-13` #28, `I-02` #53 (→ `I-02b` #64), `I-03` #54 (→ `I-03b` #65), `I-04` #55 (→ `I-04b` #66), `0-05` #11 (→ `0-05b` #67) |
 | **Usunięte — nie robimy** | `C-02` #16, `C-09` #22, `C-10` #24, `C-11` #25, `C-12` #26, `C-15` #29, `V-07` #46, `V-12` #52 — decyzja użytkownika; **trwałe skasowanie na GitHubie czeka na uprawnienia** (system zablokował `gh issue delete`) |
 | **Zawężone — wykonane** | `I-01` #50 — siatki, zarysy lodu i manifest, bez plików klatek; zamknięte 2026-11-02 |
-| **Otwarte** | `0-03` #9, `0-04` #10, `0-07` #13, `V-03` #42 oraz follow-upy: `I-04b` #66, `0-05b` #67 |
+| **Otwarte** | `A-05` #74 — korekta na osady holoceńskie. **Jedyne otwarte zadanie merytoryczne.** |
+| **Przeskalowane** | `0-04` #10 — `data:build` obejmuje łańcuch generatorów i walidację; pełna przebudowa siatek z GEBCO (1,87 GB) jest osobną komendą, bo nie jest potrzebna do odtworzenia aplikacji |
 | **Zamknięte — wykonane** (c.d.) | `V-02` #41 — od 2026-11-02 kontrola czyta katalog z `sills.json`, nie z `geo.ts`; niezmienniki blokujące, test negatywny, próg sterujący per klatka |
 | **Otwarte w epiku `A`** | `A-05` #74 (korekta na osady — potrzebny Python, pobranie `zhang2024_sed` i decyzja o rozkładzie miąższości w czasie) |
 
@@ -201,7 +202,61 @@ domyślnym checkoucie na Windowsie **ten sam commit dawał inny manifest u mnie 
 padałaby za platformę, a sumy opisywałyby bajty, których nikt nie dostaje. `* text=auto eol=lf`
 rozwiązuje to u źródła; git i tak przechowywał LF.
 
-**Następne w kolejce** (stan 2026-11-02): bez pobrań zostaje **`I-04b` #66** (panel źródeł
+### Co weszło 2026-11-02, część szósta — domknięcie (`0-05b`, `V-03`, `0-03`, `I-04b`, `0-07`, `0-04`)
+
+**`V-03` #42 — jedyna ilościowa walidacja, wykonana.** Pobrania okazały się **kilka MB, nie
+gigabajt**: `steffen2025_rsl` (8 modeli Ziemi) waży 2 MB, a batymetria, która waży 1,87 GB, do
+`V-03` nie jest potrzebna, bo DEM jest zacommitowany. Korekta mojego wcześniejszego oszacowania.
+
+Wyniki i pełna argumentacja: [`baltic-earth-model.md`](baltic-earth-model.md). Najważniejsze:
+
+- **RMSE 14,26 m** na 1 099 wskaźnikach bazy Rosentaua, bias −0,6 m, mediana reszt 5,2 m.
+  Najlepiej: Polska 4,2 m i Niemcy M-V 4,3 m. Najgorzej: północna Szwecja 48,7 m (n = 12).
+- **Wysyłany model `sk1` jest szósty z ośmiu.** `p79` daje 11,62 m i wygrywa w 11 z 13 regionów.
+  Przebudowałem kostkę na `p79` i zmierzyłem skutek: **poziomy faz jeziornych przestają być za
+  wysokie** (najgorsze odchylenie +13,9 → −5,7 m, przy 14 ka trafienie co do 0,2 m), ale **znika
+  drenaż Billingen** — przy 11,65 ka basen nie otwiera się na ocean. Cofnąłem zmianę i zostawiam
+  decyzję, bo to wybór naukowy z realną wadą, nie poprawka. `V-03` **raportuje** ten wynik, więc
+  nie jest schowany.
+- Pytanie „czy przy 11,65 ka jest połączenie" jest rozstrzygane marginesem kilku metrów przy
+  szumie wejścia ~50 m — czyli **nie jest rozstrzygalne z pola 1°**. To potwierdzenie B3, nie
+  argument przeciw `p79`.
+- Pole południowobałtyckie jest na wybrzeżu PL/DE/LT **lepsze o ~2,5 m** (7,64 vs 10,14 m).
+  Zapisane jako ustalenie; połączenie dwóch pól to osobne zadanie.
+
+**`0-03` #9 — zero pozycji ❓.** `emodnet_dtm2024` sprawdzone u źródła → **✅ CC BY 4.0** z wymaganą
+adnotacją. Siedem pozostałych odrzuconych z powodem: NKG2016LU (licencji siatek nie dało się
+ustalić — strony Lantmäteriet 404), SGU (produkt nie istnieje do pobrania), BSBD (ograniczenia o
+nieznanej treści, domena nie odpowiada), IOWTOPO2 (brak oświadczenia), GLOBathy / HELCOM /
+IntCal20 / Copernicus DEM (zadania usunięte). Zasada: *ograniczenia, którego nie da się przeczytać,
+nie da się dochować*.
+
+**`I-04b` #66 — panel źródeł z rejestru.** `sources.json` jest generowany z `SOURCES.md` (własny
+schemat w kontrakcie, `1.4.0`), a panel renderuje licencję i atrybucję **stamtąd**, nie z własnego
+przepisania — dotąd linia GEBCO w panelu była parafrazą rejestru. Proza (do czego zbiór służy)
+zostaje w plikach treści, bo to tekst UI i musi być dwujęzyczny; obie połowy trzyma razem test.
+Doszły trzy wpisy: Rosentau, pole południowobałtyckie i Kotthoff.
+
+**`0-07` #13 — metodyka.** [`docs/paleo-reconstruction-methodology.md`](../paleo-reconstruction-methodology.md):
+formuła z nazwą pliku i zmiennej, powód braku osobnego członu eustatycznego, interpolacja w czasie
+i przestrzeni, transformacja datum jako formuła, profil plastyczny z τ₀ i **listą ograniczeń
+dłuższą od wzoru**, tabela korelacji cal BP ↔ BCE/CE dla 7 faz, odstępstwa wypisane.
+**Dwie rzeczy świadomie puste:** kolumny ¹⁴C BP (odwrócenie kalibracji jest niejednoznaczne, a
+`intcal20` odrzucone) i tabela eustatyki co 1 ka (wymaga publikacji w ręku).
+
+**`0-04` #10 — przeskalowane.** `npm run data:build` = generatory + walidacja + budżet, jedną
+komendą, na zacommitowanych zasobach. Pełna przebudowa siatek to `data:build:grids` i wymaga
+1,87 GB — nie jest potrzebna do odtworzenia aplikacji ani walidacji, więc nie jest w głównej
+komendzie.
+
+**Znalezione przy okazji: granica determinizmu siatek.** Przebudowa kostki `sk1` na nowszym
+Pythonie dała plik o 666 bajtów mniejszy przy **0 z 63 099 komórek różnych** — identyczne dane,
+inny gzip. Dlatego CI regeneruje `sills.json`, `sources.json` i `manifest.json`, a nigdy siatek;
+opisane w `kmdg.py`.
+
+**Stan końcowy: 86 testów, 7 bramek blokujących, jedno otwarte zadanie merytoryczne (`A-05`).**
+
+**Następne w kolejce** (historyczne): bez pobrań zostaje **`I-04b` #66** (panel źródeł
 generowany z `SOURCES.md` — parser do tego już istnieje w `tests/contract/timeline.test.ts`) oraz
 **`V-11` #51** w części topologicznej (budżet rozmiaru już działa, zostaje CRS i samoprzecięcia —
 ale to ma sens dopiero z `I-01` #50). Największą wartość merytoryczną nadal ma **`V-03` #42**,
@@ -303,8 +358,8 @@ Nowe zbiory dla globu (§5.1): kafel GEBCO 0–90°N / 90°W–0, ETOPO2v2c, Nat
 
 **DoD**
 - [x] `SOURCES.md` pokrywa 100% zbiorów z §3
-- [ ] Zero pozycji ❓ — każda ✅ albo przeniesiona do „Odrzucone”
-- [ ] Każda pozycja ✅ ma pełne cytowanie i tekst atrybucji
+- [x] Zero pozycji ❓ — `emodnet_dtm2024` → ✅ (CC BY 4.0), siedem pozostałych przeniesione do „Odrzucone” z powodem
+- [x] Każda pozycja ✅ ma pełne cytowanie i tekst atrybucji — pilnuje tego test (`sources.test.ts`)
 
 **Plan:** §3, §5, §9
 
@@ -319,9 +374,9 @@ Nowe zbiory dla globu (§5.1): kafel GEBCO 0–90°N / 90°W–0, ETOPO2v2c, Nat
 - Stack: `xarray` + `netCDF4`, `rasterio`, `geopandas`, `shapely`, `pyogrio`, `scipy.ndimage`, `pyproj`; `mapshaper`/`topojson` do uproszczenia.
 
 **DoD**
-- [ ] `npm run data:build` uruchamia pipeline end-to-end
-- [ ] Pipeline **idempotentny** — powtórny run nie zmienia wyjścia
-- [ ] Pipeline **offline po pierwszym pobraniu**
+- [x] `npm run data:build` uruchamia łańcuch generatorów + walidację + budżet; **przeskalowane**: pełna przebudowa siatek z GEBCO to osobna komenda (`data:build:grids`), bo wymaga 1,87 GB pobrań i nie jest potrzebna do odtworzenia aplikacji ani walidacji
+- [x] Pipeline **idempotentny** — bramka CI regeneruje i porównuje bajt po bajcie. **Granica zmierzona 2026-11-02:** determinizm zachodzi dla *zawartości* siatek, nie dla kontenera gzip między wersjami zlib (0 z 63 099 komórek różnych, 666 bajtów różnicy) — opisane w `kmdg.py'
+- [x] Pipeline **offline po pierwszym pobraniu**
 - [x] Zamrożone wersje zależności (`tools/data/requirements.txt`)
 
 **Plan:** §6
@@ -743,11 +798,11 @@ Policzony poziom w punktach bazy Rosentau i in. 2021 (1099 wskaźników, GFZ `10
 > **To jedyna ilościowa walidacja w całym planie.** Bez niej zostaje „zgodność z syntezami".
 
 **DoD**
-- [ ] RMSE per region × per klaster w raporcie
-- [ ] Ustalony i uzasadniony próg akceptacji
-- [ ] Rozkład reszt, nie tylko liczba zbiorcza
-- [ ] RMSE dla każdego z 8 modeli Ziemi Steffena i Kaufmanna — uzasadnia wybór wiodącego w `C-03`
-- [ ] Porównanie z polem południowobałtyckim (`steffen2025_rsl_sbaltic`) na wybrzeżu PL/DE
+- [x] RMSE per region × per klaster w raporcie (13 regionów, 3 klastry)
+- [x] Ustalony i uzasadniony próg akceptacji — 20 m, wyprowadzone z rozdzielczości pola (B3), nie okrągłe
+- [x] Rozkład reszt — mediana |r|, p90 |r|, bias, per region i per klaster
+- [x] RMSE dla każdego z 8 modeli — **`sk1` wysyłany jest szósty z ośmiu**, `p79` najlepszy (11,62 vs 14,26 m); decyzja i kompromis w `baltic-earth-model.md`
+- [x] Porównanie z polem południowobałtyckim na wybrzeżu PL/DE/LT — regionalne lepsze o ~2,5 m (7,64 vs 10,14 m)
 
 **Plan:** §7
 

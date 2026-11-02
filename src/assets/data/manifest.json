@@ -73,6 +73,12 @@
       "firstLoad": true
     },
     {
+      "path": "sources.json",
+      "bytes": 8735,
+      "sha256": "9df2a0b046b68bff3a0ef6ce1599632a646b784adf442ecb9cb58f3432510af7",
+      "firstLoad": true
+    },
+    {
       "path": "timeline.json",
       "bytes": 3426,
       "sha256": "c83931bdbda5b946860b4dfb0cce59a95ae5620c11d20a185e626ca6ce203ad0"

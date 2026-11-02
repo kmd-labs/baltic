@@ -13,6 +13,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { context, runChecks } from '../../tools/validate/checks.ts';
 import { checkBbox, checkGeometry, selfIntersections } from '../../tools/validate/topology.ts';
+import { RMSE_BUDGET_M, appResiduals, loadObservations, modelResiduals, stats } from '../../tools/validate/rsl.ts';
+import { join } from 'node:path';
 
 const ctx = await context();
 const results = await runChecks(ctx);
@@ -165,4 +167,72 @@ test('the published outlines are clean, and the gate says so numerically', () =>
   assert.equal(r.pass, true, r.note);
   assert.match(r.value, /\d+ rings \/ \d+ points/);
   assert.equal(r.deviation, '0 problem(s)');
+});
+
+// V-03: the quantitative validation, and the properties its conclusion rests on.
+
+test('the observation set is the authors’ 1 099 indicators, with its clusters and regions', () => {
+  const obs = loadObservations(join(import.meta.dirname, '..', '..', 'tools', 'validate', 'data'));
+  assert.equal(obs.indicators.length, 1099, 'the figure the plan, the issue and the database agree on');
+  assert.equal(obs.source, 'rosentau2021');
+  assert.equal(obs.models.length, 8, 'all eight Steffen & Kaufmann earth models');
+
+  const clusters = new Set(obs.indicators.map(i => i.cluster));
+  assert.deepEqual([...clusters].sort(), ['regression', 'transgression', 'undetermined']);
+  // The plan calls the third cluster "transitional". The database calls it `nd` — not determined —
+  // so it is carried under that name: a missing interpretation is not a transitional one.
+  assert.ok(obs.indicators.filter(i => i.cluster === 'undetermined').length > 400);
+  assert.ok(new Set(obs.indicators.map(i => i.region)).size >= 12, 'per-region RMSE needs regions');
+
+  // Every indicator has a position inside the Baltic region and a modelled value for every model:
+  // a null would quietly shrink the comparison for one model and not the others.
+  for (const i of obs.indicators) {
+    assert.ok(i.lat > 50 && i.lat < 70 && i.lon > 5 && i.lon < 35, `${i.id} at ${i.lon},${i.lat}`);
+    for (const m of obs.models) assert.ok(i.model[m] != null, `${i.id} has no ${m} value`);
+  }
+});
+
+test('the app samples the shipped field the same way the pipeline did', () => {
+  // The per-model table is sampled in Python; the shipped field's residuals are sampled through
+  // the app's own rslAt and bilinear. The conclusion mixes the two, so they have to agree — and
+  // 8 mm against residuals of metres is what makes that legitimate.
+  const obs = loadObservations(join(import.meta.dirname, '..', '..', 'tools', 'validate', 'data'));
+  const shipped = ctx.manifest.gia.earthModel;
+  const app = appResiduals(ctx.frames.cube, obs.indicators);
+  let worst = 0;
+  obs.indicators.forEach((i, k) => {
+    const py = i.model[shipped];
+    if (py != null) worst = Math.max(worst, Math.abs(py - (app[k] + i.rslM)));
+  });
+  assert.ok(worst < 0.05, `python and app sampling of ${shipped} differ by ${worst.toFixed(3)} m`);
+});
+
+test('the RSL check reports per region and per cluster, and names the better model', () => {
+  const r = byId.get('rsl-vs-observations');
+  assert.ok(r);
+  assert.equal(r.pass, true, r.note);
+  assert.match(r.value, /RMSE \d+\.\d+ m over 1099 indicators/);
+  const detail = (r.detail ?? []).join('\n');
+  assert.match(detail, /per region/);
+  assert.match(detail, /per cluster/);
+  assert.match(detail, /earth models by RMSE/);
+  // The shipped model is sk1 and the observations prefer p79. While that holds, the check has to
+  // say so — a validation that found a better model and stayed quiet would be worse than none.
+  assert.match(detail, /shipped \w+ ranks \d of 8/);
+  if (!/ranks 1 of 8/.test(detail)) {
+    assert.ok(r.note && /fits the observations better/.test(r.note), 'the finding must reach the note');
+  }
+});
+
+test('the RMSE budget is argued from the field, not picked round', () => {
+  // 20 m is where "the field is used beyond what its resolution supports" begins: 1 degree spacing
+  // with up to 85 m between adjacent nodes (audit B3). All eight models sit between 11.6 and 15.0,
+  // so the budget is loose enough to be about resolution and tight enough to catch a real break.
+  assert.equal(RMSE_BUDGET_M, 20);
+  const obs = loadObservations(join(import.meta.dirname, '..', '..', 'tools', 'validate', 'data'));
+  for (const m of obs.models) {
+    const s = stats(modelResiduals(obs.indicators, m));
+    assert.ok(s.rmseM < RMSE_BUDGET_M, `${m} at ${s.rmseM.toFixed(1)} m exceeds the budget`);
+    assert.ok(s.rmseM > 5, `${m} at ${s.rmseM.toFixed(1)} m looks too good — check the comparison`);
+  }
 });

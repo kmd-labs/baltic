@@ -36,7 +36,9 @@ export const ASSETS = {
   rsl: 'grid/rsl.bin.gz',
   ice: 'ice/dated1.json',
   /** 4 KB, and every frame's phase card needs it to name the outlet — eager rather than lazy. */
-  sills: 'sills.json'
+  sills: 'sills.json',
+  /** Licences and attributions, generated from SOURCES.md; the Sources panel renders them. */
+  sources: 'sources.json'
 } as const;
 
 /** The same set as a list, for anything that weighs or preloads it rather than naming a file. */

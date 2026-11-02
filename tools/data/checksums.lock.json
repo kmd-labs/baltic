@@ -28,6 +28,18 @@
       "url": "https://dap.ceda.ac.uk/bodc/gebco/global/gebco_2024/ice_surface_elevation/geotiff/gebco_2024_n90.0_s0.0_w0.0_e90.0.tif"
     }
   },
+  "rosentau2021": {
+    "2020-003_Rosentau-et-al_HOLSEA_baltic_isol_21-06-18.xlsx": {
+      "sha256": "b106c36f25c89987a2d6b5529dbb9fc86ad3e2c6927dcae7f94f2b5e3eeced2b",
+      "size": 5219953,
+      "url": "https://datapub.gfz.de/download/10.5880.GFZ.1.3.2020.003vEGWF/2020-003_Rosentau-et-al_HOLSEA_baltic_isol_21-06-18.xlsx"
+    },
+    "2020-003_Rosentau-et-al_Supplement_2_country-wise_data_description.pdf": {
+      "sha256": "5064cbb0331a901b1a3c30c8ebb64ecbb6ce1dd833bf4b7181c2f10b279e6c2c",
+      "size": 2678759,
+      "url": "https://datapub.gfz.de/download/10.5880.GFZ.1.3.2020.003vEGWF/2020-003_Rosentau-et-al_Supplement_2_country-wise_data_description.pdf"
+    }
+  },
   "steffen2025_rsl": {
     "rsl_SK05_skan_f75.nc": {
       "sha256": "6fdb9fa1872a5b49fe8a1dea8f7021771e4957fec902465087374e8a2e4e1ea1",
@@ -68,6 +80,53 @@
       "sha256": "0e65ad0547be254a803901bd6d121b55d40246bec690906afa3e1abba72a63c8",
       "size": 254568,
       "url": "https://zenodo.org/api/records/15481755/files/rsl_SK05_skan_sk3.nc/content"
+    }
+  },
+  "steffen2025_rsl_sbaltic": {
+    "rsl_Steffen-etal14_balticsea_f52_ANU-ICE.nc": {
+      "sha256": "1249cff4e349052e1fcc6ee251aec0476a08c39c088325411eb6cc68944463c8",
+      "size": 15796,
+      "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_f52_ANU-ICE.nc/content"
+    },
+    "rsl_Steffen-etal14_balticsea_f67_ANU-ICE.nc": {
+      "sha256": "c2bdde96465d95a0678b3284cd8e9faadd132fc14d8c7022677700088ba918b5",
+      "size": 15796,
+      "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_f67_ANU-ICE.nc/content"
+    },
+    "rsl_Steffen-etal14_balticsea_fb6_ANU-ICE.nc": {
+      "sha256": "1c0266e75a24a88beee62de32f1201be167c65bd57a5a961f2afe51801bb6bce",
+      "size": 15796,
+      "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_fb6_ANU-ICE.nc/content"
+    },
+    "rsl_Steffen-etal14_balticsea_ib9_ANU-ICE.nc": {
+      "sha256": "878fad140ce7f531b96255bdd51ba492708a136ecf9731a8f88ee70d3ddc579c",
+      "size": 15796,
+      "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_ib9_ANU-ICE.nc/content"
+    },
+    "rsl_Steffen-etal14_balticsea_jb9_ANU-ICE.nc": {
+      "sha256": "baac10a050f6df58001e96511e2674b5f057906e3fcbdb78869cc7a9f0e5990b",
+      "size": 15796,
+      "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_jb9_ANU-ICE.nc/content"
+    },
+    "rsl_Steffen-etal14_balticsea_kb6_ANU-ICE.nc": {
+      "sha256": "a3ebb21b92cf878423d1973be8bf44c7a944410e60ef0c274167e1d6770d649b",
+      "size": 15796,
+      "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_kb6_ANU-ICE.nc/content"
+    },
+    "rsl_Steffen-etal14_balticsea_m71_ANU-ICE.nc": {
+      "sha256": "f6746f72918d7ab5224d9376d5931643fb5283fa542c67ecd4251568baf77b35",
+      "size": 15796,
+      "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_m71_ANU-ICE.nc/content"
+    },
+    "rsl_Steffen-etal14_balticsea_pb7_ANU-ICE.nc": {
+      "sha256": "4cf4c12aacf64a82e84b23d6e46ca3707a9924f69456af8f09673635c95b972b",
+      "size": 15796,
+      "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_pb7_ANU-ICE.nc/content"
+    },
+    "rsl_Steffen-etal14_balticsea_pb9_ANU-ICE.nc": {
+      "sha256": "0aebca88345c9cd500699a81ff40af50812d7e3aceb3428da54ac573799a6da1",
+      "size": 15796,
+      "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_pb9_ANU-ICE.nc/content"
     }
   }
 }

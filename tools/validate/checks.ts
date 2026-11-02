@@ -32,10 +32,13 @@ import { rslAt } from '../../src/app/core/data/paleo.ts';
 import { cellIndex, fillWater, WATER_OCEAN } from '../../src/app/core/data/water.ts';
 import { assertBalance, sillCheck } from '../../src/app/core/data/sill-check.ts';
 import { parseSills } from '../../src/app/core/data/sills.ts';
+import { parseManifest } from '../../src/app/core/data/manifest.ts';
+import type { Manifest } from '../../src/app/core/data/manifest.ts';
 import { FRAMES, LOCAL_ONSETS, lakeLevelAt, phaseAt } from '../../src/app/core/data/timeline.ts';
 import { ASSETS, MANIFEST as MANIFEST_FILE } from '../../src/app/core/data/assets.ts';
 import { loadFrames, DATA } from '../lib/frames.ts';
 import { checkBbox, checkGeometry } from './topology.ts';
+import { RMSE_BUDGET_M, appResiduals, groupBy, loadObservations, modelResiduals, stats } from './rsl.ts';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -104,12 +107,15 @@ const LITTLE_BELT_BUDGET_YR = 600;
 export interface Context {
   frames: Awaited<ReturnType<typeof loadFrames>>;
   sills: ReturnType<typeof parseSills>;
+  /** The published index: `V-03` needs to know which earth model it is judging. */
+  manifest: Manifest;
 }
 
 export async function context(): Promise<Context> {
   return {
     frames: await loadFrames(),
-    sills: parseSills(JSON.parse(readFileSync(join(DATA, 'sills.json'), 'utf8')))
+    sills: parseSills(JSON.parse(readFileSync(join(DATA, 'sills.json'), 'utf8'))),
+    manifest: parseManifest(JSON.parse(readFileSync(join(DATA, MANIFEST_FILE), 'utf8')))
   };
 }
 
@@ -407,6 +413,57 @@ function topologyAndChecksums(ctx: Context): CheckResult {
   };
 }
 
+/**
+ * `V-03`: the shipped sea-level field against 1 099 observed indicators, per region and per
+ * cluster — and whether the shipped earth model is the one the observations prefer.
+ *
+ * Blocking on the RMSE budget, because this is the gate the whole reconstruction rests on. The
+ * model comparison is reported rather than enforced: which rheology to ship is a scientific choice
+ * with a trade-off (see the note), and a gate that silently demanded the lowest RMSE would make
+ * that choice by arithmetic.
+ */
+function rslAgainstObservations(ctx: Context): CheckResult {
+  const obs = loadObservations(join(import.meta.dirname, 'data'));
+  const res = appResiduals(ctx.frames.cube, obs.indicators);
+  const all = stats(res);
+
+  const byRegion = [...groupBy(obs.indicators, 'region', res)]
+    .map(([g, xs]) => ({ g, ...stats(xs) }))
+    .sort((a, b) => b.rmseM - a.rmseM);
+  const byCluster = [...groupBy(obs.indicators, 'cluster', res)].map(([g, xs]) => ({ g, ...stats(xs) }));
+
+  const perModel = obs.models
+    .map(m => ({ m, ...stats(modelResiduals(obs.indicators, m)) }))
+    .sort((a, b) => a.rmseM - b.rmseM);
+  const shipped = ctx.manifest.gia.earthModel;
+  const best = perModel[0];
+  const shippedRank = perModel.findIndex(p => p.m === shipped) + 1;
+
+  const detail = [
+    'per region (RMSE m, bias m, n):',
+    ...byRegion.map(r => `  ${r.g.padEnd(16)} ${r.rmseM.toFixed(1).padStart(6)} ${f1(r.biasM).padStart(7)} ${String(r.n).padStart(5)}`),
+    'per cluster:',
+    ...byCluster.map(r => `  ${r.g.padEnd(16)} ${r.rmseM.toFixed(1).padStart(6)} ${f1(r.biasM).padStart(7)} ${String(r.n).padStart(5)}`),
+    `residuals: median |r| ${all.madM.toFixed(1)} m, p90 |r| ${all.p90M.toFixed(1)} m`,
+    `earth models by RMSE: ${perModel.map(p => `${p.m} ${p.rmseM.toFixed(1)}`).join(', ')}`,
+    `shipped ${shipped} ranks ${shippedRank} of ${perModel.length}; best is ${best.m} at ${best.rmseM.toFixed(1)} m`
+  ];
+
+  return {
+    id: 'rsl-vs-observations',
+    status: 'blocking',
+    pass: all.rmseM <= RMSE_BUDGET_M,
+    value: `RMSE ${all.rmseM.toFixed(2)} m over ${all.n} indicators, bias ${f1(all.biasM)} m`,
+    expected: `within ${RMSE_BUDGET_M} m — what a 1° field interpolated onto a 0.025° DEM can support`,
+    deviation: `${(RMSE_BUDGET_M - all.rmseM).toFixed(2)} m of headroom; worst region ${byRegion[0].g} ${byRegion[0].rmseM.toFixed(1)} m`,
+    note:
+      shippedRank > 1
+        ? `${best.m} fits the observations better (${best.rmseM.toFixed(2)} m against ${shipped}'s ${all.rmseM.toFixed(2)}) — a reported finding, not an automatic switch: see docs/research/baltic-earth-model.md`
+        : undefined,
+    detail
+  };
+}
+
 /** Reporting: the model against the literature lake-level curve, as audit §1 tabulates it. */
 function lakeLevelSpread(ctx: Context): CheckResult {
   const { baltic, hpAt, iceAt } = ctx.frames;
@@ -462,6 +519,7 @@ export const CHECKS: readonly ((ctx: Context) => CheckResult)[] = [
   holoceneHighstand,
   littleBeltLittorina,
   upliftGradient,
+  rslAgainstObservations,
   topologyAndChecksums,
   lakeLevelSpread,
   outletCatalogue

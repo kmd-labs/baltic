@@ -5,6 +5,7 @@ import { filePath, gridPath, parseManifest } from './manifest';
 import type { Manifest } from './manifest';
 import { nearestSill, parseSills } from './sills';
 import type { SillCatalogue, SillEntry } from './sills';
+import type { SourceEntry } from './sources';
 import { fetchKmdg, kmdgLayer, KmdgGrid } from './kmdg';
 import { bilinear, maskFractionAt, rslAt, RslCube } from './paleo';
 import { FRAMES, lakeLevelAt, nearestFrame } from './timeline';
@@ -134,6 +135,8 @@ export class PaleoDataService {
   readonly sills = computed<readonly SillEntry[]>(() => this.catalogue()?.sills ?? []);
   /** The published index (`I-01`): where the files are and what produced them. */
   readonly manifest = signal<Manifest | null>(null);
+  /** Licences and attributions, generated from `SOURCES.md` (`I-04b`); the Sources panel reads them. */
+  readonly sources = signal<readonly SourceEntry[]>([]);
   /**
    * Why the load failed, in the words of whatever failed — a wrong `schemaVersion`, a file the
    * manifest does not publish, an HTTP status. Shown in the dock, because the alternative is a
@@ -186,10 +189,11 @@ export class PaleoDataService {
           fetchKmdg(ASSET_BASE + gridPath(m, GRID_ID.demBaltic)),
           fetchKmdg(ASSET_BASE + gridPath(m, GRID_ID.rsl)),
           this.json(filePath(m, ASSETS.ice)),
-          this.json(filePath(m, ASSETS.sills)).then(parseSills)
+          this.json(filePath(m, ASSETS.sills)).then(parseSills),
+          this.json(filePath(m, ASSETS.sources))
         ]);
       })
-      .then(([europe, baltic, rsl, ice, sills]) => {
+      .then(([europe, baltic, rsl, ice, sills, sources]) => {
         this.europe = europe;
         this.baltic = baltic;
         this.rslGrid = rsl;
@@ -198,6 +202,7 @@ export class PaleoDataService {
         this.cube = { geometry: rsl, times: [...rsl.times], layers: Array.from({ length: rsl.nt }, (_, i) => kmdgLayer(rsl, i)) };
         this.ice = (ice as { features: IceFeature[] }).features;
         this.catalogue.set(sills);
+        this.sources.set((sources as { sources: SourceEntry[] }).sources);
         this.startWorker();
         this.state.set('ready');
         this.prefetchIceSdfs();

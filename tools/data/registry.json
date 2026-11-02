@@ -46,6 +46,31 @@
         { "name": "DATED-1_TimeSlices_shp.zip", "url": "https://store.pangaea.de/Publications/HughesA-etal_2015/DATED-1_TimeSlices_shp.zip" },
         { "name": "DATED-1_readme.pdf", "url": "https://store.pangaea.de/Publications/HughesA-etal_2015/DATED-1_readme.pdf" }
       ]
+},
+    {
+      "id": "rosentau2021",
+      "tier": 2,
+      "title": "Rosentau et al. 2021 — Holocene relative sea-level database for the Baltic Sea (HOLSEA)",
+      "files": [
+        { "name": "2020-003_Rosentau-et-al_HOLSEA_baltic_isol_21-06-18.xlsx", "url": "https://datapub.gfz.de/download/10.5880.GFZ.1.3.2020.003vEGWF/2020-003_Rosentau-et-al_HOLSEA_baltic_isol_21-06-18.xlsx", "size": 5219953 },
+        { "name": "2020-003_Rosentau-et-al_Supplement_2_country-wise_data_description.pdf", "url": "https://datapub.gfz.de/download/10.5880.GFZ.1.3.2020.003vEGWF/2020-003_Rosentau-et-al_Supplement_2_country-wise_data_description.pdf", "size": 2678759 }
+      ]
+    },
+    {
+      "id": "steffen2025_rsl_sbaltic",
+      "tier": 2,
+      "title": "Steffen & Kaufmann 2025 — RSL southern Baltic; only the ANU-ICE variants, for comparability with steffen2025_rsl",
+      "files": [
+        { "name": "rsl_Steffen-etal14_balticsea_kb6_ANU-ICE.nc", "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_kb6_ANU-ICE.nc/content", "size": 15796, "md5": "4c0e241f4632c1afd86bd386f1d13cfe" },
+        { "name": "rsl_Steffen-etal14_balticsea_ib9_ANU-ICE.nc", "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_ib9_ANU-ICE.nc/content", "size": 15796, "md5": "9caf3a43851e8a9b4e7477a76e4cd510" },
+        { "name": "rsl_Steffen-etal14_balticsea_pb7_ANU-ICE.nc", "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_pb7_ANU-ICE.nc/content", "size": 15796, "md5": "9029d7d8f7efd4760d5f6810caa3e3a7" },
+        { "name": "rsl_Steffen-etal14_balticsea_f52_ANU-ICE.nc", "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_f52_ANU-ICE.nc/content", "size": 15796, "md5": "077bbbeedb2c0e6219d7641aa7540fa1" },
+        { "name": "rsl_Steffen-etal14_balticsea_f67_ANU-ICE.nc", "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_f67_ANU-ICE.nc/content", "size": 15796, "md5": "49018e5c0efcb1b4561d45d197967d22" },
+        { "name": "rsl_Steffen-etal14_balticsea_m71_ANU-ICE.nc", "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_m71_ANU-ICE.nc/content", "size": 15796, "md5": "cf4117b5412f117f0c488a8e3dc536d6" },
+        { "name": "rsl_Steffen-etal14_balticsea_pb9_ANU-ICE.nc", "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_pb9_ANU-ICE.nc/content", "size": 15796, "md5": "9355c77f4e7d7cb3aa897275bd212782" },
+        { "name": "rsl_Steffen-etal14_balticsea_fb6_ANU-ICE.nc", "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_fb6_ANU-ICE.nc/content", "size": 15796, "md5": "084ef4ac6b36da61a1e5e9d591d2acf4" },
+        { "name": "rsl_Steffen-etal14_balticsea_jb9_ANU-ICE.nc", "url": "https://zenodo.org/api/records/15488259/files/rsl_Steffen-etal14_balticsea_jb9_ANU-ICE.nc/content", "size": 15796, "md5": "92345201327621133e9ad52685f42096" }
+      ]
     }
   ]
 }

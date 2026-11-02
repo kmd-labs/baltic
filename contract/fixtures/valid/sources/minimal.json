@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.4.0",
+  "sources": [
+    {
+      "id": "gebco2024",
+      "title": "GEBCO_2024 Grid, 15 arcsec",
+      "ref": "10.5285/1c44ce99-0a0d-5f4f-e063-7086abc0ea0f",
+      "licence": "public domain with attribution required",
+      "verified": "2026-10-30, GEBCO_Grid_terms_of_use.pdf",
+      "status": "ok",
+      "attribution": "GEBCO Compilation Group (2024). GEBCO 2024 Grid.",
+      "unused": false
+    }
+  ],
+  "citations": [
+    { "id": "andren2011", "text": "Andren, T. et al. 2011 - leading chronology source" }
+  ],
+  "rejected": ["ice6g_c", "stroeven2016"]
+}
