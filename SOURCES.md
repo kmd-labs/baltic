@@ -92,7 +92,7 @@ Grubość lodu nie pochodzi z żadnego zbioru — to profil plastyczny liczony o
 
 | id | Zbiór | DOI / URL | Licencja | Weryfikacja | Status |
 | :-- | :-- | :-- | :-- | :-- | :-: |
-| `kotthoff2022` | Kotthoff i in. 2022, IODP Exp. 347 Site M0059 — palinomorfy, okrzemki, geochemia (~8 ka) | `10.1594/PANGAEA.943832` | CC BY 4.0 | 2026-10-30, DataCite | ✅ · **nieużywany** — zadanie, pod które był zarejestrowany (`V-07`, taksony i zasolenie), zostało usunięte 2026-10-31 |
+| `kotthoff2022` | Kotthoff i in. 2022, IODP Exp. 347 Site M0059 — palinomorfy, okrzemki, geochemia (~8 ka) | `10.1594/PANGAEA.943832` | CC BY 4.0 | 2026-10-30, DataCite | ✅ · **używany** od 2026-11-02 — lokalny onset Littoriny w Małym Bełcie (~7,4 ka cal BP) w `timeline.json` (`C-08`). Zadanie, pod które był pierwotnie zarejestrowany (`V-07`, taksony i zasolenie), zostało usunięte 2026-10-31 |
 | `helcom_basins` | HELCOM — podział na baseny (ETRS89-LAEA) | https://metadata.helcom.fi | — | — | ❓ |
 
 **Atrybucja (✅):**

@@ -1,9 +1,42 @@
 import type { PhaseId } from '../i18n/i18n.types';
+import TIMELINE from '../../../assets/data/timeline.json' with { type: 'json' };
 
 /**
- * Prototype timeline (plan §1–§2). Replaced by timeline.json once C-08 lands.
- * Times are cal yr BP (Present = 1950).
+ * The postglacial chronology (plan §1–§2, `C-08`). Times are cal yr BP (Present = 1950).
+ *
+ * **The boundaries and event times live in `src/assets/data/timeline.json`**, not here. They are
+ * literature — dates with citations, and the places where authors disagree — so the contract file
+ * is their home (`contract/schema/timeline.schema.json`), and this module imports it rather than
+ * keeping a second copy of the same numbers next to it. That is the whole of `C-08`: before it,
+ * these were seven hard-coded rows whose provenance was a comment saying "Andrén et al. 2011".
+ *
+ * It is imported rather than fetched because every frame needs it synchronously — `phaseAt` is
+ * called from templates, from the renderers and from the Node-side tools — and 3 KB bundled costs
+ * less than a request and an async hole in a hundred call sites. The file is still served as an
+ * asset and still validated by `npm run contract:validate`. Loading it through `manifest.json`
+ * with the rest is `I-02b` (#64).
+ *
+ * What stays here is what the contract does not model: the water class and lake flag per phase
+ * (behaviour of the scene, not chronology) and the literature lake-level curve.
  */
+
+/**
+ * The shape this module needs of the contract file. Declared rather than inferred, and bound by
+ * assignment below, so TypeScript still checks the JSON against it: a renamed or missing field
+ * fails the build here instead of becoming `undefined` at runtime.
+ */
+interface TimelineDoc {
+  schemaVersion: string;
+  phases: readonly {
+    id: string;
+    start: { tBP: number };
+    end: { tBP: number };
+    localOnsets?: readonly { place: string; lat: number; lon: number; tBP: number }[];
+  }[];
+  events: readonly { id: string; tBP: number; disputed?: boolean }[];
+}
+
+const DOC: TimelineDoc = TIMELINE;
 
 export type WaterClass = 'ice' | 'fresh' | 'brackish' | 'marine';
 
@@ -15,16 +48,28 @@ export interface Phase {
   lake: boolean;
 }
 
-/** Basin-wide boundaries, Andrén et al. 2011 via plan §2. */
-export const PHASES: readonly Phase[] = [
-  { id: 'deglaciation', from: 20000, to: 16000, cls: 'ice', lake: false },
-  { id: 'bil', from: 16000, to: 11700, cls: 'fresh', lake: true },
-  { id: 'yoldia', from: 11700, to: 10700, cls: 'brackish', lake: false },
-  { id: 'ancylus', from: 10700, to: 9800, cls: 'fresh', lake: true },
-  { id: 'mastogloia', from: 9800, to: 8500, cls: 'brackish', lake: false },
-  { id: 'littorina', from: 8500, to: 4000, cls: 'marine', lake: false },
-  { id: 'post-littorina', from: 4000, to: 0, cls: 'brackish', lake: false }
-];
+/**
+ * Water regime per phase. Not in `timeline.json` because it is not chronology: `lake` decides
+ * whether the scene fills the basin to an outlet sill or to the ocean, and `cls` picks the badge
+ * and the water colour. The salinity ranges that go with them are content, per phase.
+ */
+const REGIME: Readonly<Record<PhaseId, { cls: WaterClass; lake: boolean }>> = {
+  deglaciation: { cls: 'ice', lake: false },
+  bil: { cls: 'fresh', lake: true },
+  yoldia: { cls: 'brackish', lake: false },
+  ancylus: { cls: 'fresh', lake: true },
+  mastogloia: { cls: 'brackish', lake: false },
+  littorina: { cls: 'marine', lake: false },
+  'post-littorina': { cls: 'brackish', lake: false }
+};
+
+/** Basin-wide boundaries from `timeline.json`, each one cited there. */
+export const PHASES: readonly Phase[] = DOC.phases.map(p => ({
+  id: p.id as PhaseId,
+  from: p.start.tBP,
+  to: p.end.tBP,
+  ...REGIME[p.id as PhaseId]
+}));
 
 export type EventId =
   | 'billingen-before'
@@ -34,15 +79,24 @@ export type EventId =
   | 'littorina-onset'
   | 'littorina-max';
 
-/** Event cross-sections (plan §1). */
-export const EVENTS: readonly { id: EventId; t: number; disputed?: boolean }[] = [
-  { id: 'billingen-before', t: 11750 },
-  { id: 'billingen-after', t: 11650, disputed: true },
-  { id: 'ancylus-max', t: 10300 },
-  { id: 'ancylus-regression', t: 10050 },
-  { id: 'littorina-onset', t: 8350 },
-  { id: 'littorina-max', t: 6750 }
-];
+/** Event cross-sections (plan §1), from `timeline.json`. */
+export const EVENTS: readonly { id: EventId; t: number; disputed?: boolean }[] = DOC.events.map(e => ({
+  id: e.id as EventId,
+  t: e.tBP,
+  disputed: e.disputed
+}));
+
+/**
+ * Local phase onsets, kept apart from the basin-wide boundaries because the transitions were not
+ * synchronous — the Littorina onset in the Little Belt is about a millennium younger than the
+ * boundary. `V-06` (#45) compares its event checks against these, not against the boundary, which
+ * is the difference between a check that measures something and one that fails for the wrong
+ * reason.
+ */
+export const LOCAL_ONSETS: readonly { phase: PhaseId; place: string; lat: number; lon: number; tBP: number }[] =
+  DOC.phases.flatMap(p =>
+    (p.localOnsets ?? []).map(o => ({ phase: p.id as PhaseId, place: o.place, lat: o.lat, lon: o.lon, tBP: o.tBP }))
+  );
 
 /** 21 regular frames every 1000 years plus the event cross-sections, oldest first. */
 export const FRAMES: readonly number[] = [
