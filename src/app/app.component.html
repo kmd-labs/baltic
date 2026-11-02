@@ -10,11 +10,11 @@
         <button
           type="button"
           class="header__brand-btn"
-          aria-label="KMD Labs – About us"
+          [attr.aria-label]="tr.brandAria"
           (click)="about.open({ lang: i18n.lang() })">
           <img class="header__logo-img" src="assets/design-system/logo/kmd-black-orange.svg" alt="KMD" />
           <span class="header__divider" aria-hidden="true"></span>
-          <h1 class="header__app-name">Baltic</h1>
+          <h1 class="header__app-name">{{ tr.appName }}</h1>
           <span class="header__badge">{{ tr.prototype }}</span>
         </button>
       </div>
@@ -91,6 +91,9 @@
       <div class="tip__row"><span>{{ tr.tipRelOcean }}</span><span>{{ tip.rel }}</span></div>
       <div class="tip__row"><span>{{ tr.tipToday }}</span><span>{{ tip.today }}</span></div>
       <div class="tip__row"><span>{{ tr.tipRsl }}</span><span>{{ tip.rsl }}</span></div>
+      @if (tip.iceThickness) {
+        <div class="tip__row"><span>{{ tr.tipIceThickness }}</span><span>{{ tip.iceThickness }}</span></div>
+      }
     </div>
   }
 

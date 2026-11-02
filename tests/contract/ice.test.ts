@@ -21,7 +21,8 @@ import {
   ICE_PROFILE_K,
   ICE_SDF_SCALE,
   ICE_KA_MAX,
-  ICE_KA_MIN
+  ICE_KA_MIN,
+  iceThickness
 } from '../../src/app/core/data/ice-field.ts';
 
 const DATA = join(import.meta.dirname, '..', '..', 'src', 'assets', 'data');
@@ -356,4 +357,43 @@ test('the thickest point of the 20 ka sheet is the ~3 km C-07 documents', () => 
   assert.ok(km > 300 && km < 600, `furthest point from the margin ${km.toFixed(0)} km`);
   assert.ok(metres > 2500 && metres < 3500, `dome ${metres.toFixed(0)} m thick at ${km.toFixed(0)} km from the margin`);
   console.log(`    A-09: 20 ka dome ${metres.toFixed(0)} m at ${km.toFixed(0)} km from the margin`);
+});
+
+// C-07b: the thickness the readouts report is the thickness the globe extrudes.
+//
+// `iceThickness` in ice-field.ts and `iceThickness` in the GLSL of ice-shaders.ts are the same
+// formula on two sides of a texture upload. The constant is already shared — the shader takes
+// `ICE_PROFILE_K` as a uniform — so what can still drift is the shape, and this holds the two to
+// each other the way water.test.ts holds the water rule (`A-02`). The tooltip and the body
+// disagreeing about the ice is exactly what `A-08` was.
+test('the GLSL plastic profile equals the TypeScript one', () => {
+  const glsl = readFileSync(
+    join(import.meta.dirname, '..', '..', 'src', 'app', 'components', 'globe', 'ice-shaders.ts'),
+    'utf8'
+  );
+  const body = /float iceThickness\(float d\)\s*{\s*return ([^;]+);/.exec(glsl);
+  assert.ok(body, 'ice-shaders.ts no longer declares iceThickness(float d) — update this test with it');
+
+  // Translate the one expression back to JS. `uProfileK` is the uniform the globe fills with
+  // ICE_PROFILE_K (globe.component.ts), so it binds to the same constant here.
+  const expr = body[1].replace(/\buProfileK\b/g, 'K').replace(/\bsqrt\b/g, 'Math.sqrt');
+  const fromGlsl = new Function('d', 'K', `return ${expr};`) as (d: number, K: number) => number;
+
+  for (const d of [-10, -0.001, 0, 0.001, 1, 4, 25, 100, 225, 400, 900]) {
+    assert.ok(
+      Math.abs(fromGlsl(d, ICE_PROFILE_K) - iceThickness(d)) < 1e-9,
+      `d = ${d} km: GLSL ${fromGlsl(d, ICE_PROFILE_K)} m, TS ${iceThickness(d)} m`
+    );
+  }
+});
+
+test('the plastic profile has the documented magnitudes', () => {
+  // The numbers the comment on ICE_PROFILE_K and the C-07 scope both quote.
+  assert.equal(iceThickness(0), 0, 'no ice outside the margin');
+  assert.equal(iceThickness(-5), 0, 'and none at a negative distance');
+  assert.ok(Math.abs(iceThickness(1) - 149) < 1, `${iceThickness(1).toFixed(0)} m at 1 km from the margin`);
+  assert.ok(Math.abs(iceThickness(400) - 2982) < 2, `${iceThickness(400).toFixed(0)} m at 400 km`);
+  // Monotone and concave: thicker inland, and the gain per km falls off.
+  assert.ok(iceThickness(100) > iceThickness(50));
+  assert.ok(iceThickness(100) - iceThickness(50) < iceThickness(50) - iceThickness(1));
 });

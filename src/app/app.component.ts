@@ -184,7 +184,9 @@ export class AppComponent implements OnDestroy {
       seabed: !info.ice && info.water === 'dry' && info.hNow < 0 ? tr.tipSeabed : '',
       rel: this.signed(info.hPaleo),
       today: this.signed(info.hNow),
-      rsl: this.signed(info.rsl)
+      rsl: this.signed(info.rsl),
+      // Only where the body is drawn; the plastic profile is a schematic, so the label says so.
+      iceThickness: info.iceM > 0 ? `${this.fmt(Math.round(info.iceM))} m` : ''
     };
   });
 

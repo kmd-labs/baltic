@@ -42,6 +42,7 @@ git submodule status      # bez wiodącego '-' i '+' przy SHA
 | `npm run build` | build produkcyjny do `dist/baltic/` |
 | `npm run build:gh-pages` | build pod `https://kmd-labs.github.io/baltic/` |
 | `npm run test:contract` | testy czytnika danych i reguły wody (Node, `node --test`) + `tsc` na kontrakcie |
+| `npm run test:i18n` | zgodność kluczy treści EN↔PL i brak zahardkodowanych napisów — wołane przez `build` |
 | `npm run contract:validate` | walidacja JSON-ów z `src/assets/data/` schematami z `contract/schema/` |
 | `npm run assets:check` | waży `src/assets/data/` wobec budżetu (25 MiB całość, 4 MiB pierwsze wejście) |
 | `npm run validate` | raport walidacyjny (`V-01`): niezmienniki modelu i kontrole zdarzeń, z odchyleniem liczbowym |

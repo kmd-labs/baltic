@@ -4,8 +4,9 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
-    "build:gh-pages": "ng build --base-href /baltic/",
+    "test:i18n": "node --test --experimental-strip-types --no-warnings --import ./tests/ts-resolve.mjs tests/contract/content.test.ts",
+    "build": "npm run test:i18n && ng build",
+    "build:gh-pages": "npm run test:i18n && ng build --base-href /baltic/",
     "watch": "ng build --watch --configuration development",
     "setup:github": "node scripts/setup-github.mjs",
     "data:fetch": "python tools/data/fetch.py",

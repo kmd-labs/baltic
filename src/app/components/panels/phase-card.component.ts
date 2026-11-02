@@ -19,7 +19,7 @@ import { EVENTS, eventAt, phaseAt } from '../../core/data/timeline';
     @let ph = phase();
     <div class="panel__head">
       <h3 class="panel__title">{{ tr.phaseTitle }}</h3>
-      <span class="panel__meta">{{ fmt(ph.from) }}–{{ fmt(ph.to) }} cal BP</span>
+      <span class="panel__meta">{{ tr.calBp(fmt(ph.from) + "–" + fmt(ph.to)) }}</span>
     </div>
     @if (c) {
       <h2 class="phase-name">{{ c.phases[ph.id].name }}</h2>

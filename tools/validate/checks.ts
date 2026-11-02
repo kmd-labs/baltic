@@ -52,6 +52,8 @@ export interface CheckResult {
   deviation: string;
   /** One line on what limits the comparison, printed under the row. */
   note?: string;
+  /** Extra lines the report prints under the row — a scan, a small table. */
+  detail?: string[];
 }
 
 /**
@@ -284,6 +286,68 @@ function littleBeltLittorina(ctx: Context): CheckResult {
   };
 }
 
+/**
+ * `V-08`: present-day uplift, approximated by the RSL gradient between the 0.9 ka and 0 ka nodes
+ * of the cube — the two youngest the field has.
+ *
+ * Steffen & Kaufmann publish no present-day velocity field, and the models that carry one are
+ * licence-barred (`0-02`), so this is an approximation with a stated meaning: **the mean of the
+ * last ~900 years, not an instantaneous rate**. That is also why Umeå comes out below the
+ * published maximum rather than at it — a 900-year mean of a decelerating process is lower than
+ * its present value, so a model that matched 10.3 mm/yr here would be suspect, not better.
+ *
+ * Reference values are the published figures from the NKG2016LU paper (plan §7): ~10.3 mm/yr at
+ * Umeå and the zero line on the German and Polish coast. The grids themselves are licence-❓
+ * (`0-03`), so there is no residual map against the field — what the report carries instead is the
+ * modelled gradient at named places, which is the honest version of that DoD item until the
+ * licence is resolved.
+ */
+const NKG = { umeaMaxMmYr: 10.3, southToleranceMmYr: 1.5, umeaBudgetMmYr: 3 };
+
+function upliftGradient(ctx: Context): CheckResult {
+  const { cube } = ctx.frames;
+  const a = rslAt(cube, 0.9);
+  const b = rslAt(cube, 0);
+  // RSL falls as the land rises, so the uplift rate is the drop over the interval.
+  const mmPerYr = (lon: number, lat: number) => {
+    const i = cellIndex(cube.geometry, lon, lat);
+    return ((a[i] - b[i]) / 900) * 1000;
+  };
+
+  const places: readonly [string, number, number][] = [
+    ['umea', 20.26, 63.83],
+    ['oulu', 25.47, 65.01],
+    ['stockholm', 18.07, 59.33],
+    ['copenhagen', 12.57, 55.68],
+    ['rugen', 13.4, 54.45],
+    ['szczecin', 14.55, 53.43],
+    ['gdansk', 18.65, 54.35]
+  ];
+  const rows = places.map(([id, lon, lat]) => ({ id, v: mmPerYr(lon, lat) }));
+  const umea = rows.find(r => r.id === 'umea')!;
+  const south = rows.filter(r => ['rugen', 'szczecin', 'gdansk'].includes(r.id));
+  const worstSouth = south.sort((x, y) => Math.abs(y.v) - Math.abs(x.v))[0];
+
+  const umeaOff = umea.v - NKG.umeaMaxMmYr;
+  const pass = Math.abs(umeaOff) <= NKG.umeaBudgetMmYr && Math.abs(worstSouth.v) <= NKG.southToleranceMmYr;
+
+  // The gradient along the southern coast, as the closest thing to a residual map the licence
+  // situation allows: where the model puts the zero line.
+  const scan: string[] = [];
+  for (let lon = 10; lon <= 22; lon += 2) scan.push(`${lon}°E ${mmPerYr(lon, 54.5).toFixed(2)}`);
+
+  return {
+    id: 'uplift-gradient',
+    status: 'blocking',
+    pass,
+    value: rows.map(r => `${r.id} ${r.v.toFixed(2)}`).join(', ') + ' mm/yr',
+    expected: `Umeå ≈ ${NKG.umeaMaxMmYr} mm/yr (NKG2016LU max), zero line on the DE/PL coast`,
+    deviation: `Umeå ${f1(umeaOff)} mm/yr (budget ${NKG.umeaBudgetMmYr}), worst southern site ${worstSouth.id} ${f1(worstSouth.v)} mm/yr (tolerance ±${NKG.southToleranceMmYr})`,
+    note: 'the mean of the last ~900 years, not an instantaneous rate — below the published maximum by construction',
+    detail: ['gradient along 54.5°N, mm/yr:', '  ' + scan.join('   ')]
+  };
+}
+
 /** Reporting: the model against the literature lake-level curve, as audit §1 tabulates it. */
 function lakeLevelSpread(ctx: Context): CheckResult {
   const { baltic, hpAt, iceAt } = ctx.frames;
@@ -338,6 +402,7 @@ export const CHECKS: readonly ((ctx: Context) => CheckResult)[] = [
   billingenDrop,
   holoceneHighstand,
   littleBeltLittorina,
+  upliftGradient,
   lakeLevelSpread,
   outletCatalogue
 ];
