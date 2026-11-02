@@ -5,6 +5,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 const DIR = join(import.meta.dirname, '..', '..', 'src', 'assets', 'content');
+const DATA = join(import.meta.dirname, '..', '..', 'src', 'assets', 'data');
 const langs = readdirSync(DIR);
 
 function shape(v: unknown, path = ''): string[] {
@@ -36,3 +37,19 @@ for (const file of readdirSync(join(DIR, 'en'))) {
     }
   });
 }
+
+// Since `C-05` the sill ids are data rather than a union in the code — `geo.ts` used to hold the
+// ids and the positions together, and the union was what kept a sill from reaching the screen as a
+// bare slug. The check it was doing has to live somewhere, so it lives here.
+test('every sill in sills.json has a label in every language', () => {
+  const catalogue = JSON.parse(readFileSync(join(DATA, 'sills.json'), 'utf8')) as { sills: { id: string }[] };
+  assert.ok(catalogue.sills.length > 0, 'sills.json is empty');
+  for (const lang of langs) {
+    const content = JSON.parse(readFileSync(join(DIR, lang, 'postglacial.json'), 'utf8')) as {
+      sills: Record<string, string>;
+    };
+    for (const { id } of catalogue.sills) {
+      assert.ok(content.sills[id], `${lang}/postglacial.json has no label for sill "${id}"`);
+    }
+  }
+});

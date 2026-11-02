@@ -1,0 +1,15 @@
+# Contract-time subset of requirements.txt: what it takes to validate JSON against
+# contract/schema/ and to read or write a KMDG grid — nothing that touches raw data.
+#
+# CI (0-08) installs this instead of the full set. The pipeline's heavy half (rasterio, netCDF4,
+# geopandas, pyogrio, pyproj, scipy, xarray) exists to turn downloads into assets, and CI never
+# downloads: it checks the assets already committed. Pulling GDAL-backed wheels for a schema check
+# would add minutes per PR and a second platform to keep working, for nothing.
+#
+# Versions are copied from requirements.txt and must stay equal to it.
+attrs==26.1.0
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+numpy==2.5.4
+referencing==0.37.0
+rpds-py==2026.9.1

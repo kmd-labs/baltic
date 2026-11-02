@@ -12,6 +12,8 @@
     "test:contract": "node --test --experimental-strip-types --no-warnings --import ./tests/ts-resolve.mjs \"tests/contract/*.test.ts\" && tsc -p tsconfig.contract.json",
     "test:data": "python -m unittest discover -s tools/data/tests -t .",
     "audit:metrics": "node --experimental-strip-types --no-warnings --import ./tests/ts-resolve.mjs tools/audit/metrics.ts",
+    "assets:check": "node --experimental-strip-types --no-warnings --import ./tests/ts-resolve.mjs tools/assets/budget.ts",
+    "data:sills": "node --experimental-strip-types --no-warnings --import ./tests/ts-resolve.mjs tools/sills/build.ts",
     "contract:validate": "python tools/data/contract.py"
   },
   "private": true,

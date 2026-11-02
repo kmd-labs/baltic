@@ -29,6 +29,13 @@ export interface WorkerFrame {
   t: number;
   water: Uint8Array;
   level: number;
+  /**
+   * Cell the basin spills over, −1 when it is connected to the ocean or buried under ice. The
+   * fill is the only place that knows it (`water.ts` `WaterFill.outlet`), so dropping it here
+   * would leave the phase card able to say how high the lake stood and not which way out it
+   * found — the question `C-06b` is about.
+   */
+  outlet: number;
   stats: ReturnType<typeof basinStats>;
 }
 
@@ -65,12 +72,13 @@ function pump(): void {
     const req = queue.shift()!;
     paleoElevation(hNow, rslAt(cube, req.t / 1000), resampler, hp);
     const ice = req.iceKa != null ? iceMasks[req.iceKa] ?? null : null;
-    const { water, level } = fillWater(baltic, hp, ice);
+    const { water, level, outlet } = fillWater(baltic, hp, ice);
     const msg: WorkerFrame = {
       type: 'frame',
       t: req.t,
       water,
       level,
+      outlet,
       stats: basinStats(baltic, hp, water, level)
     };
     postMessage(msg, [msg.water.buffer]);

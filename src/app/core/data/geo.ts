@@ -1,7 +1,6 @@
 /** Fixed places on the globe. Names come from the content files. */
 
 export type PlaceId = 'stockholm' | 'helsinki' | 'tallinn' | 'riga' | 'gdansk' | 'copenhagen' | 'umea' | 'oulu' | 'szczecin' | 'gotland';
-export type SillId = 'billingen' | 'narke' | 'svea' | 'darss' | 'oresund' | 'storebaelt';
 
 export const PLACES: readonly { id: PlaceId; lon: number; lat: number }[] = [
   { id: 'stockholm', lon: 18.07, lat: 59.33 },
@@ -17,14 +16,10 @@ export const PLACES: readonly { id: PlaceId; lon: number; lat: number }[] = [
 ];
 
 /**
- * Sill and strait positions (plan §3.2 / C-05). States and threshold elevations come with
- * sills.json; until then the globe shows positions only.
+ * Sills used to live here as six positions. They come from `src/assets/data/sills.json` now
+ * (`C-05`), where each one carries its threshold elevation, its periods, its per-phase state, its
+ * sources and a hypothesis flag — read through `sills.ts`, exposed as `PaleoDataService.sills()`.
+ *
+ * The move is the point of the issue rather than tidying: the catalogue is what `V-02` checks the
+ * model's spill route against, and a bare list of names could not say where its numbers came from.
  */
-export const SILLS: readonly { id: SillId; lon: number; lat: number }[] = [
-  { id: 'billingen', lon: 13.85, lat: 58.45 },
-  { id: 'narke', lon: 15.3, lat: 59.22 },
-  { id: 'svea', lon: 14.45, lat: 59.2 },
-  { id: 'darss', lon: 12.25, lat: 54.6 },
-  { id: 'oresund', lon: 12.75, lat: 55.55 },
-  { id: 'storebaelt', lon: 11.0, lat: 55.3 }
-];

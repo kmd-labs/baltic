@@ -89,6 +89,15 @@ export interface Dict {
   levelMatch: string;
   levelMismatch: (m: string) => string;
   levelSill: string;
+  /** The route the modelled basin spills over (`C-06b`). */
+  kvOutlet: string;
+  /** Distance from the spilling cell to the catalogue entry it is named after. */
+  outletFromCatalogue: (km: string) => string;
+  /** The spill route matches no catalogue entry closely enough to borrow its name. */
+  outletUnnamed: string;
+  /** The entry is a route the model uses, not an established sill. */
+  outletHypothesis: string;
+  outletElevation: (m: string) => string;
   kvArea: string;
   kvVolume: string;
   kvMaxDepth: string;

@@ -22,12 +22,10 @@
 import type { GridGeometry } from './paleo';
 import type { WaterFill } from './water';
 import { BASIN_SEEDS, cellIndex, WATER_OCEAN } from './water';
+import { nearestSill } from './sills';
+import type { SillPoint } from './sills';
 
-export interface SillPoint {
-  id: string;
-  lon: number;
-  lat: number;
-}
+export type { SillPoint };
 
 export interface SillState extends SillPoint {
   /** H_paleo at the catalogue point, metres relative to the contemporaneous ocean. */
@@ -63,12 +61,6 @@ export interface SillCheck {
   balance: string[];
 }
 
-const DEG = Math.PI / 180;
-
-function distKm(aLon: number, aLat: number, bLon: number, bLat: number): number {
-  return Math.hypot((bLon - aLon) * Math.cos(((aLat + bLat) / 2) * DEG) * 111.32, (bLat - aLat) * 110.57);
-}
-
 /**
  * One frame against the catalogue. `fill` is the output of `fillWater` for the same `hp` and ice
  * mask — passed in rather than recomputed, so the check describes the frame the app drew.
@@ -98,11 +90,8 @@ export function sillCheck(
 
   const outlet =
     fill.outlet >= 0 ? { lon: lonOf(fill.outlet), lat: latOf(fill.outlet), hp: hp[fill.outlet] } : null;
-  const nearest = outlet
-    ? states
-        .map(s => ({ id: s.id, km: distKm(outlet.lon, outlet.lat, s.lon, s.lat) }))
-        .sort((a, b) => a.km - b.km)[0]
-    : null;
+  const near = outlet ? nearestSill(states, outlet.lon, outlet.lat) : null;
+  const nearest = near ? { id: near.sill.id, km: near.km } : null;
 
   const balance: string[] = [];
   if (state === 'lake') {

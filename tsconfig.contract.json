@@ -8,6 +8,8 @@
     "src/app/core/data/kmdg.ts",
     "src/app/core/data/paleo.ts",
     "src/app/core/data/water.ts",
-    "src/app/core/data/sill-check.ts"
+    "src/app/core/data/sill-check.ts",
+    "src/app/core/data/sills.ts",
+    "src/app/core/data/assets.ts"
   ]
 }

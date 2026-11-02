@@ -7,7 +7,7 @@ Umowa między pipeline'em (`tools/data/`) a aplikacją (`src/`). Opisuje wszystk
 | `manifest.json` | [`schema/manifest.schema.json`](schema/manifest.schema.json) |
 | `frames/f-<tBP>.json` | [`schema/frame.schema.json`](schema/frame.schema.json) |
 | `timeline.json` | [`schema/timeline.schema.json`](schema/timeline.schema.json) |
-| `sills.json` | [`schema/sills.schema.json`](schema/sills.schema.json) |
+| `sills.json` | [`schema/sills.schema.json`](schema/sills.schema.json) — **zacommitowany**, generowany przez `npm run data:sills` |
 | `taxa.json` | [`schema/taxa.schema.json`](schema/taxa.schema.json) |
 | `curves/<id>.json` | [`schema/curve.schema.json`](schema/curve.schema.json) |
 | `grid/*.bin.gz` | format KMDG/1 — niżej |
@@ -30,7 +30,9 @@ Wspólne definicje (`datum`, `stageId`, `gia`, `dataQuality`, `psuRange` …) s�
 
 ## Wersjonowanie (`schemaVersion`)
 
-Semver `MAJOR.MINOR.PATCH`, dziś `1.0.0`.
+Semver `MAJOR.MINOR.PATCH`, dziś `1.1.0`.
+
+`1.1.0` (2026-11-02, `C-05`) dodało opcjonalne `method` w `sills.json` — jedno zdanie o tym, które liczby w pliku są zmierzone na siatce, a które pochodzą z publikacji. Katalog, który miesza jedne z drugimi, bez takiej adnotacji wprowadza w błąd, a JSON nie ma komentarzy. Pliki deklarujące `1.0.0` nadal przechodzą walidację — pole jest opcjonalne.
 
 | Zmiana | Wersja | Przykład |
 | :-- | :-- | :-- |

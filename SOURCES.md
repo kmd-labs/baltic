@@ -48,7 +48,7 @@ Zakres aplikacji od 2026-10-31. Zbiory dla usuniętych reżimów (fanerozoik, cz
 | `zhang2024_sed` | Zhang 2024, Holocene sediment thickness map for the Baltic Sea | `10.17632/k45mff2ccy.1` | CC BY 4.0 | 2026-10-30, DataCite | ✅ · **zarejestrowany, nieużywany** — wejście do `A-05` (korekta na osady); nie ma go też w `registry.json` |
 | `rosentau2021` | Rosentau i in. 2021, A Holocene relative sea-level database for the Baltic Sea (1099 wskaźników, HOLSEA) | `10.5880/GFZ.1.3.2020.003` | CC BY 4.0 | 2026-10-30, DataCite | ✅ · **zarejestrowany, nieużywany** — wejście do `V-03` (RSL wobec obserwacji) |
 | `nkg2016lu` | NKG2016LU, Vestøl i in. 2019, J. Geod. 93, 1759–1779 | `10.1007/s00190-019-01280-8` | CC BY 4.0 (artykuł) | 2026-10-30, repozytorium DUO; **licencja samych siatek** (`_abs`, `_lev`) u Lantmäteriet do sprawdzenia na stronie; fallback: wartości z artykułu | ❓ |
-| `sgu_strand` | SGU Strandförskjutningsmodell | — | — | do sprawdzenia na stronie SGU; fallback: rzędne progów z publikacji | ❓ |
+| `sgu_strand` | SGU Strandförskjutningsmodell | — | — | do sprawdzenia na stronie SGU; fallback: rzędne progów z publikacji. **Skutek nierozstrzygnięcia:** `narke`, `svea` i `storebaelt` mają w `sills.json` puste `activePeriods` (`C-05`) | ❓ |
 | `sincos` | Projekt SINCOS, RSL SW Bałtyku | — | — | do sprawdzenia; fallback: `steffen2025_rsl_sbaltic` | ❓ |
 
 **Atrybucja (✅):**
@@ -125,10 +125,10 @@ Publikacje, których **liczby** (granice faz, rzędne, poziomy) trafiają do kon
 
 | id | Publikacja |
 | :-- | :-- |
-| `andren2011` | Andrén, T. i in. 2011 — źródło wiodące chronologii faz (`C-08`) |
+| `andren2011` | Andrén, T. i in. 2011 — źródło wiodące chronologii faz (`C-08`); periody i pozycje progów w `sills.json` (`C-05`) |
 | `lambeck2014` | Lambeck, K., Rouby, H., Purcell, A., Sun, Y., Sambridge, M. 2014, PNAS 111, 15296–15303, `10.1073/pnas.1411762111` — eustatyka co 1 ka (`curves/esl`, `C-12`) |
 | `khazaei2022` | Khazaei, B. i in. 2022, Sci. Data 9, 36 — opis GLOBathy (`C-02`) |
-| `bjorck1995` | Björck, S. 1995 |
+| `bjorck1995` | Björck, S. 1995 — pozycje i nazwy progów w `sills.json` (`C-05`) |
 | `bjorck2008` | Björck, S. 2008 |
 | `uscinowicz2014` | Uścinowicz, Sz. 2014 — odstępstwa chronologii (`C-08`) |
 | `steffen2005` | Steffen, H., Kaufmann, G. 2005, GJI 163, 801–812, `10.1111/j.1365-246X.2005.02740.x` |

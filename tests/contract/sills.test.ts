@@ -6,8 +6,8 @@
 // twice, and a confused datum — because both move the whole curve without changing the shape of
 // anything on screen.
 //
-// The catalogue comparison is reported, not asserted: `geo.ts` holds a prototype list awaiting
-// C-05, and where it disagrees with the fill it is usually the catalogue that is wrong.
+// The catalogue comparison is reported, not asserted: where `sills.json` and the fill disagree it
+// is usually the catalogue that is wrong, and saying where is the evidence C-05 was built from.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -15,11 +15,11 @@ import { join } from 'node:path';
 import type { Feature, Geometry } from 'geojson';
 import { decodeKmdg, gunzipIfNeeded, kmdgLayer } from '../../src/app/core/data/kmdg.ts';
 import { buildResampler, paleoElevation, rslAt } from '../../src/app/core/data/paleo.ts';
-import { fillWater } from '../../src/app/core/data/water.ts';
+import { cellIndex, fillWater } from '../../src/app/core/data/water.ts';
 import { assertBalance, sillCheck } from '../../src/app/core/data/sill-check.ts';
-import { FRAMES, phaseAt } from '../../src/app/core/data/timeline.ts';
+import { FRAMES, PHASES, phaseAt } from '../../src/app/core/data/timeline.ts';
 import { iceMaskFor, iceSliceFor } from '../../src/app/core/data/ice-field.ts';
-import { SILLS } from '../../src/app/core/data/geo.ts';
+import { parseSills } from '../../src/app/core/data/sills.ts';
 
 const DATA = join(import.meta.dirname, '..', '..', 'src', 'assets', 'data');
 async function grid(rel: string) {
@@ -49,10 +49,13 @@ function iceAt(t: number): Uint8Array | null {
   }
   return mask;
 }
+/** The shipped catalogue, through the app's own reader — the file the browser will check against. */
+const catalogue = parseSills(JSON.parse(readFileSync(join(DATA, 'sills.json'), 'utf8')));
+
 const checkAt = (t: number) => {
   const hp = paleoElevation(hNow, rslAt(cube, t / 1000), rs);
   const mask = iceAt(t);
-  return { hp, check: sillCheck(baltic, t, hp, mask, fillWater(baltic, hp, mask), SILLS) };
+  return { hp, check: sillCheck(baltic, t, hp, mask, fillWater(baltic, hp, mask), catalogue.sills) };
 };
 
 test('elevation balance holds at every frame', () => {
@@ -92,7 +95,7 @@ test('a lake needs its outlet above the ocean: the check fails when it is not', 
   // And the same through the real entry point: a fill whose level does not match its outlet.
   const mask = iceAt(t);
   const fill = fillWater(baltic, hp, mask);
-  const tampered = sillCheck(baltic, t, hp, mask, { ...fill, level: fill.level + 25 }, SILLS);
+  const tampered = sillCheck(baltic, t, hp, mask, { ...fill, level: fill.level + 25 }, catalogue.sills);
   assert.ok(tampered.balance.length > 0, 'podniesiony poziom bez zmiany progu musi zostać wyłapany');
   assert.throws(() => assertBalance(tampered), /bilans rzędnych/);
 });
@@ -109,4 +112,68 @@ test('every frame is a lake, a connection or a buried basin — and never two at
   // All three occur on this timeline: buried at 20-19 ka, lake through BIL and Ancylus,
   // connected from the Littorina transgression on.
   assert.deepEqual([...seen].sort(), ['buried', 'connected', 'lake']);
+});
+
+// ── The catalogue itself (C-05) and the route the card names (C-06b) ─────────────────────────
+
+test('sills.json: a file from another major version is refused, not guessed at', () => {
+  assert.throws(() => parseSills({ ...catalogue, schemaVersion: '2.0.0' }), /schemaVersion/);
+  assert.throws(() => parseSills({ schemaVersion: '1.1.0', datum: 'present-day', sills: [] }), /no sills/);
+  assert.throws(
+    () => parseSills({ schemaVersion: '1.1.0', datum: 'present-day', sills: [{ id: 'x' }] }),
+    /usable position/
+  );
+});
+
+test('sills.json: every entry carries all seven phases and says where its numbers came from', () => {
+  assert.equal(catalogue.datum, 'present-day');
+  assert.ok(catalogue.method && catalogue.method.length > 50, 'the file has to state its own method');
+  for (const s of catalogue.sills) {
+    assert.deepEqual(
+      Object.keys(s.states).sort(),
+      [...PHASES].map(p => p.id).sort(),
+      `${s.id}: states cover ${Object.keys(s.states).length} phases`
+    );
+    assert.ok(s.sources.length > 0, `${s.id} has no source`);
+    // elevationM is read off the DEM, so it is a claim the committed grid can settle. A mismatch
+    // means the grid moved and the catalogue was not regenerated (`npm run data:sills`).
+    const h = hNow[cellIndex(baltic, s.lon, s.lat)];
+    assert.ok(
+      Math.abs(h - s.elevationM) < 0.5,
+      `${s.id}: elevationM ${s.elevationM} m but the DEM says ${h.toFixed(1)} m — rerun npm run data:sills`
+    );
+  }
+});
+
+test('the catalogue has a name for every route the model spills over', () => {
+  // The teeth of C-05. Before it, the Yoldia-window outlet was 97 km from the nearest entry, so
+  // the phase card could show a level but not a way out — and naming it `billingen` at 97 km would
+  // have been the catalogue's claim dressed up as the model's (audit II.2 B2).
+  let worst = { t: 0, km: 0, id: '' };
+  let lakes = 0;
+  for (const t of [...FRAMES].sort((a, b) => b - a)) {
+    const { check } = checkAt(t);
+    if (!check.outlet) continue;
+    lakes++;
+    assert.ok(check.nearest, `${t} BP: outlet with no catalogue entry at all`);
+    if (check.nearest.km > worst.km) worst = { t, km: check.nearest.km, id: check.nearest.id };
+  }
+  assert.ok(lakes >= 8, `only ${lakes} lake frames`);
+  console.log(`    C-05: najdalszy próg sterujący od katalogu — ${worst.km.toFixed(0)} km (${worst.t} BP, ${worst.id})`);
+  assert.ok(worst.km <= 30, `${worst.t} BP spills ${worst.km.toFixed(0)} km from ${worst.id} — the catalogue is missing a route`);
+});
+
+test('a hypothesis entry is flagged as one, and a literature entry is not', () => {
+  // `gota-alv` is where the model drains, not a sill the literature establishes; the flag is what
+  // the phase card turns into a badge. Entries with literature sources must not carry it.
+  const byId = new Map(catalogue.sills.map(s => [s.id, s]));
+  const derived = byId.get('gota-alv');
+  assert.ok(derived, 'the model drains through gota-alv at 11 ka; it has to be in the catalogue');
+  assert.equal(derived.hypothesis, true);
+  assert.deepEqual([...derived.activePeriods], [], 'a model route has no dated literature period');
+
+  for (const s of catalogue.sills) {
+    const cited = s.sources.some(id => !['gebco2024', 'steffen2025_rsl'].includes(id));
+    assert.equal(s.hypothesis, !cited, `${s.id}: hypothesis ${s.hypothesis} with sources ${s.sources.join(', ')}`);
+  }
 });

@@ -20,7 +20,6 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { IceVariant, PaleoDataService, PaleoFrame, RSL_STEP_YR, TRANSECT } from '../../core/data/paleo-data.service';
 import { WATER_LAKE, WATER_OCEAN } from '../../core/data/water';
 import { nearestFrame, phaseAt, WaterClass } from '../../core/data/timeline';
-import { SILLS } from '../../core/data/geo';
 import { PATCH_FRAGMENT, PATCH_VERTEX } from './paleo-shaders';
 import { ICE_FRAGMENT, ICE_VERTEX } from './ice-shaders';
 import { ICE_DOMAIN, ICE_PROFILE_K, ICE_SDF_SCALE, iceBracket } from '../../core/data/ice-field';
@@ -690,7 +689,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     if (L.sills) {
       const r = W / 450;
       ctx.fillStyle = this.theme.getTokenColor('accent', '#d37400');
-      for (const sl of SILLS) {
+      for (const sl of this.data.sills()) {
         const x = (sl.lon - w) * sx;
         const y = (n - sl.lat) * sy;
         ctx.beginPath();
