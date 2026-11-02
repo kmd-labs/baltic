@@ -16,11 +16,11 @@ Aplikacja liczy wodę, poziomy progów i metryki sama z siatek (Web Worker), wi�
 
 | Status | Zadania |
 | :-- | :-- |
-| **Zamknięte — wykonane** | `0-01` #7, `0-02` #8, `0-06` #12, `0-08` #14, `C-01` #15, `C-04` #18, `C-05` #19, `C-06b` #62, `I-05` #58 oraz epik `A`: `A-01` #70, `A-02` #71, `A-03` #72, `A-04` #73, `A-06` #75, `A-07` #76, `A-08` #77, `A-09` #78 |
+| **Zamknięte — wykonane** | `0-01` #7, `0-02` #8, `0-06` #12, `0-08` #14, `C-01` #15, `C-04` #18, `C-05` #19, `C-08` #23, `C-06b` #62, `I-05` #58 oraz epik `A`: `A-01` #70, `A-02` #71, `A-03` #72, `A-04` #73, `A-06` #75, `A-07` #76, `A-08` #77, `A-09` #78 |
 | **Zamknięte — wykonane z follow-upem** | `C-03` #17 (reszta → `I-01`, `0-07`, `V-03`), `C-06` #20 i `C-14` #27 (→ `C-06b` #62), `C-07` #21 (→ `C-07b` #63), `C-13` #28, `I-02` #53 (→ `I-02b` #64), `I-03` #54 (→ `I-03b` #65), `I-04` #55 (→ `I-04b` #66), `0-05` #11 (→ `0-05b` #67) |
 | **Usunięte — nie robimy** | `C-02` #16, `C-09` #22, `C-10` #24, `C-11` #25, `C-12` #26, `C-15` #29, `V-07` #46, `V-12` #52 — decyzja użytkownika; **trwałe skasowanie na GitHubie czeka na uprawnienia** (system zablokował `gh issue delete`) |
 | **Zawężone** | `I-01` #50 — siatki, zarysy lodu i manifest, bez plików klatek |
-| **Otwarte** | `0-03` #9, `0-04` #10, `0-07` #13, `C-08` #23, `V-01` #40, `V-03` #42, `V-06` #45, `V-08` #47, `V-11` #51 oraz follow-upy #63–#67 |
+| **Otwarte** | `0-03` #9, `0-04` #10, `0-07` #13, `V-01` #40, `V-03` #42, `V-06` #45, `V-08` #47, `V-11` #51 oraz follow-upy #63–#67 |
 | **Zamknięte — wykonane** (c.d.) | `V-02` #41 — od 2026-11-02 kontrola czyta katalog z `sills.json`, nie z `geo.ts`; niezmienniki blokujące, test negatywny, próg sterujący per klatka |
 | **Otwarte w epiku `A`** | `A-05` #74 (korekta na osady — potrzebny Python, pobranie `zhang2024_sed` i decyzja o rozkładzie miąższości w czasie) |
 
@@ -55,13 +55,34 @@ katalogu, rzędną dzisiejszą i odznakę „hipoteza". Sille zniknęły z `geo.
 **Czego to nie ruszyło:** poziomy jezior (B1, +6…+14 m wobec literatury) — przyczyną jest
 rozdzielczość pola RSL (B3), więc droga do nich prowadzi przez `V-03`, nie przez katalog progów.
 
-**Następne w kolejce** (stan 2026-11-02): dwie opcje, obie realne.
-1. **`V-03` #42** — jedyna ilościowa walidacja w planie, potwierdzona przez audyt jako właściwy
-   priorytet; wymaga odtworzenia środowiska Pythona (`python` na PATH, `xarray`, `netCDF4`),
-   pobrania `rosentau2021` (tura 2 w `0-05`) i krzywych z `C-12`.
-2. **`C-08` #23** (`timeline.json`) — bez pobrań, na tych samych zasadach co `C-05`: granice faz z
-   `timeline.ts` wychodzą do kontraktu razem z cytowaniami i lokalnymi onsetami, co odblokowuje
-   `V-06` #45. Tańsze, a `contract:validate` ma już bramkę, w którą ten plik wpadnie.
+### Co weszło 2026-11-02, część druga — `C-08` #23
+
+W odróżnieniu od progów chronologia nie jest mierzona, więc `timeline.json` nie jest generowany —
+jest pisany ręcznie i **jest źródłem**: `timeline.ts` go importuje (`with { type: 'json' }`,
+`resolveJsonModule`), zamiast trzymać drugą kopię tych samych liczb obok. Granice faz, czasy
+przekrojów zdarzeniowych i lokalne onsety są więc w jednym miejscu, z cytowaniem per granica.
+Import, nie `fetch`, bo `phaseAt` jest wołane z szablonów, rendererów i narzędzi node'owych —
+3 KB w bundlu kosztuje mniej niż żądanie i asynchroniczna dziura w stu wywołaniach; wciągnięcie
+pliku przez `manifest.json` razem z resztą zostaje w `I-02b` #64.
+
+W `timeline.ts` zostaje tylko to, czego kontrakt nie modeluje: klasa wody i flaga jeziora per faza
+(zachowanie sceny, nie chronologia) oraz literaturowa krzywa poziomu jeziora.
+
+Kontrakt `1.2.0`: opcjonalne `method` w `timeline.json` (jak w `sills.json`) i `events[].disputed`
+— flaga, że zdarzenie niesie twierdzenie sporne; **co** jest sporne jest treścią, nie danymi.
+
+Najmocniejszy z sześciu nowych testów nie dotyczy chronologii, a cytowań: **każdy identyfikator
+źródła w `timeline.json` i `sills.json` musi rozwiązywać się do wpisu w `SOURCES.md`**, parsowanego
+z pierwszej komórki wiersza tabeli i z nagłówka wypunktowania. Bez tego „każda granica z
+cytowaniem" jest ozdobą. Sprawdzone podrzuconym `not_a_real_source` — pada z nazwą granicy.
+`kotthoff2022` przestał być „zarejestrowany, nieużywany": to źródło onsetu w Małym Bełcie.
+
+**Następne w kolejce** (stan 2026-11-02): **`V-06` #45** jest teraz odblokowane — ma wszystko,
+czego potrzebowało: spadek Billingen z `fillWater`, highstand 7,5–6,5 ka z klatek i lokalny onset
+Małego Bełtu z `timeline.json`, zamiast granicy basenowej, o którą by fałszywie padało. Brakuje mu
+tylko `V-01` #40 (rejestr testów i raport), który jest mały i też bez pobrań. Alternatywa bez
+pobrań: `I-04b` #66 (panel źródeł generowany z `SOURCES.md` — parser do tego już istnieje w
+teście). `V-03` #42 nadal czeka na odtworzenie środowiska Pythona i ~1 GB pobrań.
 
 ## Jak czytać
 
@@ -431,7 +452,7 @@ Archiwum zawiera 58 shapefile'i (sprawdzone 2026-10-31). Do ich odczytu trzeba d
 
 **Plan:** §3.1, §4.1
 
-## `C-08` Build timeline.json for the seven postglacial phases
+## `C-08` Build timeline.json for the seven postglacial phases — **wykonane 2026-11-02**
 
 **Epik:** C · **Zależy od:** `0-06`, `C-09` · **Blokuje:** `C-11`, `V-12` · **Labels:** `contract`, `regime-c`
 
@@ -442,10 +463,10 @@ Siedem faz: `deglaciation`, `bil`, `yoldia`, `ancylus`, `mastogloia`, `littorina
 Granice faz w `timeline.json` są **basenowe**, a przejścia lokalne są nierównoczesne — np. Littorina w Małym Bełcie ~7,4 ka cal BP (IODP M0059) wobec początku fazy ~8 500 BP. Lokalne onsety trzymamy osobno, inaczej `V-06` będzie fałszywie padał.
 
 **DoD**
-- [ ] `timeline.json` w cal yr BP, 7 faz, każda granica z cytowaniem
-- [ ] Lokalne onsety faz (miejsce, data, źródło) jako osobne pole, nie nadpisują granic basenowych
-- [ ] Tabela odstępstw w katalogu danych
-- [ ] Zero uśrednionych granic
+- [x] `timeline.json` w cal yr BP, 7 faz, każda granica z cytowaniem — test sprawdza, że każde cytowanie rozwiązuje się do wpisu w `SOURCES.md`
+- [x] Lokalne onsety faz (miejsce, data, źródło) jako osobne pole, nie nadpisują granic basenowych — Mały Bełt ~7,4 ka (`kotthoff2022`), test pilnuje, że onset nie równa się granicy
+- [ ] Tabela odstępstw w katalogu danych — **zostaje w `0-07` #13**: rozbieżność 9 800 / 9 500 jest zapisana w polu `method` pliku, ale przypisanie alternatywy do konkretnych autorów wymaga publikacji w ręku
+- [x] Zero uśrednionych granic — test odrzuca 9 650 (średnią z dwóch publikowanych wartości) na granicy ancylusowej
 
 **Plan:** §2
 

@@ -6,7 +6,7 @@ Umowa między pipeline'em (`tools/data/`) a aplikacją (`src/`). Opisuje wszystk
 | :-- | :-- |
 | `manifest.json` | [`schema/manifest.schema.json`](schema/manifest.schema.json) |
 | `frames/f-<tBP>.json` | [`schema/frame.schema.json`](schema/frame.schema.json) |
-| `timeline.json` | [`schema/timeline.schema.json`](schema/timeline.schema.json) |
+| `timeline.json` | [`schema/timeline.schema.json`](schema/timeline.schema.json) — **zacommitowany**, pisany ręcznie (literatura), importowany przez `timeline.ts` |
 | `sills.json` | [`schema/sills.schema.json`](schema/sills.schema.json) — **zacommitowany**, generowany przez `npm run data:sills` |
 | `taxa.json` | [`schema/taxa.schema.json`](schema/taxa.schema.json) |
 | `curves/<id>.json` | [`schema/curve.schema.json`](schema/curve.schema.json) |
@@ -30,7 +30,9 @@ Wspólne definicje (`datum`, `stageId`, `gia`, `dataQuality`, `psuRange` …) s�
 
 ## Wersjonowanie (`schemaVersion`)
 
-Semver `MAJOR.MINOR.PATCH`, dziś `1.1.0`.
+Semver `MAJOR.MINOR.PATCH`, dziś `1.2.0`.
+
+`1.2.0` (2026-11-02, `C-08`) dodało w `timeline.json` opcjonalne `method` (tak samo i z tego samego powodu) oraz `events[].disputed` — flagę, że zdarzenie niesie twierdzenie sporne w literaturze; **co** jest sporne jest treścią (`events.<id>.note`), nie danymi.
 
 `1.1.0` (2026-11-02, `C-05`) dodało opcjonalne `method` w `sills.json` — jedno zdanie o tym, które liczby w pliku są zmierzone na siatce, a które pochodzą z publikacji. Katalog, który miesza jedne z drugimi, bez takiej adnotacji wprowadza w błąd, a JSON nie ma komentarzy. Pliki deklarujące `1.0.0` nadal przechodzą walidację — pole jest opcjonalne.
 

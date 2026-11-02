@@ -69,7 +69,7 @@ py -m venv .venv
 | :-- | :-- |
 | `src/app/core/data/` | czytnik siatek KMDG, paleo-DEM, reguła wody, pole lodu, sill-check — czyste funkcje bez DOM-u, współdzielone z workerem i testami |
 | `src/app/components/` | glob, blok rzeźby, dolny dok, karty faz, przekrój, samouczek |
-| `src/assets/data/` | zacommitowane zasoby: siatki `grid/*.bin.gz`, katalog `sills.json`, prototyp `prototype/*.json` |
+| `src/assets/data/` | zacommitowane zasoby: siatki `grid/*.bin.gz`, katalogi `sills.json` i `timeline.json`, prototyp `prototype/*.json` |
 | `contract/` | kontrakt danych (`0-06`): schematy JSON i fixture'y |
 | `tools/data/` | pipeline (`fetch.py`, `postglacial.py`, `contract.py`, `kmdg.py`) |
 | `tools/lib/` | `frames.ts` — wczytanie zasobów i klatka liczona tak, jak liczy ją aplikacja |

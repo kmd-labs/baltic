@@ -7,6 +7,12 @@
   "required": ["schemaVersion", "phases", "events"],
   "properties": {
     "schemaVersion": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "method": {
+      "description": "Which times in this file are dated boundaries from the cited work, which are cross-sections positioned against it, and where the literature disagrees. Optional, added in 1.2.0 — the same reason sills.json has one: a file that mixes dated and chosen times misleads without saying so, and JSON carries no comment.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
     "phases": {
       "type": "array",
       "minItems": 7,
@@ -46,6 +52,10 @@
           "id": { "$ref": "common.schema.json#/$defs/id" },
           "tBP": { "$ref": "common.schema.json#/$defs/tBP" },
           "stageId": { "$ref": "common.schema.json#/$defs/stageId" },
+          "disputed": {
+            "description": "The event carries a claim the literature does not agree on, so the card marks it. What exactly is contested is content, not data (events.<id>.note in assets/content/{lang}). Distinct from a frame's `disputed`, which lists which statements of a frame are flagged. Added in 1.2.0.",
+            "type": "boolean"
+          },
           "sources": { "$ref": "common.schema.json#/$defs/sources" }
         },
         "additionalProperties": false
