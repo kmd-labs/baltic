@@ -262,6 +262,12 @@ generowany z `SOURCES.md` — parser do tego już istnieje w `tests/contract/tim
 ale to ma sens dopiero z `I-01` #50). Największą wartość merytoryczną nadal ma **`V-03` #42**,
 bo zamyka B1 i B3, i nadal wymaga odtworzenia środowiska Pythona oraz ~1 GB pobrań.
 
+## Propozycje bez issue
+
+Kandydaci na następną iterację — ocenieni, ale nie zatwierdzeni — leżą w [`Todo.md`](../../Todo.md).
+Pozycja, którą się przyjmie, przechodzi tutaj i z tamtego pliku znika. **Źródłem prawdy o stanie
+prac jest ten dokument i GitHub Issues**, nie `Todo.md`.
+
 ## Jak czytać
 
 | Pole | Znaczenie |
