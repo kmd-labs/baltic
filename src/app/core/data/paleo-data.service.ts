@@ -1,6 +1,8 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import type { Feature, Geometry } from 'geojson';
 import { ASSET_BASE, ASSETS } from './assets';
+import { nearestSill, parseSills } from './sills';
+import type { SillCatalogue, SillEntry } from './sills';
 import { fetchKmdg, kmdgLayer, KmdgGrid } from './kmdg';
 import { bilinear, maskFractionAt, rslAt, RslCube } from './paleo';
 import { FRAMES, lakeLevelAt, nearestFrame } from './timeline';
@@ -38,6 +40,23 @@ export interface PaleoFrame {
   ice: FrameIce | null;
   iceMask: Uint8Array | null;
   stats: FrameStats;
+  /**
+   * The way out the basin found, or null when it is connected to the ocean (or ice-buried).
+   * `sill` is the nearest entry of the loaded catalogue and `km` the distance to it, so the card
+   * can name the route and say how far the name is from the route — at 11 ka that is 97 km, and a
+   * name presented without the distance would be the catalogue's claim dressed as the model's
+   * (audit II.2 B2).
+   */
+  outlet: FrameOutlet | null;
+}
+
+export interface FrameOutlet {
+  lon: number;
+  lat: number;
+  /** Present-day elevation of the spilling cell; its paleo elevation is `lakeLevelM`. */
+  hNowM: number;
+  sill: SillEntry | null;
+  km: number;
 }
 
 /**
@@ -104,6 +123,9 @@ export class PaleoDataService {
   readonly state = signal<'idle' | 'loading' | 'ready' | 'error'>('idle');
   /** Bumped whenever a frame arrives from the worker. */
   readonly version = signal(0);
+  /** The sill catalogue (`C-05`), null before it loads. Positions on the globe come from it. */
+  readonly catalogue = signal<SillCatalogue | null>(null);
+  readonly sills = computed<readonly SillEntry[]>(() => this.catalogue()?.sills ?? []);
 
   europe?: KmdgGrid;
   baltic?: KmdgGrid;
@@ -131,9 +153,13 @@ export class PaleoDataService {
       fetch(ASSET_BASE + ASSETS.ice).then(r => {
         if (!r.ok) throw new Error(`ice: HTTP ${r.status}`);
         return r.json();
+      }),
+      fetch(ASSET_BASE + ASSETS.sills).then(r => {
+        if (!r.ok) throw new Error(`sills: HTTP ${r.status}`);
+        return r.json().then(parseSills);
       })
     ])
-      .then(([europe, baltic, rsl, ice]) => {
+      .then(([europe, baltic, rsl, ice, sills]) => {
         this.europe = europe;
         this.baltic = baltic;
         this.rslGrid = rsl;
@@ -141,6 +167,7 @@ export class PaleoDataService {
         this.hNowBaltic = kmdgLayer(baltic, 0);
         this.cube = { geometry: rsl, times: [...rsl.times], layers: Array.from({ length: rsl.nt }, (_, i) => kmdgLayer(rsl, i)) };
         this.ice = ice.features as IceFeature[];
+        this.catalogue.set(sills);
         this.startWorker();
         this.state.set('ready');
         this.prefetchIceSdfs();
@@ -443,9 +470,21 @@ export class PaleoDataService {
       water: m.water,
       ice,
       iceMask: ice ? this.iceMask(ice.ka) : null,
-      stats: m.stats
+      stats: m.stats,
+      outlet: this.outletOf(m.outlet)
     });
     this.version.update(v => v + 1);
+  }
+
+  /** The spilling cell as a place with a name: where it is, how high it is today, which sill it is. */
+  private outletOf(cell: number): FrameOutlet | null {
+    const b = this.baltic;
+    if (cell < 0 || !b) return null;
+    const [west, south, east, north] = b.bbox;
+    const lon = west + ((cell % b.nx) + 0.5) * ((east - west) / b.nx);
+    const lat = north - (Math.floor(cell / b.nx) + 0.5) * ((north - south) / b.ny);
+    const near = nearestSill(this.sills(), lon, lat);
+    return { lon, lat, hNowM: this.hNowBaltic?.[cell] ?? NaN, sill: near?.sill ?? null, km: near?.km ?? NaN };
   }
 
   /** DATED-1 `mc` outline rasterised onto the Baltic grid — the wall of the flood fill. */

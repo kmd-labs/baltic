@@ -18,7 +18,9 @@ export const ASSETS = {
   demEurope: 'grid/dem-europe.bin.gz',
   demBaltic: 'grid/dem-baltic.bin.gz',
   rsl: 'grid/rsl.bin.gz',
-  ice: 'prototype/ice-dated1.json'
+  ice: 'prototype/ice-dated1.json',
+  /** 4 KB, and every frame's phase card needs it to name the outlet — eager rather than lazy. */
+  sills: 'sills.json'
 } as const;
 
 /** The same set as a list, for anything that weighs or preloads it rather than naming a file. */

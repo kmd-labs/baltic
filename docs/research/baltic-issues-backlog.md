@@ -10,25 +10,58 @@
 > 3. **Krok 1000 lat** (21 klatek + ~6 zdarzeniowych) zamiast 500 lat.
 > 4. **Scena: glob jak w El Niño**, dane runtime hybrydowe (siatki + kostka RSL + wektory). Nowe zadanie `I-05`.
 
-## Stan issues (przegląd 2026-11-01, po scaleniu PR #79 i sesji naprawczej epiku `A`)
+## Stan issues (przegląd 2026-11-02, po `0-01` + `0-08` i `C-05` + `C-06b`)
 
 Aplikacja liczy wodę, poziomy progów i metryki sama z siatek (Web Worker), więc pipeline nie emituje plików klatek.
 
 | Status | Zadania |
 | :-- | :-- |
-| **Zamknięte — wykonane** | `0-02` #8, `0-06` #12, `C-01` #15, `C-04` #18, `I-05` #58 oraz epik `A`: `A-01` #70, `A-02` #71, `A-03` #72, `A-04` #73, `A-07` #76, `A-08` #77, `A-09` #78 |
+| **Zamknięte — wykonane** | `0-01` #7, `0-02` #8, `0-06` #12, `0-08` #14, `C-01` #15, `C-04` #18, `C-05` #19, `C-06b` #62, `I-05` #58 oraz epik `A`: `A-01` #70, `A-02` #71, `A-03` #72, `A-04` #73, `A-06` #75, `A-07` #76, `A-08` #77, `A-09` #78 |
 | **Zamknięte — wykonane z follow-upem** | `C-03` #17 (reszta → `I-01`, `0-07`, `V-03`), `C-06` #20 i `C-14` #27 (→ `C-06b` #62), `C-07` #21 (→ `C-07b` #63), `C-13` #28, `I-02` #53 (→ `I-02b` #64), `I-03` #54 (→ `I-03b` #65), `I-04` #55 (→ `I-04b` #66), `0-05` #11 (→ `0-05b` #67) |
 | **Usunięte — nie robimy** | `C-02` #16, `C-09` #22, `C-10` #24, `C-11` #25, `C-12` #26, `C-15` #29, `V-07` #46, `V-12` #52 — decyzja użytkownika; **trwałe skasowanie na GitHubie czeka na uprawnienia** (system zablokował `gh issue delete`) |
 | **Zawężone** | `I-01` #50 — siatki, zarysy lodu i manifest, bez plików klatek |
-| **Otwarte** | `0-01` #7, `0-03` #9, `0-04` #10, `0-07` #13, `0-08` #14, `C-05` #19, `C-08` #23, `V-01` #40, `V-03` #42, `V-06` #45, `V-08` #47, `V-11` #51 oraz follow-upy #62–#67 |
-| **Częściowo wykonane** | `V-02` #41 — kontrola działa na katalogu z `geo.ts` (niezmienniki blokujące, test negatywny, próg sterujący per klatka); zostaje podmiana źródła progów na `sills.json` razem z `C-05` #19 |
-| **Otwarte w epiku `A`** | `A-05` #74 (korekta na osady — potrzebny Python, pobranie `zhang2024_sed` i decyzja o rozkładzie miąższości w czasie) oraz `A-06` #75 (ostatni punkt: `audit:metrics` w CI, czeka na `0-08` #14) |
+| **Otwarte** | `0-03` #9, `0-04` #10, `0-07` #13, `C-08` #23, `V-01` #40, `V-03` #42, `V-06` #45, `V-08` #47, `V-11` #51 oraz follow-upy #63–#67 |
+| **Zamknięte — wykonane** (c.d.) | `V-02` #41 — od 2026-11-02 kontrola czyta katalog z `sills.json`, nie z `geo.ts`; niezmienniki blokujące, test negatywny, próg sterujący per klatka |
+| **Otwarte w epiku `A`** | `A-05` #74 (korekta na osady — potrzebny Python, pobranie `zhang2024_sed` i decyzja o rozkładzie miąższości w czasie) |
 
 Opisy zadań poniżej są historyczne dla pozycji zamkniętych i usuniętych; aktualny zakres jest w issues.
 
-**Następne w kolejce** (stan 2026-11-01): `C-06b` #62 — nazwanie czynnego progu w fazach jeziornych; po
-`V-02` model zna komórkę sterującą dla każdej klatki, więc karta fazy może pokazać trasę odpływu, a nie
-sam poziom. Potem `C-05` #19 (`sills.json` wyprowadzony z analizy przelewu), który domyka `V-02`.
+### Co weszło 2026-11-02
+
+**Tor inżynierski — `0-01` #7 + `0-08` #14.** Repo nie miało żadnego CI na PR-ach: 42 testy kontraktu
+uruchamiały się, kiedy ktoś pamiętał. `ci.yml` chodzi teraz na każdym PR do `main` w dwóch jobach —
+aplikacja (kontrola submodułu, build, testy, budżet zasobów, `audit:metrics`) i kontrakt danych
+(walidacja schematów `src/assets/data`, testy Pythona). `deploy.yml` przestał budować
+`git submodule update --remote`, więc wdrożenie odpowiada commitowi zapisanemu w gicie; `README.md`
+opisuje czysty klon. Trzy rzeczy musiały wcześniej zacząć działać: `contract:validate` kończył się
+kodem 2 (skrypt nie przekazywał argumentów) i teraz obchodzi `src/assets/data`, dobierając schemat
+po ścieżce, a nierozpoznany JSON **pada**, nie jest pomijany; `assets:check` waży katalog wobec
+budżetu (25 MiB / 4 MiB — dziś 2,58 i 2,57), z listą zasobów startowych wziętą z tej samej stałej,
+którą czyta serwis; `requirements-contract.txt` to podzbiór bez GDAL-a, pilnowany testem zgodności
+pinów. **Domknęło to ostatni punkt DoD `A-06` #75.**
+
+**Tor danych — `C-05` #19 + `C-06b` #62.** `sills.json` jest generowany (`npm run data:sills`) z
+analizy przelewu, nie wpisywany z listy nazw — kolejność odwrotna do zapisanej w backlogu, bo tak
+wynika z korekty audytu: o trasie rozstrzyga przelew, nie rzędna w katalogu. Pozycje i nazwy są z
+literatury, `elevationM` i `states` mierzone na zacommitowanych siatkach, `activePeriods` puste tam,
+gdzie repo nie ma datowanego źródła (pole `method` w pliku mówi, co jest czym — nowe, opcjonalne,
+kontrakt `1.1.0`). Trasa z 11 ka dostała własny wpis `gota-alv` z `hypothesis: true`, więc
+**najdalsza trasa od swojej nazwy to 21 km zamiast 97**; test z budżetem 30 km zatrzymuje build,
+gdy pojawi się trasa bez nazwy. `fillWater` oddawał komórkę sterującą, a worker ją wyrzucał —
+teraz dochodzi do `PaleoFrame.outlet` i karta fazy pokazuje nazwę trasy, odległość do punktu
+katalogu, rzędną dzisiejszą i odznakę „hipoteza". Sille zniknęły z `geo.ts`: glob, `V-02`,
+`audit:metrics` i testy czytają jeden plik.
+
+**Czego to nie ruszyło:** poziomy jezior (B1, +6…+14 m wobec literatury) — przyczyną jest
+rozdzielczość pola RSL (B3), więc droga do nich prowadzi przez `V-03`, nie przez katalog progów.
+
+**Następne w kolejce** (stan 2026-11-02): dwie opcje, obie realne.
+1. **`V-03` #42** — jedyna ilościowa walidacja w planie, potwierdzona przez audyt jako właściwy
+   priorytet; wymaga odtworzenia środowiska Pythona (`python` na PATH, `xarray`, `netCDF4`),
+   pobrania `rosentau2021` (tura 2 w `0-05`) i krzywych z `C-12`.
+2. **`C-08` #23** (`timeline.json`) — bez pobrań, na tych samych zasadach co `C-05`: granice faz z
+   `timeline.ts` wychodzą do kontraktu razem z cytowaniami i lokalnymi onsetami, co odblokowuje
+   `V-06` #45. Tańsze, a `contract:validate` ma już bramkę, w którą ten plik wpadnie.
 
 ## Jak czytać
 
@@ -70,7 +103,7 @@ Dwie rzeczy nieobejściowe: **`0-01`** (bez submodułu nie ma builda) i **`0-06`
 
 # EPIC 0 · Fundamenty i blokery
 
-## `0-01` Document clean-clone setup and pin design-system in builds
+## `0-01` Document clean-clone setup and pin design-system in builds — **wykonane 2026-11-02**
 
 **Epik:** 0 · **Blokuje:** `0-04` · **Labels:** `blocker`, `ci`
 
@@ -82,9 +115,9 @@ W świeżej kopii roboczej submoduł `src/design-system` jest niezainicjowany (`
 - Weryfikacja, że `sync-design-system.yml` nadal działa po zmianie.
 
 **DoD**
-- [ ] `README.md` istnieje; `npm run build` zielony na czystym klonie wykonanym wg README
-- [ ] Deploy buduje z SHA zapisanego w gicie
-- [ ] CI nie przechodzi, jeśli submoduł jest pusty (`0-08`)
+- [x] `README.md` istnieje; `npm run build` zielony na czystym klonie wykonanym wg README
+- [x] Deploy buduje z SHA zapisanego w gicie — krok `--remote` usunięty, aktualizacje idą przez `sync-design-system.yml`
+- [x] CI nie przechodzi, jeśli submoduł jest pusty (`0-08`)
 
 **Plan:** §6 (Kolejność prac, p. 1)
 
@@ -218,7 +251,7 @@ Dwa artefakty z §9. `paleo-reconstruction-methodology.md` **musi wskazywać kon
 
 **Plan:** §0.1, §9
 
-## `0-08` Add PR CI workflow that validates committed data assets
+## `0-08` Add PR CI workflow that validates committed data assets — **wykonane 2026-11-02**
 
 **Epik:** 0 · **Zależy od:** `0-01`, `0-06` · **Blokuje:** `V-11` · **Labels:** `ci`, `blocker`
 
@@ -230,9 +263,9 @@ W repo jest tylko `deploy.yml` (push na `main`) i `sync-design-system.yml` — *
 - Kontrola pustego submodułu (`0-01`).
 
 **DoD**
-- [ ] Workflow uruchamia się na każdym PR do `main`
-- [ ] Plik niezgodny ze schematem lub z sumą w `manifest.json` blokuje merge
-- [ ] Brak kroku pobierającego surowe dane
+- [x] Workflow uruchamia się na każdym PR do `main`
+- [x] Plik niezgodny ze schematem blokuje merge; nierozpoznany JSON też. **Sumy kontrolne czekają na `manifest.json` (`I-01`)** — dziś nie ma czego sprawdzać
+- [x] Brak kroku pobierającego surowe dane
 
 **Plan:** §5, §7
 
@@ -339,7 +372,7 @@ Ten etap obejmuje **fazy morskie** (Yoldia, Mastogloia, Littorina, post-Littorin
 
 **Plan:** §0.3, §4.1
 
-## `C-05` Build sills.json — sill and strait catalogue
+## `C-05` Build sills.json — sill and strait catalogue — **wykonane 2026-11-02 z analizy przelewu**
 
 **Epik:** C · **Zależy od:** `0-06` · **Blokuje:** `C-06`, `C-10`, `C-14`, `V-02` · **Labels:** `contract`, `regime-c`, `blocker`
 
@@ -352,9 +385,9 @@ Badanie literatury do katalogu (współrzędne, rzędne, okresy aktywności) mo�
 > **Uwaga do kolejności z §6.** `C-14` potrzebuje zasiewu w aktywnej cieśninie, `C-06` rzędnych progowych, a `C-10` stanów progów (zasolenie w klatkach M3). Ten plik powstaje **razem z `C-03`** (M2), nie po nim.
 
 **DoD**
-- [ ] Każdy próg: współrzędne, rzędna, okresy aktywności, źródło
-- [ ] Stan otwarty / zamknięty per faza dla wszystkich 7 faz
-- [ ] Hipotezy oznaczone flagą, nie podane jako fakt
+- [x] Każdy próg: współrzędne, rzędna, źródło; **okresy aktywności tylko tam, gdzie repo ma datowane źródło** — reszta pusta, bo wymyślony wiek byłby gorszy od braku (`sgu_strand` nierozstrzygnięty, `0-03`)
+- [x] Stan otwarty / zamknięty per faza dla wszystkich 7 faz — mierzony na modelu, nie przepisany z literatury
+- [x] Hipotezy oznaczone flagą, nie podane jako fakt — `gota-alv` z `hypothesis: true`
 
 **Plan:** §3.2, §3.4, §5
 
@@ -888,7 +921,7 @@ w czasie, walidacja na dziś.
 - [x] Skrypt w repo, wpięty jako `npm run audit:metrics`
 - [x] Czyta `src/assets/data` i `src/app/core/data`, bez duplikowania logiki
 - [x] Ograniczenie `no-ice` opisane w nagłówku skryptu i powiązane z `A-03`
-- [ ] Uruchamiany w CI po zmianie zasobów danych (czeka na `0-08`)
+- [x] Uruchamiany w CI po zmianie zasobów danych (`ci.yml`, job `app`)
 
 ## `A-08` #77 Read the ice flag from the field the scene draws — **wykonane 2026-11-01**
 

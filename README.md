@@ -43,7 +43,9 @@ git submodule status      # bez wiodącego '-' i '+' przy SHA
 | `npm run build:gh-pages` | build pod `https://kmd-labs.github.io/baltic/` |
 | `npm run test:contract` | testy czytnika danych i reguły wody (Node, `node --test`) + `tsc` na kontrakcie |
 | `npm run contract:validate` | walidacja JSON-ów z `src/assets/data/` schematami z `contract/schema/` |
+| `npm run assets:check` | waży `src/assets/data/` wobec budżetu (25 MiB całość, 4 MiB pierwsze wejście) |
 | `npm run audit:metrics` | przelicza liczby cytowane w audycie z zacommitowanych zasobów |
+| `npm run data:sills` | generuje `src/assets/data/sills.json` z analizy przelewu (`-- --report` tylko drukuje) |
 | `npm run data:fetch` | pobiera surowe zbiory do `data/raw/` (poza gitem) |
 | `npm run test:data` | testy pipeline'u (Python) |
 
@@ -67,9 +69,12 @@ py -m venv .venv
 | :-- | :-- |
 | `src/app/core/data/` | czytnik siatek KMDG, paleo-DEM, reguła wody, pole lodu, sill-check — czyste funkcje bez DOM-u, współdzielone z workerem i testami |
 | `src/app/components/` | glob, blok rzeźby, dolny dok, karty faz, przekrój, samouczek |
-| `src/assets/data/` | zacommitowane zasoby: siatki `grid/*.bin.gz` i prototyp `prototype/*.json` |
+| `src/assets/data/` | zacommitowane zasoby: siatki `grid/*.bin.gz`, katalog `sills.json`, prototyp `prototype/*.json` |
 | `contract/` | kontrakt danych (`0-06`): schematy JSON i fixture'y |
 | `tools/data/` | pipeline (`fetch.py`, `postglacial.py`, `contract.py`, `kmdg.py`) |
+| `tools/lib/` | `frames.ts` — wczytanie zasobów i klatka liczona tak, jak liczy ją aplikacja |
+| `tools/sills/` | `build.ts` — generator katalogu progów (`C-05`) |
+| `tools/assets/` | `budget.ts` — bramka rozmiaru zasobów |
 | `tools/audit/` | `metrics.ts` — liczby audytu jako skrypt |
 | `tests/contract/` | testy kontraktu i reguły wody |
 | `docs/research/` | plan danych, backlog issues, audyt, handoff |

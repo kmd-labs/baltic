@@ -234,6 +234,22 @@ połączenie morskie poniżej") i **`C-05` #19** (`sills.json`). Tabela wyżej t
 > modelu. Wniosek ogólny: **o trasie rozstrzyga analiza przelewu, nie rzędna w katalogu**, i to jest
 > argument za tym, żeby `sills.json` powstał z niej, a nie z listy nazw.
 
+> **Domknięcie z 2026-11-02 (`C-05` + `C-06b`).** `sills.json` powstał dokładnie z tej analizy
+> (`npm run data:sills`, raport w `tools/sills/build.ts`). Trasa z 11 ka ma teraz własny wpis
+> `gota-alv` — odpływ Vänern do doliny Göta älv, `hypothesis: true`, bo ustalone jest to, że
+> **model** tam przelewa, nie że tam przelewał Bałtyk. Kolumna „najbliższy wpis katalogu" czyta
+> się więc inaczej: `oresund` 7–9 km, `gota-alv` 0 km, `darss` 21 km — **najdalsza trasa od nazwy
+> to 21 km zamiast 97**, i pilnuje tego test (`tests/contract/sills.test.ts`, budżet 30 km), więc
+> nowa trasa bez nazwy zatrzymuje build zamiast pożyczać nazwę sąsiada. Karta fazy pokazuje
+> nazwę trasy razem z odległością do punktu katalogu i z odznaką „hipoteza", gdy wpis jest
+> modelowy (`C-06b`).
+>
+> Co to **nie** naprawiło: `billingen` wychodzi z modelu jako „zamknięty we wszystkich fazach"
+> (rzędna 156 m, nigdy nie zanurzony), a literatura stawia tam odpływ BIL. Ta rozbieżność jest
+> teraz zapisana w pliku — `activePeriods` z literatury obok `states` z modelu — a nie zasłonięta
+> przez wybór jednej z dwóch odpowiedzi. Poziomy jezior (B1) zostają niezmienione: ich przyczyną
+> jest rozdzielczość pola RSL (B3), czyli `V-03`.
+
 ### B3 — Pozorna precyzja linii brzegowej
 
 Pole RSL ma **1°** (81 × 41 węzłów) i jest interpolowane biliniowo na DEM **0,025°** — 40–80-krotna

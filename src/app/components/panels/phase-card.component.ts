@@ -72,6 +72,23 @@ import { EVENTS, eventAt, phaseAt } from '../../core/data/timeline';
             </dd>
           </div>
         }
+        @if (outlet(); as o) {
+          <div>
+            <dt>{{ tr.kvOutlet }}</dt>
+            <dd>
+              @if (o.sill && c) {
+                {{ c.sills[o.sill.id] ?? o.sill.id }}
+                <span class="dim">· {{ tr.outletFromCatalogue(fmt(o.km, 0)) }} · {{ tr.outletElevation(signedM(o.hNowM)) }}</span>
+                @if (o.sill.hypothesis) {
+                  <span class="badge badge--warn">{{ tr.outletHypothesis }}</span>
+                }
+              } @else {
+                {{ fmt(o.lon, 2) }}°E {{ fmt(o.lat, 2) }}°N
+                <span class="dim">· {{ tr.outletUnnamed }}</span>
+              }
+            </dd>
+          </div>
+        }
         <div>
           <dt>{{ tr.kvArea }}</dt>
           <dd>{{ s.areaKm2 > 1000 ? tr.areaValue(fmt(s.areaKm2 / 1000, 0)) : '—' }}</dd>
@@ -114,6 +131,11 @@ export class PhaseCardComponent {
     return this.data.state() === 'ready' ? this.data.frame(this.t()) : null;
   });
   readonly stats = computed(() => this.frame()?.stats ?? null);
+  /**
+   * The route the basin spills over (`C-06b`). Only a lake has one: a basin connected to the
+   * ocean does not spill anywhere, and the fill returns none for it.
+   */
+  readonly outlet = computed(() => this.frame()?.outlet ?? null);
   readonly lakeLevel = computed(() => this.frame()?.lakeLevelM ?? 0);
   readonly litLevel = computed(() => this.frame()?.literatureLevelM ?? 0);
   readonly levelDiff = computed(() => Math.abs(this.lakeLevel() - this.litLevel()));

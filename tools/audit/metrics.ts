@@ -15,56 +15,20 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Feature, Geometry } from 'geojson';
-import { decodeKmdg, gunzipIfNeeded, kmdgLayer } from '../../src/app/core/data/kmdg.ts';
-import { buildResampler, paleoElevation, rslAt } from '../../src/app/core/data/paleo.ts';
+import { rslAt } from '../../src/app/core/data/paleo.ts';
 import { basinStats, fillWater, oceanSide } from '../../src/app/core/data/water.ts';
 import { FRAMES, lakeLevelAt, phaseAt } from '../../src/app/core/data/timeline.ts';
-import { iceMaskFor, iceSliceFor } from '../../src/app/core/data/ice-field.ts';
+import { iceSliceFor } from '../../src/app/core/data/ice-field.ts';
 import { sillCheck } from '../../src/app/core/data/sill-check.ts';
-import { SILLS } from '../../src/app/core/data/geo.ts';
+import { parseSills } from '../../src/app/core/data/sills.ts';
+import { loadFrames, DATA } from '../lib/frames.ts';
 
-const DATA = join(process.cwd(), 'src', 'assets', 'data');
-
-async function grid(rel: string) {
-  const b = readFileSync(join(DATA, rel));
-  return decodeKmdg(await gunzipIfNeeded(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer));
-}
-
-const baltic = await grid('grid/dem-baltic.bin.gz');
-const rslGrid = await grid('grid/rsl.bin.gz');
-const cube = {
-  geometry: rslGrid,
-  times: [...rslGrid.times],
-  layers: Array.from({ length: rslGrid.nt }, (_, i) => kmdgLayer(rslGrid, i))
-};
-const hNow = kmdgLayer(baltic, 0);
-const rs = buildResampler(rslGrid, baltic);
+const { baltic, cube, hNow, hpAt, iceAt, cell } = await loadFrames();
 const [bw, bs, be, bn] = baltic.bbox;
-
-/** H_paleo on the Baltic grid at t cal yr BP. `rslAt` takes ka, not years. */
-const hpAt = (t: number) => paleoElevation(hNow, rslAt(cube, t / 1000), rs);
-
-/**
- * The ice wall for a frame, by the app's own slice mapping. Cached per slice: the same outline
- * answers for several frames and rasterising is the expensive part.
- */
-const ice = JSON.parse(readFileSync(join(DATA, 'prototype', 'ice-dated1.json'), 'utf8')) as {
-  features: Feature<Geometry, { ka: number; variant: string }>[];
-};
-const iceCache = new Map<number, Uint8Array>();
-const iceAt = (t: number): Uint8Array | null => {
-  const ka = iceSliceFor(t);
-  if (ka == null) return null;
-  let mask = iceCache.get(ka);
-  if (!mask) {
-    mask = iceMaskFor(ice.features.find(f => f.properties.ka === ka && f.properties.variant === 'mc'), baltic);
-    iceCache.set(ka, mask);
-  }
-  return mask;
-};
-const cell = (lon: number, lat: number) =>
-  Math.floor(((bn - lat) / (bn - bs)) * baltic.ny) * baltic.nx + Math.floor(((lon - bw) / (be - bw)) * baltic.nx);
+/** The 1° RSL grid the cube is sampled on — section 2 measures the jumps between its nodes. */
+const rslGrid = cube.geometry;
+/** The shipped sill catalogue (C-05), read through the app reader. */
+const SILLS = parseSills(JSON.parse(readFileSync(join(DATA, 'sills.json'), 'utf8'))).sills;
 
 const f1 = (n: number, w: number, d = 1) => n.toFixed(d).padStart(w);
 
@@ -140,10 +104,7 @@ console.log('\n## 4. H_paleo at the outlets  [< 0 = submerged, a possible connec
 const epochs = [16, 13, 11.7, 11, 10.3, 9, 8];
 console.log('  outlet            ' + epochs.map(k => (k + 'ka').padStart(8)).join(''));
 for (const s of SILLS) {
-  const row = epochs.map(ka => {
-    const hp = paleoElevation(hNow, rslAt(cube, ka), rs);
-    return f1(hp[cell(s.lon, s.lat)], 8, 0);
-  });
+  const row = epochs.map(ka => f1(hpAt(ka * 1000)[cell(s.lon, s.lat)], 8, 0));
   console.log('  ' + s.id.padEnd(18) + row.join(''));
 }
 

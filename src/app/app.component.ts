@@ -37,7 +37,7 @@ import { GlobeComponent, GlobeLabel, GlobeLayers, GlobePointer } from './compone
 import { PaleoDataService } from './core/data/paleo-data.service';
 import { ContentService } from './core/content/content.service';
 import { FRAMES, phaseAt } from './core/data/timeline';
-import { PLACES, SILLS } from './core/data/geo';
+import { PLACES } from './core/data/geo';
 import { PhaseCardComponent } from './components/panels/phase-card.component';
 import { TransectPanelComponent } from './components/panels/transect-panel.component';
 import { PhaseBandsComponent } from './components/panels/phase-bands.component';
@@ -161,7 +161,7 @@ export class AppComponent implements OnDestroy {
     if (!c) return [];
     return [
       ...PLACES.filter(p => p.id !== 'gotland').map(p => ({ id: 'p-' + p.id, text: c.places[p.id], lon: p.lon, lat: p.lat, kind: 'place' as const })),
-      ...SILLS.map(s => ({ id: 's-' + s.id, text: c.sills[s.id], lon: s.lon, lat: s.lat, kind: 'sill' as const }))
+      ...this.data.sills().map(s => ({ id: 's-' + s.id, text: c.sills[s.id] ?? s.id, lon: s.lon, lat: s.lat, kind: 'sill' as const }))
     ];
   });
 

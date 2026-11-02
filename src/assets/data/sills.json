@@ -1,0 +1,176 @@
+{
+  "schemaVersion": "1.1.0",
+  "datum": "present-day",
+  "method": "Positions and names from the literature (sources per entry); gota-alv is derived from the spill analysis and flagged hypothesis. elevationM is H_now read off gebco2024 at the position, not a published threshold value. states are measured per phase on H_paleo = H_now - RSL(t) with the DATED-1 ice wall, by tools/sills/build.ts. activePeriods are empty where this repo holds no dated source; an empty array is not a claim of inactivity.",
+  "sills": [
+    {
+      "id": "billingen",
+      "lat": 58.45,
+      "lon": 13.85,
+      "elevationM": 156,
+      "activePeriods": [
+        {
+          "fromBP": 13000,
+          "toBP": 11650
+        }
+      ],
+      "states": {
+        "deglaciation": "closed",
+        "bil": "closed",
+        "yoldia": "closed",
+        "ancylus": "closed",
+        "mastogloia": "closed",
+        "littorina": "closed",
+        "post-littorina": "closed"
+      },
+      "hypothesis": false,
+      "sources": [
+        "andren2011",
+        "bjorck1995",
+        "gebco2024",
+        "steffen2025_rsl"
+      ]
+    },
+    {
+      "id": "darss",
+      "lat": 54.6,
+      "lon": 12.25,
+      "elevationM": -17,
+      "activePeriods": [
+        {
+          "fromBP": 8500,
+          "toBP": 0
+        }
+      ],
+      "states": {
+        "deglaciation": "closed",
+        "bil": "closed",
+        "yoldia": "closed",
+        "ancylus": "open",
+        "mastogloia": "open",
+        "littorina": "open",
+        "post-littorina": "open"
+      },
+      "hypothesis": false,
+      "sources": [
+        "andren2011",
+        "gebco2024",
+        "steffen2025_rsl"
+      ]
+    },
+    {
+      "id": "gota-alv",
+      "lat": 58.237,
+      "lon": 12.238,
+      "elevationM": 74,
+      "activePeriods": [],
+      "states": {
+        "deglaciation": "closed",
+        "bil": "open",
+        "yoldia": "open",
+        "ancylus": "closed",
+        "mastogloia": "closed",
+        "littorina": "closed",
+        "post-littorina": "closed"
+      },
+      "hypothesis": true,
+      "sources": [
+        "gebco2024",
+        "steffen2025_rsl"
+      ]
+    },
+    {
+      "id": "narke",
+      "lat": 59.22,
+      "lon": 15.3,
+      "elevationM": 42,
+      "activePeriods": [],
+      "states": {
+        "deglaciation": "closed",
+        "bil": "closed",
+        "yoldia": "open",
+        "ancylus": "open",
+        "mastogloia": "open",
+        "littorina": "open",
+        "post-littorina": "closed"
+      },
+      "hypothesis": false,
+      "sources": [
+        "bjorck1995",
+        "gebco2024",
+        "steffen2025_rsl"
+      ]
+    },
+    {
+      "id": "oresund",
+      "lat": 55.55,
+      "lon": 12.75,
+      "elevationM": -9,
+      "activePeriods": [
+        {
+          "fromBP": 8500,
+          "toBP": 0
+        }
+      ],
+      "states": {
+        "deglaciation": "closed",
+        "bil": "open",
+        "yoldia": "closed",
+        "ancylus": "open",
+        "mastogloia": "closed",
+        "littorina": "open",
+        "post-littorina": "open"
+      },
+      "hypothesis": false,
+      "sources": [
+        "andren2011",
+        "gebco2024",
+        "steffen2025_rsl"
+      ]
+    },
+    {
+      "id": "storebaelt",
+      "lat": 55.3,
+      "lon": 11,
+      "elevationM": -21,
+      "activePeriods": [],
+      "states": {
+        "deglaciation": "closed",
+        "bil": "closed",
+        "yoldia": "closed",
+        "ancylus": "closed",
+        "mastogloia": "closed",
+        "littorina": "open",
+        "post-littorina": "open"
+      },
+      "hypothesis": false,
+      "sources": [
+        "bjorck1995",
+        "gebco2024",
+        "steffen2025_rsl"
+      ]
+    },
+    {
+      "id": "svea",
+      "lat": 59.2,
+      "lon": 14.45,
+      "elevationM": 116,
+      "activePeriods": [],
+      "states": {
+        "deglaciation": "closed",
+        "bil": "closed",
+        "yoldia": "open",
+        "ancylus": "closed",
+        "mastogloia": "closed",
+        "littorina": "closed",
+        "post-littorina": "closed"
+      },
+      "hypothesis": false,
+      "sources": [
+        "bjorck1995",
+        "gebco2024",
+        "steffen2025_rsl"
+      ]
+    }
+  ]
+}

@@ -8,6 +8,12 @@
   "properties": {
     "schemaVersion": { "$ref": "common.schema.json#/$defs/schemaVersion" },
     "datum": { "$ref": "common.schema.json#/$defs/datum" },
+    "method": {
+      "description": "How the numbers in this file were obtained — which of them are read off the DEM, which come from publications, which are left empty for want of a source. Optional, added in 1.1.0: a catalogue that mixes measured and cited values is misleading without it, and JSON cannot carry a comment.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
     "sills": {
       "type": "array",
       "items": {
