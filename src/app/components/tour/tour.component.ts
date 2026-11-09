@@ -9,8 +9,8 @@ export interface TourStep {
 }
 
 /**
- * Guided tour, started from the "Tutorial" pill (never automatically). Each step highlights one
- * control with its number; the rest of the screen is dimmed. Back / Next / Finish, × and Esc.
+ * Guided tour, started on every load after the intro popup, and again from the "Tutorial" pill.
+ * Each step highlights one control with its number; the rest of the screen is dimmed. Back / Next / Finish, × and Esc.
  */
 @Component({
   selector: 'app-tour',

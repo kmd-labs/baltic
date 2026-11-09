@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
@@ -335,6 +335,31 @@ export class AppComponent implements OnDestroy {
     if (this.timeRaf !== null) cancelAnimationFrame(this.timeRaf);
     this.timeRaf = null;
     this.glideTarget = null;
+  }
+
+  /**
+   * Every load (decision 2026-11-09): once the splash is gone and the data and content are in,
+   * an intro popup on what the app shows; closing it, by any route, starts the tutorial.
+   */
+  private introShown = false;
+  private readonly introOnLoad = effect(() => {
+    if (this.introShown || this.splash.visible() || this.data.state() !== 'ready' || !this.content.content()) return;
+    this.introShown = true;
+    untracked(() => this.openIntro());
+  });
+
+  openIntro(): void {
+    const tr = () => this.i18n.t();
+    this.popup.open({
+      id: 'intro',
+      title: () => tr().introTitle,
+      component: InfoPopupComponent,
+      componentInputs: { kind: 'intro' },
+      size: 'md',
+      actions: [{ label: () => tr().introStart, variant: 'default', hot: true }],
+      // After the popup has gone, so the tour measures its targets without the backdrop.
+      onClose: () => setTimeout(() => this.startTour(), 250)
+    });
   }
 
   startTour(): void {

@@ -31,7 +31,6 @@ export interface Dict {
   calBp: (t: string) => string;
   /** Calendar year of a cal BP age, e.g. "≈ 9 700 p.n.e." */
   calendar: (year: number, fmt: (n: number) => string) => string;
-  prototype: string;
   play: string;
   pause: string;
   prevFrame: string;
@@ -66,6 +65,10 @@ export interface Dict {
   srcNote: string;
   about: string;
   aboutTitle: string;
+  /** Intro popup shown on every load, before the tutorial. */
+  introTitle: string;
+  introParas: string[];
+  introStart: string;
   panelsLabel: string;
   tabPhase: string;
   tabTransect: string;
