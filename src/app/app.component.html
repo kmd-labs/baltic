@@ -69,14 +69,16 @@
         [t]="t()"
         [layers]="layers()"
         [labels]="labels()"
-        (hover)="pointer.set($event)">
+        (hover)="pointer.set($event)"
+        (pick)="transects.pick($event.lon, $event.lat)">
       </app-globe>
     } @else {
       <app-block
         [t]="t()"
         [layers]="layers()"
         [labels]="labels()"
-        (hover)="pointer.set($event)">
+        (hover)="pointer.set($event)"
+        (pick)="transects.pick($event.lon, $event.lat)">
       </app-block>
     }
   </section>
@@ -176,7 +178,7 @@
         </div>
         <div class="panels">
           <app-phase-card data-tour="phase" class="panel panel--phase glass-panel" [class.is-tab]="tab() === 'phase'" [t]="t()" (pickTime)="t.set($event)"></app-phase-card>
-          <app-transect-panel data-tour="transect" class="panel panel--transect glass-panel" [class.is-tab]="tab() === 'transect'" [t]="t()"></app-transect-panel>
+          <app-transect-panel data-tour="transect" class="panel panel--transect glass-panel" [class.is-tab]="tab() === 'transect'" [t]="t()" (pickTime)="t.set($event)"></app-transect-panel>
         </div>
       }
     </div>

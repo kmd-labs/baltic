@@ -22,6 +22,7 @@ import { IceVariant, PaleoDataService, PaleoFrame, RSL_STEP_YR } from '../../cor
 import { nearestFrame, phaseAt, WaterClass } from '../../core/data/timeline';
 import { bilinear } from '../../core/data/paleo';
 import { inside, WATER_LAKE, WATER_OCEAN } from '../../core/data/water';
+import { TransectService } from '../../core/data/transect.service';
 import { ICE_DOMAIN, ICE_PROFILE_K, ICE_SDF_SCALE, iceBracket } from '../../core/data/ice-field';
 import {
   BLOCK_LCC,
@@ -114,6 +115,8 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
   readonly exaggeration = input<number>(30);
   readonly labels = input<GlobeLabel[]>([]);
   readonly hover = output<GlobePointer | null>();
+  /** A click on the block (lon/lat), for drawing a custom transect. */
+  readonly pick = output<{ lon: number; lat: number }>();
 
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChildren('lbl') labelRefs!: QueryList<ElementRef<HTMLSpanElement>>;
@@ -122,6 +125,7 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
   private readonly zone = inject(NgZone);
   private readonly theme = inject(ThemeService);
   private readonly data = inject(PaleoDataService);
+  private readonly transects = inject(TransectService);
 
   private readonly midX = (BLOCK_RECT.x0 + BLOCK_RECT.x1) / 2;
   private readonly midY = (BLOCK_RECT.y0 + BLOCK_RECT.y1) / 2;
@@ -135,6 +139,8 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
 
   private slabMat?: THREE.ShaderMaterial;
   private waterMats: THREE.ShaderMaterial[] = [];
+  private transectLine?: THREE.Line;
+  private pendingDot?: THREE.Mesh;
   /** waterLook uniforms shared by both water sheets. */
   private look?: Record<string, THREE.IUniform>;
   private iceMats = new Map<IceVariant, THREE.ShaderMaterial>();
@@ -178,6 +184,15 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
       this.labels();
       this.i18n.lang();
       this.needsRender = true;
+    });
+    // The active transect (preset or custom) and the pending point A while one is being drawn.
+    effect(() => {
+      this.transects.line();
+      this.transects.pending();
+      this.layers();
+      this.exaggeration();
+      if (!this.slabMat) return;
+      this.zone.runOutsideAngular(() => this.drawTransect());
     });
     effect(() => {
       const L = this.layers();
@@ -299,6 +314,57 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
   }
 
   // ─── geometry ───────────────────────────────────────────────────────────
+
+  /**
+   * The transect laid on the surface: the bed, or the water where there is water, lifted a hair so
+   * the depth test keeps it in front of what it lies on. Follows time (the bed moves with RSL), the
+   * section and the exaggeration.
+   */
+  private drawTransect(): void {
+    if (!this.rslNow) return;
+    if (!this.transectLine) {
+      const mat = new THREE.LineBasicMaterial({ color: new THREE.Color(this.theme.getTokenColor('neutral-800', '#1e293b')) });
+      this.transectLine = new THREE.Line(new THREE.BufferGeometry(), mat);
+      this.transectLine.renderOrder = 20;
+      this.scene.add(this.transectLine);
+      this.pendingDot = new THREE.Mesh(
+        new THREE.SphereGeometry(0.05, 16, 12),
+        new THREE.MeshBasicMaterial({ color: new THREE.Color(this.theme.getTokenColor('accent', '#d37400')) })
+      );
+      this.scene.add(this.pendingDot);
+    }
+    const ex = this.exaggeration();
+    const level = this.data.sceneWater(this.shownT)?.lakeLevelM ?? 0;
+    const surface = (lon: number, lat: number) => {
+      const bed = this.bedAt(lon, lat);
+      return (Math.max(bed, 0, bed < level ? level : 0) * UNITS_PER_M * ex) + 0.012;
+    };
+    const pts = this.transects.line().points;
+    const out: number[] = [];
+    for (let k = 0; k + 1 < pts.length; k++) {
+      const [a0, a1] = pts[k];
+      const [b0, b1] = pts[k + 1];
+      const steps = 80;
+      for (let i = k === 0 ? 0 : 1; i <= steps; i++) {
+        const lon = a0 + ((b0 - a0) * i) / steps;
+        const lat = a1 + ((b1 - a1) * i) / steps;
+        const [px, py] = lccForward(BLOCK_LCC, lon, lat);
+        this.world(px, py, this.tmpV);
+        out.push(this.tmpV.x, surface(lon, lat), this.tmpV.z);
+      }
+    }
+    this.transectLine.geometry.setAttribute('position', new THREE.Float32BufferAttribute(out, 3));
+    this.transectLine.geometry.computeBoundingSphere();
+    this.transectLine.visible = this.layers().transect;
+    const a = this.transects.pending();
+    this.pendingDot!.visible = !!a;
+    if (a) {
+      const [px, py] = lccForward(BLOCK_LCC, a[0], a[1]);
+      this.world(px, py, this.pendingDot!.position);
+      this.pendingDot!.position.y = surface(a[0], a[1]);
+    }
+    this.needsRender = true;
+  }
 
   /** Projected position to world; X is east, −Z is north, Y is up. */
   private world(px: number, py: number, out: THREE.Vector3): THREE.Vector3 {
@@ -630,6 +696,7 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
       for (const m of [this.slabMat]) (m.uniforms['cWaterDeep'].value as THREE.Color).copy(deep);
       if (this.look) (this.look['wBasin'].value as THREE.Color).copy(deep);
       this.showIce(t);
+      this.drawTransect();
     }
 
     // The pair in play and the level between them come from the data layer, so the picture, the
@@ -724,6 +791,16 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
       this.pendingHover = null;
       this.zone.run(() => this.hover.emit(null));
     });
+    // A click (press and release without dragging) picks a point — used to draw a custom transect.
+    let down: { x: number; y: number } | null = null;
+    cv.addEventListener('pointerdown', e => (down = { x: e.clientX, y: e.clientY }), { passive: true });
+    cv.addEventListener('pointerup', e => {
+      const d = down;
+      down = null;
+      if (!d || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 5) return;
+      const ll = this.pickAt(e);
+      if (ll) this.zone.run(() => this.pick.emit(ll));
+    });
   }
 
   /** Bed elevation in metres at lon/lat, matching bedM() in the shader. */
@@ -745,6 +822,18 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
     const e = this.pendingHover;
     if (!e || !this.rslNow || this.data.state() !== 'ready') return;
     this.pendingHover = null;
+    const hit = this.hitAt(e);
+    this.zone.run(() => this.hover.emit(hit ? { lon: hit[0], lat: hit[1], x: e.clientX, y: e.clientY } : null));
+  }
+
+  /** Point of the block's surface under the pointer (lon/lat), or null off the block. */
+  private pickAt(e: { clientX: number; clientY: number }): { lon: number; lat: number } | null {
+    if (!this.rslNow || this.data.state() !== 'ready') return null;
+    const hit = this.hitAt(e);
+    return hit ? { lon: hit[0], lat: hit[1] } : null;
+  }
+
+  private hitAt(e: { clientX: number; clientY: number }): [number, number] | null {
     const cv = this.canvasRef.nativeElement;
     const rect = cv.getBoundingClientRect();
     this.ndc.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
@@ -752,20 +841,21 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
     const ray = this.raycaster.ray;
 
     const enter = ray.intersectBox(this.pickBox, this.tmpV);
-    if (!enter) {
-      this.zone.run(() => this.hover.emit(null));
-      return;
-    }
+    if (!enter) return null;
     const ex = this.exaggeration();
     const span = this.pickBox.getSize(this.tmpW).length();
-    const steps = 180;
+    // The entry point lies on the box's face, and floating point puts it a hair outside as often
+    // as inside, so the containment test gets a tolerance — without it the march stopped at its
+    // first step and picking failed over most of the block.
+    const within = this.pickBox.clone().expandByScalar(1e-3);
+    const steps = 400;
     const dt = span / steps;
     let prev = 0;
     let prevGap = Number.NaN;
     for (let i = 0; i <= steps; i++) {
       const s = i * dt;
       this.tmpW.copy(enter).addScaledVector(ray.direction, s);
-      if (!this.pickBox.containsPoint(this.tmpW)) break;
+      if (!within.containsPoint(this.tmpW)) break;
       const ll = this.lonLatAt(this.tmpW);
       const gap = this.tmpW.y - this.bedAt(ll[0], ll[1]) * UNITS_PER_M * ex;
       if (!Number.isNaN(prevGap) && prevGap > 0 && gap <= 0) {
@@ -781,15 +871,12 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
         }
         this.tmpW.copy(enter).addScaledVector(ray.direction, (lo + hi) / 2);
         const hit = this.lonLatAt(this.tmpW);
-        const within = insideBlock(hit[0], hit[1]);
-        const at = { lon: hit[0], lat: hit[1], x: e.clientX, y: e.clientY };
-        this.zone.run(() => this.hover.emit(within ? at : null));
-        return;
+        return insideBlock(hit[0], hit[1]) ? hit : null;
       }
       prev = s;
       prevGap = gap;
     }
-    this.zone.run(() => this.hover.emit(null));
+    return null;
   }
 
   private lonLatAt(p: THREE.Vector3): [number, number] {

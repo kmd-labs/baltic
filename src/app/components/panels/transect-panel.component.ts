@@ -1,4 +1,7 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, output } from '@angular/core';
+import { DropdownComponent, DropdownOption } from '@kmd/design-system';
+import { PRESETS, TransectId, TransectService } from '../../core/data/transect.service';
+import { TransectHistoryComponent } from './transect-history.component';
 import { ThemeService } from '@kmd/design-system/services/theme.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ContentService } from '../../core/content/content.service';
@@ -6,28 +9,80 @@ import { PaleoDataService } from '../../core/data/paleo-data.service';
 import { phaseAt } from '../../core/data/timeline';
 import { CanvasPanel } from './canvas-panel';
 
-/** Elevation profile Umeå → Gdańsk in the frame: land and floor, water, ice, today's floor. */
+/**
+ * The transect panel: a preset section or the user's own (A → B, two clicks on the map), its
+ * elevation profile in the current frame — land and floor, water, ice, today's floor — and, beside
+ * it, the whole history along the line as a time × distance diagram (decision 2026-11-09).
+ */
 @Component({
   selector: 'app-transect-panel',
   standalone: true,
+  imports: [DropdownComponent, TransectHistoryComponent],
   template: `
     @let tr = i18n.t();
-    <div class="panel__head">
+    @let mode = transects.drawing();
+    <div class="panel__head tr-head">
       <h3 class="panel__title">{{ tr.transectTitle }}</h3>
-      <span class="panel__meta">{{ meta() }}</span>
+      <app-dropdown
+        class="tr-pick"
+        variant="ghost"
+        [options]="presetOptions()"
+        [value]="transects.line().id"
+        [ariaLabel]="tr.transectChoose"
+        (valueChange)="transects.select($any($event))">
+      </app-dropdown>
+      @if (mode !== 'off') {
+        <span class="tr-hint" role="status">{{ mode === 'a' ? tr.transectPickA : tr.transectPickB }}</span>
+        <button type="button" class="tr-btn" (click)="transects.cancelDrawing()">{{ tr.transectCancel }}</button>
+      } @else {
+        <button type="button" class="tr-btn" (click)="transects.startDrawing()">{{ tr.transectDraw }}</button>
+        @if (transects.line().id !== 'umea-gdansk') {
+          <button type="button" class="tr-btn" (click)="transects.reset()">{{ tr.transectReset }}</button>
+        }
+      }
+      <span class="panel__meta tr-meta">{{ meta() }}</span>
     </div>
     <div class="legend">
       <span><i class="ln" style="border-color: var(--color-paleo-earth-line)"></i>{{ tr.transectFloor }}</span>
       <span><i class="ln ln--dash"></i>{{ tr.transectToday }}</span>
       <span><i class="sw" style="background: var(--color-paleo-ice-section)"></i>{{ tr.transectIce }}</span>
     </div>
-    <canvas #cv [attr.aria-label]="tr.transectAria" role="img"></canvas>
+    <div class="tr-body">
+      <canvas #cv [attr.aria-label]="tr.transectAria" role="img"></canvas>
+      <app-transect-history [t]="t()" (pickTime)="pickTime.emit($event)"></app-transect-history>
+    </div>
   `,
-  styleUrl: './panels.scss'
+  styleUrl: './panels.scss',
+  styles: [
+    `
+      .tr-head { align-items: center; justify-content: flex-start; gap: 8px; flex-wrap: nowrap; }
+      .tr-pick { flex: none; }
+      .tr-meta { margin-left: auto; }
+      .tr-hint { font-size: 11px; font-weight: 600; color: var(--color-accent); white-space: nowrap; }
+      .tr-btn {
+        height: 22px; padding: 0 9px; border: 1px solid var(--color-line); border-radius: 999px;
+        background: transparent; font: inherit; font-size: 11px; color: var(--color-text-desc);
+        cursor: pointer; white-space: nowrap;
+      }
+      .tr-btn:hover { background: var(--color-btn-hover); }
+      .tr-body { display: flex; gap: 10px; flex: 1 1 0; min-height: 0; }
+      .tr-body > canvas { flex: 3 1 0; width: 0; height: 100%; }
+      .tr-body > app-transect-history { flex: 2 1 0; }
+    `
+  ]
 })
 export class TransectPanelComponent extends CanvasPanel {
   readonly t = input.required<number>();
+  readonly pickTime = output<number>();
   readonly i18n = inject(I18nService);
+  readonly transects = inject(TransectService);
+
+  readonly presetOptions = computed<DropdownOption<TransectId>[]>(() => {
+    const names = this.i18n.t().transectNames;
+    const opts: DropdownOption<TransectId>[] = PRESETS.map(p => ({ value: p.id, label: names[p.id] }));
+    opts.push({ value: 'custom', label: names.custom });
+    return opts;
+  });
   private readonly content = inject(ContentService);
   private readonly theme = inject(ThemeService);
   private readonly data = inject(PaleoDataService);
@@ -49,6 +104,7 @@ export class TransectPanelComponent extends CanvasPanel {
       this.data.state();
       this.data.version();
       this.content.content();
+      this.transects.line();
       this.redraw();
     });
   }
@@ -56,14 +112,25 @@ export class TransectPanelComponent extends CanvasPanel {
   protected draw(x: CanvasRenderingContext2D, w: number, h: number): void {
     if (this.data.state() !== 'ready') return;
     const t = this.t();
-    const profile = this.data.transect(t);
+    const line = this.transects.line();
+    const profile = this.data.transect(t, line.points);
     if (!profile) return;
     const { total, points } = profile;
     const tok = (k: string, fb: string) => this.theme.getTokenColor(k, fb);
     const font = this.theme.getFontFamily();
     const pad = { l: 34, r: 6, t: 8, b: 16 };
-    const z0 = -320;
-    const z1 = 460;
+    // Vertical scale fitted to the section, so shallow ones (the Danish straits, the Polish coast)
+    // do not flatten into a line under a scale made for the Gulf of Bothnia.
+    let lo = 0;
+    let hi = 0;
+    for (const p of points) {
+      lo = Math.min(lo, p.hPaleo, p.hNow);
+      hi = Math.max(hi, p.hPaleo, p.hNow, p.level ?? 0);
+    }
+    const range = Math.max(120, hi - lo);
+    const step = range <= 300 ? 50 : range <= 800 ? 200 : 500;
+    const z0 = Math.floor(Math.max(lo, -1500) / step) * step - step / 2;
+    const z1 = Math.ceil(Math.min(hi, 2500) / step) * step + step / 2;
     const X = (s: number) => pad.l + (s / total) * (w - pad.l - pad.r);
     const Y = (z: number) => pad.t + ((z1 - Math.min(z1, Math.max(z0, z))) / (z1 - z0)) * (h - pad.t - pad.b);
 
@@ -71,7 +138,9 @@ export class TransectPanelComponent extends CanvasPanel {
     x.textAlign = 'right';
     x.textBaseline = 'middle';
     x.fillStyle = tok('text-dim', '#64748b');
-    for (const z of [-200, 0, 200, 400]) {
+    const ticks: number[] = [];
+    for (let z = Math.ceil(z0 / step) * step; z <= z1; z += step) ticks.push(z);
+    for (const z of ticks) {
       x.strokeStyle = tok('line', 'rgba(15,23,42,0.1)');
       x.beginPath();
       x.moveTo(pad.l, Y(z));
@@ -181,7 +250,15 @@ export class TransectPanelComponent extends CanvasPanel {
     // fallback literals, so a chart drawn before the content arrives carries no labels rather than
     // English ones in a Polish session (`I-03b`).
     const places = this.content.content()?.places;
-    if (places) {
+    if (line.id !== 'umea-gdansk') {
+      x.font = `600 10px ${font}`;
+      x.fillStyle = tok('text-desc', '#334155');
+      x.textBaseline = 'alphabetic';
+      x.textAlign = 'left';
+      x.fillText('A', pad.l + 2, h - 3);
+      x.textAlign = 'right';
+      x.fillText('B', w - pad.r, h - 3);
+    } else if (places) {
       const tr = this.i18n.t();
       x.font = `600 10px ${font}`;
       x.fillStyle = tok('text-desc', '#334155');
