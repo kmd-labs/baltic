@@ -111,6 +111,15 @@ export interface Dict {
   transectMetaOcean: string;
   transectMetaLake: (m: string) => string;
   transectAria: string;
+  /** Names of the preset sections and of the user's own. */
+  transectNames: Record<'umea-gdansk' | 'danish-straits' | 'gulf-of-finland' | 'polish-coast' | 'custom', string>;
+  transectChoose: string;
+  transectDraw: string;
+  transectPickA: string;
+  transectPickB: string;
+  transectCancel: string;
+  transectReset: string;
+  transectHistoryAria: string;
   tipIce: string;
   tipOcean: string;
   tipLake: string;
