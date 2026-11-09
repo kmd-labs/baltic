@@ -23,6 +23,7 @@ import { nearestFrame, phaseAt, WaterClass } from '../../core/data/timeline';
 import { PATCH_FRAGMENT, PATCH_VERTEX } from './paleo-shaders';
 import { ICE_FRAGMENT, ICE_VERTEX } from './ice-shaders';
 import { ICE_DOMAIN, ICE_PROFILE_K, ICE_SDF_SCALE, iceBracket } from '../../core/data/ice-field';
+import { BLOCK_LCC, BLOCK_RECT, insideBlock } from '../../core/data/projection';
 
 export interface GlobeLayers {
   ice: boolean;
@@ -368,6 +369,8 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
         uExag: { value: this.exaggeration() },
         uR: { value: this.R },
         uFeather: { value: 1.5 },
+        uCutLcc: { value: new THREE.Vector4(BLOCK_LCC.n, BLOCK_LCC.F, BLOCK_LCC.rho0, BLOCK_LCC.lon0) },
+        uCutRect: { value: new THREE.Vector4(BLOCK_RECT.x0, BLOCK_RECT.y0, BLOCK_RECT.x1, BLOCK_RECT.y1) },
         uShowToday: { value: this.layers().today ? 1 : 0 },
         uShowPrev: { value: this.layers().prev ? 1 : 0 },
         cLand: { value: c('globe-land-fill', '#cfd8e3') },
@@ -452,6 +455,8 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
           uBoxE: shared['uBoxE'],
           uBoxB: shared['uBoxB'],
           uBoxR: shared['uBoxR'],
+          uCutLcc: shared['uCutLcc'],
+          uCutRect: shared['uCutRect'],
           uLake: shared['uLake'],
           uExag: shared['uExag'],
           uR: { value: this.R },
@@ -730,7 +735,9 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     this.pendingHover = null;
     if (this.dragging) return;
     const ll = this.hit(e);
-    this.zone.run(() => this.hover.emit(ll ? { ...ll, x: e.clientX, y: e.clientY } : null));
+    // Outside the block's rectangle the globe is cut away, so there is nothing to describe.
+    const on = ll && insideBlock(ll.lon, ll.lat);
+    this.zone.run(() => this.hover.emit(on ? { ...ll, x: e.clientX, y: e.clientY } : null));
   }
 
   // ─── loop ───────────────────────────────────────────────────────────────

@@ -27,6 +27,19 @@ export const COMMON = /* glsl */ `
   vec2 boxUv(vec4 box, vec2 ll) {
     return vec2((ll.x - box.x) / (box.z - box.x), (box.w - ll.y) / (box.w - box.y));
   }
+
+  // The globe is cut to the block's rectangle (decision 2026-11-09), so both views show one area.
+  // uCutLcc = (n, F, rho0, lon0) of the block's Lambert conic, uCutRect = projected x0, y0, x1, y1
+  // (projection.ts). Returns the distance to the nearest edge in degrees of arc, negative outside.
+  uniform vec4 uCutLcc;
+  uniform vec4 uCutRect;
+  float blockEdgeDeg(vec2 ll) {
+    float rho = uCutLcc.y / pow(tan(0.78539816 + radians(ll.y) * 0.5), uCutLcc.x);
+    float th = uCutLcc.x * radians(ll.x - uCutLcc.w);
+    vec2 p = vec2(rho * sin(th), uCutLcc.z - rho * cos(th));
+    float d = min(min(p.x - uCutRect.x, uCutRect.z - p.x), min(p.y - uCutRect.y, uCutRect.w - p.y));
+    return degrees(d);
+  }
   bool inBox(vec4 box, vec2 ll, float margin) {
     return ll.x > box.x + margin && ll.x < box.z - margin && ll.y > box.y + margin && ll.y < box.w - margin;
   }
@@ -172,7 +185,9 @@ export const PATCH_FRAGMENT = /* glsl */ `
     }
 
     float edge = min(min(ll.x - uBoxE.x, uBoxE.z - ll.x), min(ll.y - uBoxE.y, uBoxE.w - ll.y));
-    gl_FragColor = vec4(col, smoothstep(0.0, uFeather, edge));
+    float cut = blockEdgeDeg(ll);
+    if (cut <= 0.0) discard;
+    gl_FragColor = vec4(col, smoothstep(0.0, uFeather, edge) * smoothstep(0.0, uFeather, cut));
     #include <colorspace_fragment>
   }
 `;

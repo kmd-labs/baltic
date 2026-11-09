@@ -142,6 +142,13 @@
     align-items: center;
     width: 100%;
     gap: 8px;
+
+    // Icon only on narrow screens (≤ 640 px), round like the layers trigger above it.
+    &--icon {
+      width: 34px;
+      padding: 0;
+      justify-content: center;
+    }
     height: 34px;
     padding: 0 14px;
     border: 0;

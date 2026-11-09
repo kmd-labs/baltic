@@ -123,6 +123,7 @@ export const ICE_FRAGMENT = /* glsl */ `
     // Fade at the edge of the domain, where DATED-1 continues past the RSL grid (Kara Sea).
     float edge = min(min(ll.x - uBoxI.x, uBoxI.z - ll.x), min(ll.y - uBoxI.y, uBoxI.w - ll.y));
     float a = uOpacity * uFade * smoothstep(0.0, uFeatherKm, d) * smoothstep(0.0, 1.5, edge)
+            * smoothstep(0.0, 1.5, blockEdgeDeg(ll)) // the same cut as the terrain: the block's rectangle
             * smoothstep(0.0, 0.10, vFacing); // soften the cut at the limb
     if (a <= 0.003) discard;
     gl_FragColor = vec4(col, a);

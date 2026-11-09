@@ -26,6 +26,7 @@
           [options]="viewOptions()"
           [value]="view()"
           [ariaLabel]="tr.viewLabel"
+          [iconOnly]="bp.mobile()"
           (valueChange)="view.set($any($event))">
         </app-dropdown>
       </div>
@@ -44,11 +45,19 @@
 
     <div class="header__right">
       <div class="header__view glass-panel" data-tour="layers">
-        <app-layers-menu [items]="layerItems()" (toggle)="toggleLayer($any($event))"></app-layers-menu>
+        <app-layers-menu [items]="layerItems()" [compact]="bp.mobile()" (toggle)="toggleLayer($any($event))"></app-layers-menu>
       </div>
-      <button type="button" class="header__tour glass-panel" (click)="startTour()">
+      <button
+        type="button"
+        class="header__tour glass-panel"
+        [class.header__tour--icon]="bp.mobile()"
+        [attr.aria-label]="tr.tour"
+        [title]="tr.tour"
+        (click)="startTour()">
         <lucide-icon [img]="icons.GraduationCap" [size]="15"></lucide-icon>
-        <span>{{ tr.tour }}</span>
+        @if (!bp.mobile()) {
+          <span>{{ tr.tour }}</span>
+        }
       </button>
     </div>
   </header>

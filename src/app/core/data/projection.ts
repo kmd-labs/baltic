@@ -16,7 +16,9 @@
  * *inside* it, loses the southern corners to the converging cone — at 53.4°N it reaches only
  * 13.2–28.9°E, which cuts off the Danish straits, Copenhagen and the route of the Littorina
  * transgression. Enclosing instead means the corners fall outside the fine 1/40° window, where
- * `demAt()` falls back to the 0.05° European grid: real data, merely coarser.
+ * `demAt()` falls back to the 0.05° European grid: real data, merely coarser. Since 2026-11-09 the
+ * enclosing rectangle is widened by `BLOCK_MARGIN` on every side, so most of the block outside the
+ * Baltic is on that coarser grid.
  */
 import type { GridGeometry } from './paleo';
 
@@ -109,7 +111,32 @@ export function enclosingRect(P: LccParams, bbox: GridGeometry['bbox'], samples 
   return { x0, y0, x1, y1 };
 }
 
-export const BLOCK_RECT = enclosingRect(BLOCK_LCC, BLOCK_DOMAIN.bbox);
+/**
+ * Margin added on every side of the rectangle enclosing the DEM window, as a fraction of that
+ * side (decision 2026-11-09: +25% on each edge), 2 407 × 2 406 km. Being a rectangle on the
+ * conic, its west edge runs from 4.9°E at 48°N to 9.3°W at 68.5°N and its east edge from 37°E to
+ * 51°E: the North Sea east of ~2°E, Shetland, the Norwegian Sea, the White Sea and Arkhangelsk are
+ * inside; mainland Britain and North Cape stay just outside. Everything outside the 1/40° window is
+ * drawn from the 0.05° European grid, and the globe is cut to the same rectangle so both views show
+ * one area.
+ */
+export const BLOCK_MARGIN = 0.25;
+
+/** The block: the rectangle enclosing the DEM window, widened by BLOCK_MARGIN on every side. */
+export const BLOCK_RECT: ProjRect = expandRect(enclosingRect(BLOCK_LCC, BLOCK_DOMAIN.bbox), BLOCK_MARGIN);
+
+/** `r` widened by `k` of its width and height on each side. */
+export function expandRect(r: ProjRect, k: number): ProjRect {
+  const dx = (r.x1 - r.x0) * k;
+  const dy = (r.y1 - r.y0) * k;
+  return { x0: r.x0 - dx, y0: r.y0 - dy, x1: r.x1 + dx, y1: r.y1 + dy };
+}
+
+/** Whether a lon/lat point lies on the block (inside BLOCK_RECT in projected space). */
+export function insideBlock(lon: number, lat: number): boolean {
+  const [x, y] = lccForward(BLOCK_LCC, lon, lat);
+  return x >= BLOCK_RECT.x0 && x <= BLOCK_RECT.x1 && y >= BLOCK_RECT.y0 && y <= BLOCK_RECT.y1;
+}
 
 /** Ground size of the block in kilometres. */
 export const BLOCK_KM = {
@@ -127,8 +154,9 @@ export const UNITS_PER_KM = BLOCK_SPAN_UNITS / Math.max(BLOCK_KM.x, BLOCK_KM.y);
 export const UNITS_PER_PROJ = R_EARTH_KM * UNITS_PER_KM;
 
 /**
- * World units per metre of elevation at exaggeration 1. Relief here is 3 729 m (−1 742 to 1 987)
- * over 1 605 km — 0.23% of the block's width — so the view needs a large factor to read as relief
- * at all. BlockComponent.exaggeration picks it.
+ * World units per metre of elevation at exaggeration 1. Relief on the widened block is about
+ * 5 950 m (−3 916 m in the Norwegian Basin to 2 035 m in the Scandes, on the 0.05° grid) over
+ * 2 407 km — 0.25% of the block's width — so the view needs a large factor to read as relief at
+ * all. BlockComponent.exaggeration picks it.
  */
 export const UNITS_PER_M = UNITS_PER_KM / 1000;
