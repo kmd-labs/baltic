@@ -17,6 +17,12 @@
   --color-paleo-brackish: #8dbcdc;
   --color-paleo-marine: #3d6aa3;
   --color-paleo-seabed: #e4dccb;
+  // Water look (decision 2026-11-09): open ocean and lake families; the basin takes the phase colour.
+  --color-water-ocean-0: #dbeef8;
+  --color-water-ocean-1: #6b93b8;
+  --color-water-lake-0: #d8f0e6;
+  --color-water-lake-1: #4f9a80;
+  --color-water-melt: #eef6f4;
   --color-paleo-earth: #d6cfb9;
   --color-paleo-earth-line: #8c8369;
   // Hypsometric tint for the block view. With one flat land colour, elevation reads only as shape,

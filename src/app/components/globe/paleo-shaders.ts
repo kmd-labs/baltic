@@ -81,6 +81,97 @@ export const COMMON = /* glsl */ `
   ${WATER_RULE_GLSL}
 `;
 
+/**
+ * Look of the water, shared by the globe patch and the block's water sheets (decision 2026-11-09)
+ * so switching views does not change how the sea reads. Everything comes from data the shaders
+ * already have — no new files:
+ *
+ * - three families: open ocean, the Baltic basin in the phase's colour, a lake (from the water
+ *   mask and oceanSide, the same rule as the published metrics);
+ * - stepped depth bands at 10 / 30 / 60 / 100 / 200 / 500 m with soft edges, like a bathymetric
+ *   chart, and isobaths every 50 m below 25 m;
+ * - the relief of the bed through the water (`shade`, the same hillshade response as the land);
+ * - water that was land 1000 years earlier (`wasLand`, from the frame t + 1000) hatched — it
+ *   belongs to the "coast −1000 years" layer;
+ * - milky meltwater within ~90 km of the ice margin, from the DATED-1 distance field (km, positive
+ *   inside the ice), blended between the bracketing slices like the ice body itself.
+ */
+export const WATER_LOOK = /* glsl */ `
+  uniform vec3 wOcean0;
+  uniform vec3 wOcean1;
+  uniform vec3 wBasin;
+  uniform vec3 wLake0;
+  uniform vec3 wLake1;
+  uniform vec3 wMelt;
+  uniform vec3 wNew;
+  uniform sampler2D uMeltA;
+  uniform sampler2D uMeltB;
+  uniform float uMeltMix;
+  uniform float uMeltOn;
+  uniform vec4 uMeltBox;
+  // Ice of the frame t + 1000, so water uncovered by the retreating ice is not mistaken for land
+  // flooded by the sea (it was ice, not land).
+  uniform sampler2D uPrevIceA;
+  uniform sampler2D uPrevIceB;
+  uniform float uPrevIceMix;
+  uniform float uPrevIceOn;
+
+  /** 1 where the frame t + 1000 had ice over this point. */
+  float wasIce(vec2 ll) {
+    if (uPrevIceOn <= 0.0) return 0.0;
+    vec2 u = boxUv(uMeltBox, ll);
+    return step(0.0, mix(texture2D(uPrevIceA, u).r, texture2D(uPrevIceB, u).r, uPrevIceMix));
+  }
+
+  // Hillshade factor of the present-day bed (slopes barely change with RSL), with the light and
+  // response of the baked land shading. For the block, whose DEM texture carries no shade channel.
+  float reliefShade(vec2 ll) {
+    float e = 0.04;
+    float hl = hNowAt(ll - vec2(e, 0.0));
+    float hr = hNowAt(ll + vec2(e, 0.0));
+    float hd = hNowAt(ll - vec2(0.0, e));
+    float hu = hNowAt(ll + vec2(0.0, e));
+    float mx = 111320.0 * cos(radians(ll.y)) * e * 2.0;
+    float my = 110570.0 * e * 2.0;
+    vec3 n = normalize(vec3(-(hr - hl) / mx * 14.0, -(hu - hd) / my * 14.0, 1.0));
+    vec3 L = normalize(vec3(-0.6, 0.6, 0.9));
+    return clamp(1.0 + 0.9 * (dot(n, L) - L.z), 0.55, 1.35);
+  }
+
+  // kind: 0 open ocean, 1 Baltic basin, 2 lake.
+  vec3 waterLook(vec2 ll, float depth, int kind, float shade, float wasLand) {
+    float b = smoothstep(8.0, 12.0, depth) + smoothstep(27.0, 33.0, depth) + smoothstep(56.0, 64.0, depth)
+            + smoothstep(94.0, 106.0, depth) + smoothstep(188.0, 212.0, depth) + smoothstep(470.0, 530.0, depth);
+    float k = b / 6.0;
+    vec3 col;
+    if (kind == 0) col = mix(wOcean0, wOcean1, k);
+    else if (kind == 2) col = mix(wLake0, wLake1, k);
+    else col = mix(mix(wBasin, vec3(1.0), 0.6), wBasin * 0.82, k);
+
+    // The bed under the water: strongest in the shallows, where it is also the most legible.
+    col *= mix(1.0, shade, mix(0.6, 0.35, k));
+
+    // Isobaths every 50 m, as hairlines of constant screen width.
+    float off = abs(fract(depth / 50.0 + 0.5) - 0.5) * 50.0;
+    float iso = 1.0 - smoothstep(0.5, 1.5, off / max(fwidth(depth), 1e-3));
+    col = mix(col, col * 0.8, iso * step(25.0, depth) * 0.5);
+
+    // Meltwater near the ice margin.
+    if (uMeltOn > 0.0) {
+      vec2 u = boxUv(uMeltBox, ll);
+      float d = mix(texture2D(uMeltA, u).r, texture2D(uMeltB, u).r, uMeltMix);
+      float m = (1.0 - smoothstep(0.0, 90.0, -d)) * step(d, 0.0);
+      col = mix(col, wMelt, m * 0.55 * uMeltOn);
+    }
+
+    // Flooded within the last 1000 years: a fine hatch, constant on screen. Not where the ice stood
+    // 1000 years earlier — that water was uncovered by the retreating ice, not taken from the land.
+    float hatch = step(fract((gl_FragCoord.x + gl_FragCoord.y) / 7.0), 0.3);
+    col = mix(col, wNew, wasLand * (1.0 - wasIce(ll)) * hatch * 0.5);
+    return col;
+  }
+`;
+
 export const PATCH_VERTEX = /* glsl */ `
   ${COMMON}
   uniform float uExag;
@@ -102,6 +193,7 @@ export const PATCH_VERTEX = /* glsl */ `
 
 export const PATCH_FRAGMENT = /* glsl */ `
   ${COMMON}
+  ${WATER_LOOK}
   uniform sampler2D uOverlay;
   uniform sampler2D uOverlayB;
   uniform vec3 cLand;
@@ -144,20 +236,25 @@ export const PATCH_FRAGMENT = /* glsl */ `
     bool lake = isLakeAt(wm, hp);
     bool ocean = isOceanAt(wm, hp);
 
+    // The coast-1000-years layer: ready inside the Baltic window once frame t + 1000 has arrived,
+    // and faded out along the window's edge where the water rule changes (fill inside, threshold
+    // outside), which would otherwise draw a false contour there.
+    float prevReady = inBox(uBoxB, ll, 0.05) ? uPrevReady : 1.0;
+    vec4 bd = vec4(ll.x - uBoxB.x, uBoxB.z - ll.x, ll.y - uBoxB.y, uBoxB.w - ll.y);
+    float edgeDist = abs(min(min(bd.x, bd.y), min(bd.z, bd.w)));
+    float seam = inBox(uBoxB, ll, -0.3) ? smoothstep(0.05, 0.25, edgeDist) : 1.0;
+    float prevField = prevWaterField(ll, hn);
+
     vec3 col;
     if (ocean || lake) {
       float level = lake ? uLake : 0.0;
       float depth = level - hp;
-      float k = smoothstep(0.0, 220.0, depth);
       // Basin colour (fresh / brackish / marine) only for the Baltic basin itself; every other
       // water body — North Sea, Norwegian and Barents Sea, White Sea — is open ocean.
       bool basin = inBox(uBoxB, ll, 0.05) && !oceanSide(ll);
-      if (ocean && !basin) {
-        // Open ocean: a long, soft ramp so the deep Atlantic does not dominate the cap.
-        col = mix(cOcean, cOceanDeep, smoothstep(0.0, 1500.0, depth));
-      } else {
-        col = mix(mix(cBasin, vec3(1.0), 0.45), cBasin, k);
-      }
+      int kind = lake ? 2 : (basin ? 1 : 0);
+      float wasLand = step(prevField, 0.0) * uShowPrev * prevReady * seam;
+      col = waterLook(ll, depth, kind, shade, wasLand);
       // Shoreline of the frame.
       col = mix(col, col * 0.72, contourLine(hp - level, 1.4) * 0.9);
     } else {
@@ -168,13 +265,7 @@ export const PATCH_FRAGMENT = /* glsl */ `
 
     // Present-day coastline and the coast 1000 years earlier.
     col = mix(col, cCoast, contourLine(hn, 1.2) * uShowToday * 0.85);
-    float prevReady = inBox(uBoxB, ll, 0.05) ? uPrevReady : 1.0;
-    // The water rule changes at the edge of the Baltic window (fill inside, threshold outside),
-    // which would draw a false contour along it: fade the line out in a 0.25° band there.
-    vec4 bd = vec4(ll.x - uBoxB.x, uBoxB.z - ll.x, ll.y - uBoxB.y, uBoxB.w - ll.y);
-    float edgeDist = abs(min(min(bd.x, bd.y), min(bd.z, bd.w)));
-    float seam = inBox(uBoxB, ll, -0.3) ? smoothstep(0.05, 0.25, edgeDist) : 1.0;
-    col = mix(col, cPrev, contourLine(prevWaterField(ll, hn), 1.1) * uShowPrev * prevReady * seam * 0.8);
+    col = mix(col, cPrev, contourLine(prevField, 1.1) * uShowPrev * prevReady * seam * 0.8);
 
     // Ice, sills, transect: painted on the overlay canvas.
     vec4 ov = texture2D(uOverlay, vec2((ll.x - uBoxE.x) / (uBoxE.z - uBoxE.x), (ll.y - uBoxE.y) / (uBoxE.w - uBoxE.y)));
@@ -191,3 +282,4 @@ export const PATCH_FRAGMENT = /* glsl */ `
     #include <colorspace_fragment>
   }
 `;
+

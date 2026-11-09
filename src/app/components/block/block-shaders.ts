@@ -20,7 +20,7 @@
  * standing on it up to the level of the moment. That column is what makes the slab read as a basin
  * being filled as time runs, rather than as a sheet of glass laid over the relief.
  */
-import { COMMON } from '../globe/paleo-shaders';
+import { COMMON, WATER_LOOK } from '../globe/paleo-shaders';
 
 /** Projection, vertical scale and the height of the bed. Shared by every stage of the block. */
 const BLOCK_COMMON = /* glsl */ `
@@ -274,9 +274,9 @@ export const WATER_FRAGMENT = /* glsl */ `
   ${COMMON}
   ${BLOCK_COMMON}
   ${BLOCK_FRAG}
+  ${WATER_LOOK}
   uniform float uIsLake;
-  uniform vec3 cWater;
-  uniform vec3 cWaterDeep;
+  uniform float uShowPrev;
   varying vec2 vProj;
 
   void main() {
@@ -290,20 +290,27 @@ export const WATER_FRAGMENT = /* glsl */ `
     bool show = uIsLake > 0.5 ? isLakeAt(wm, hp) : isOceanAt(wm, hp);
     if (!show) discard;
 
-    // Calibrated to this basin, not to the open ocean. The Baltic averages ~55 m and only the
-    // Landsort Deep passes 400 m, so ramps spread over 0–300 m left the whole sea a faint wash of
-    // pale blue over a cream bed: it read as tinted ground rather than as water, and the basin
-    // never looked like it was filling. The colour now reaches the basin's own tone by ~150 m, and
-    // the sheet is opaque enough even at the shore to read as a body of water — depth is carried by
-    // the colour ramp, with the true profile still legible on the walls.
+    // Colour from the shared waterLook (paleo-shaders.ts): ocean / basin / lake families, stepped
+    // depth bands and isobaths, the bed's relief, meltwater at the ice margin, and the hatch for
+    // water that was land 1000 years earlier — the same rules as on the globe.
     float depth = level - hp;
-    vec3 col = mix(cWater, cWaterDeep, smoothstep(0.0, 150.0, depth));
-    float a = mix(0.60, 0.93, smoothstep(0.0, 120.0, depth));
-    // Pick out the shoreline, where the sheet meets the bed: the water's edge is the outline of the
-    // filled basin, so it is drawn and not merely left as the end of the transparency.
+    bool basin = inBox(uBoxB, ll, 0.05) && !oceanSide(ll);
+    int kind = uIsLake > 0.5 ? 2 : (basin ? 1 : 0);
+    float hn = hNowAt(ll);
+    float prevReady = inBox(uBoxB, ll, 0.05) ? uPrevReady : 1.0;
+    vec4 bd = vec4(ll.x - uBoxB.x, uBoxB.z - ll.x, ll.y - uBoxB.y, uBoxB.w - ll.y);
+    float edgeDist = abs(min(min(bd.x, bd.y), min(bd.z, bd.w)));
+    float seam = inBox(uBoxB, ll, -0.3) ? smoothstep(0.05, 0.25, edgeDist) : 1.0;
+    float wasLand = step(prevWaterField(ll, hn), 0.0) * uShowPrev * prevReady * seam;
+    vec3 col = waterLook(ll, depth, kind, reliefShade(ll), wasLand);
+
+    // Opaque enough even at the shore to read as a body of water; the true profile stays legible
+    // on the walls.
+    float a = mix(0.72, 0.95, smoothstep(0.0, 120.0, depth));
+    // Pick out the shoreline, where the sheet meets the bed.
     float rim = hairline(depth, 1.6);
     col = mix(col, col * 0.7, rim * 0.6);
-    a = mix(a, 0.95, rim * 0.5);
+    a = mix(a, 0.97, rim * 0.5);
     gl_FragColor = vec4(col, a);
     #include <colorspace_fragment>
   }

@@ -369,6 +369,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
         uExag: { value: this.exaggeration() },
         uR: { value: this.R },
         uFeather: { value: 1.5 },
+        ...this.waterLookUniforms(),
         uCutLcc: { value: new THREE.Vector4(BLOCK_LCC.n, BLOCK_LCC.F, BLOCK_LCC.rho0, BLOCK_LCC.lon0) },
         uCutRect: { value: new THREE.Vector4(BLOCK_RECT.x0, BLOCK_RECT.y0, BLOCK_RECT.x1, BLOCK_RECT.y1) },
         uShowToday: { value: this.layers().today ? 1 : 0 },
@@ -500,6 +501,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   private showIce(t: number): void {
     if (!this.iceMats.size) return;
     const b = iceBracket(t);
+    this.showMelt(b, iceBracket(t + 1000));
     const L = this.layers();
     for (const [variant, mat] of this.iceMats) {
       const on = variant === 'mc' ? L.ice : L.band;
@@ -516,6 +518,50 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
       mat.uniforms['uFade'].value = b.fade;
       mat.uniforms['uIceExag'].value = this.iceExaggeration();
     }
+  }
+
+  /** Uniforms of the shared waterLook (paleo-shaders.ts): colour families and the meltwater field. */
+  private waterLookUniforms(): Record<string, THREE.IUniform> {
+    const c = (token: string, fb: string) => new THREE.Color(this.theme.getTokenColor(token, fb));
+    const blank = this.sdfTexture(20, 'mc');
+    return {
+      wOcean0: { value: c('water-ocean-0', '#dbeef8') },
+      wOcean1: { value: c('water-ocean-1', '#6b93b8') },
+      wBasin: { value: c('paleo-brackish', '#8dbcdc') },
+      wLake0: { value: c('water-lake-0', '#d8f0e6') },
+      wLake1: { value: c('water-lake-1', '#4f9a80') },
+      wMelt: { value: c('water-melt', '#eef6f4') },
+      wNew: { value: new THREE.Color('#ffffff') },
+      uMeltA: { value: blank },
+      uMeltB: { value: blank },
+      uMeltMix: { value: 0 },
+      uMeltOn: { value: 0 },
+      uMeltBox: { value: new THREE.Vector4(...ICE_DOMAIN.bbox) },
+      uPrevIceA: { value: blank },
+      uPrevIceB: { value: blank },
+      uPrevIceMix: { value: 0 },
+      uPrevIceOn: { value: 0 }
+    };
+  }
+
+  /**
+   * Meltwater follows the data, not the ice layer's visibility: the `mc` distance field of the
+   * bracketing DATED-1 slices, faded with the ice itself.
+   */
+  private showMelt(b: ReturnType<typeof iceBracket>, prev: ReturnType<typeof iceBracket>): void {
+    const u = this.patchMat?.uniforms;
+    if (!u) return;
+    u['uPrevIceOn'].value = prev ? 1 : 0;
+    if (prev) {
+      u['uPrevIceA'].value = this.sdfTexture(prev.kaA, 'mc');
+      u['uPrevIceB'].value = this.sdfTexture(prev.kaB, 'mc');
+      u['uPrevIceMix'].value = prev.w;
+    }
+    u['uMeltOn'].value = b ? b.fade : 0;
+    if (!b) return;
+    u['uMeltA'].value = this.sdfTexture(b.kaA, 'mc');
+    u['uMeltB'].value = this.sdfTexture(b.kaB, 'mc');
+    u['uMeltMix'].value = b.w;
   }
 
   private dataTex(
@@ -554,6 +600,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
       const cls: WaterClass = phaseAt(t).cls;
       const token = cls === 'marine' ? 'paleo-marine' : cls === 'brackish' ? 'paleo-brackish' : 'paleo-fresh';
       (u['cBasin'].value as THREE.Color).set(this.theme.getTokenColor(token, '#8dbcdc'));
+      (u['wBasin'].value as THREE.Color).set(this.theme.getTokenColor(token, '#8dbcdc'));
       this.showIce(t);
     }
 
