@@ -135,6 +135,8 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
 
   private slabMat?: THREE.ShaderMaterial;
   private waterMats: THREE.ShaderMaterial[] = [];
+  /** waterLook uniforms shared by both water sheets. */
+  private look?: Record<string, THREE.IUniform>;
   private iceMats = new Map<IceVariant, THREE.ShaderMaterial>();
   private iceMeshes = new Map<IceVariant, THREE.Mesh>();
   private iceSdfTex = new Map<string, THREE.DataTexture>();
@@ -476,6 +478,27 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
     // Two sheets: the ocean at sea level and the basin at its own level during the lake phases.
     // One sheet cannot do both — a flat plane has a single height.
     const waterGeo = this.buildGrid(mobile ? 24 : 48);
+    // One set of waterLook uniforms shared by both sheets (paleo-shaders.ts).
+    const blank = this.sdfTexture(20, 'mc');
+    const waterLookU: Record<string, THREE.IUniform> = {
+      wOcean0: { value: c('water-ocean-0', '#dbeef8') },
+      wOcean1: { value: c('water-ocean-1', '#6b93b8') },
+      wBasin: { value: c('paleo-brackish', '#8dbcdc') },
+      wLake0: { value: c('water-lake-0', '#d8f0e6') },
+      wLake1: { value: c('water-lake-1', '#4f9a80') },
+      wMelt: { value: c('water-melt', '#eef6f4') },
+      wNew: { value: new THREE.Color('#ffffff') },
+      uMeltA: { value: blank },
+      uMeltB: { value: blank },
+      uMeltMix: { value: 0 },
+      uMeltOn: { value: 0 },
+      uMeltBox: { value: new THREE.Vector4(...ICE_DOMAIN.bbox) },
+      uPrevIceA: { value: blank },
+      uPrevIceB: { value: blank },
+      uPrevIceMix: { value: 0 },
+      uPrevIceOn: { value: 0 }
+    };
+    this.look = waterLookU;
     for (const isLake of [0, 1]) {
       const mat = new THREE.ShaderMaterial({
         vertexShader: WATER_VERTEX,
@@ -485,8 +508,8 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
         side: THREE.DoubleSide,
         uniforms: fork({
           uIsLake: { value: isLake },
-          cWater: { value: c('paleo-water-shallow', '#bae6fd') },
-          cWaterDeep: { value: c('paleo-marine', '#3d6aa3') }
+          uShowPrev: this.slabMat.uniforms['uShowPrev'],
+          ...waterLookU
         })
       });
       const mesh = new THREE.Mesh(waterGeo, mat);
@@ -604,7 +627,8 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
       const token = cls === 'marine' ? 'paleo-marine' : cls === 'brackish' ? 'paleo-brackish' : 'paleo-fresh';
       const deep = new THREE.Color(this.theme.getTokenColor(token, '#3d6aa3'));
       // The slab too: its walls carry the water column, which takes the phase's colour with it.
-      for (const m of [...this.waterMats, this.slabMat]) (m.uniforms['cWaterDeep'].value as THREE.Color).copy(deep);
+      for (const m of [this.slabMat]) (m.uniforms['cWaterDeep'].value as THREE.Color).copy(deep);
+      if (this.look) (this.look['wBasin'].value as THREE.Color).copy(deep);
       this.showIce(t);
     }
 
@@ -659,6 +683,22 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
   private showIce(t: number): void {
     if (!this.iceMats.size) return;
     const b = iceBracket(t);
+    // Meltwater follows the data, not the ice layer's visibility.
+    if (this.look) {
+      const prev = iceBracket(t + 1000);
+      this.look['uPrevIceOn'].value = prev ? 1 : 0;
+      if (prev) {
+        this.look['uPrevIceA'].value = this.sdfTexture(prev.kaA, 'mc');
+        this.look['uPrevIceB'].value = this.sdfTexture(prev.kaB, 'mc');
+        this.look['uPrevIceMix'].value = prev.w;
+      }
+      this.look['uMeltOn'].value = b ? b.fade : 0;
+      if (b) {
+        this.look['uMeltA'].value = this.sdfTexture(b.kaA, 'mc');
+        this.look['uMeltB'].value = this.sdfTexture(b.kaB, 'mc');
+        this.look['uMeltMix'].value = b.w;
+      }
+    }
     const L = this.layers();
     for (const [variant, mat] of this.iceMats) {
       const on = variant === 'mc' ? L.ice : L.band;
