@@ -253,7 +253,12 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
   }
 
   fit(): void {
-    this.camera.position.set(0, this.defaultDistance * 0.62, this.defaultDistance * 0.78);
+    // Start view (decision 2026-11-09): 30° above the horizon, turned 15° to the east so the
+    // block's south-west corner sits higher on screen than the south-east one.
+    const el = Math.PI / 6;
+    const az = THREE.MathUtils.degToRad(15);
+    const d = this.defaultDistance;
+    this.camera.position.set(d * Math.cos(el) * Math.sin(az), d * Math.sin(el), d * Math.cos(el) * Math.cos(az));
     this.controls.target.set(0, 0, 0);
     this.controls.update();
     this.needsRender = true;
@@ -287,11 +292,11 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
     this.controls.minPolarAngle = 0.08;
     this.controls.maxPolarAngle = 1.40;
     this.controls.minDistance = 6;
-    this.controls.maxDistance = 38;
+    this.controls.maxDistance = 50;
     this.controls.addEventListener('change', () => (this.needsRender = true));
 
     const compact = isAtMost('mobile');
-    this.defaultDistance = compact ? 21 : 16;
+    this.defaultDistance = compact ? 44 : 21; // zoomed out on load so the whole block is in view
     this.fit();
     this.updatePickBox();
   }
