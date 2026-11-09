@@ -40,6 +40,11 @@ import { PaleoDataService } from '../../core/data/paleo-data.service';
             }
           </div>
         }
+        @case ('intro') {
+          @for (p of i18n.t().introParas; track $index) {
+            <p class="info info--intro">{{ p }}</p>
+          }
+        }
         @case ('about') {
           @for (p of c.about; track $index) {
             <p class="info">{{ p }}</p>
@@ -51,6 +56,7 @@ import { PaleoDataService } from '../../core/data/paleo-data.service';
   styles: [
     `
       .info { margin: 0 0 10px; font-size: 13px; line-height: 1.5; color: var(--color-text-desc); max-width: 65ch; }
+      .info--intro { font-size: 14px; line-height: 1.55; }
       dl.info { display: grid; gap: 10px; }
       dt { font-weight: 600; color: var(--color-text-bright); }
       dd { margin: 2px 0 0; }
@@ -65,7 +71,7 @@ import { PaleoDataService } from '../../core/data/paleo-data.service';
   ]
 })
 export class InfoPopupComponent {
-  readonly kind = input.required<'glossary' | 'sources' | 'about'>();
+  readonly kind = input.required<'glossary' | 'sources' | 'about' | 'intro'>();
   readonly content = inject(ContentService);
   readonly i18n = inject(I18nService);
   private readonly data = inject(PaleoDataService);

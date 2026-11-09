@@ -20,7 +20,6 @@ export const EN: Dict = {
   numberLocale: 'en-GB',
   calBp: t => `${t} cal BP`,
   calendar: (y, fmt) => (y >= 1 ? `${y} CE` : `≈ ${fmt(Math.round((1 - y) / 50) * 50)} BCE`),
-  prototype: 'prototype',
   play: 'Play',
   pause: 'Pause',
   prevFrame: 'Previous frame',
@@ -67,6 +66,15 @@ export const EN: Dict = {
   srcNote: 'Notes',
   about: 'About the prototype',
   aboutTitle: 'About the prototype',
+  introTitle: 'The Baltic after the Ice Age',
+  introParas: [
+    'This app shows how the Baltic and its coasts changed over the last 20,000 years — from the time the Scandinavian ice sheet covered the region to the coastline of today.',
+    'The shape of the land and the sea floor at every moment is computed from present-day relief (GEBCO 2024) and a relative sea-level model (Steffen & Kaufmann 2025). Land freed from the weight of the ice slowly rises while the ocean swells with meltwater — the difference between the two decides where the water stood.',
+    'The Baltic was in turn a lake and a sea: from the Baltic Ice Lake through the Yoldia Sea, the Ancylus Lake and the Littorina Sea to the sea of today. The water colour marks the phase, and the phase card explains what connected the basin to the ocean or cut it off at that moment.',
+    'Look at the relief block or the globe, move along the timeline, switch layers and draw your own sections across the basin.',
+    'This is a prototype: heights and sea levels come from real data, but some parts (the sill catalogue, salinity, ice thickness) are still being worked on.'
+  ],
+  introStart: 'Start the tutorial',
   panelsLabel: 'Panels',
   tabPhase: 'Phase',
   tabTransect: 'Transect',

@@ -20,7 +20,6 @@ export const PL: Dict = {
   numberLocale: 'pl-PL',
   calBp: t => `${t} cal BP`,
   calendar: (y, fmt) => (y >= 1 ? `${y} n.e.` : `≈ ${fmt(Math.round((1 - y) / 50) * 50)} p.n.e.`),
-  prototype: 'prototyp',
   play: 'Odtwórz',
   pause: 'Wstrzymaj',
   prevFrame: 'Poprzednia klatka',
@@ -67,6 +66,15 @@ export const PL: Dict = {
   srcNote: 'Uwagi',
   about: 'O prototypie',
   aboutTitle: 'O prototypie',
+  introTitle: 'Bałtyk po epoce lodowcowej',
+  introParas: [
+    'Aplikacja pokazuje, jak przez ostatnie 20 000 lat zmieniał się Bałtyk i jego wybrzeża — od czasu, gdy region przykrywał lądolód skandynawski, do dzisiejszej linii brzegowej.',
+    'Ukształtowanie lądu i dna w każdej chwili liczymy z dzisiejszej rzeźby terenu (GEBCO 2024) i modelu względnego poziomu morza (Steffen i Kaufmann 2025). Ląd uwolniony od ciężaru lodu powoli się podnosi, a ocean wzbiera po topnieniu lodowców — od różnicy tych ruchów zależy, gdzie stała woda.',
+    'Bałtyk był na przemian jeziorem i morzem: od Bałtyckiego Jeziora Lodowego przez Morze Yoldiowe, Jezioro Ancylusowe i Morze Litorynowe po dzisiejsze morze. Kolor wody oznacza fazę, a karta fazy wyjaśnia, co w danym momencie łączyło lub odcinało basen od oceanu.',
+    'Oglądaj bryłę rzeźby albo globus, przesuwaj oś czasu, włączaj warstwy i wytyczaj własne przekroje przez basen.',
+    'To prototyp: wysokości i poziomy morza pochodzą z prawdziwych danych, ale część elementów (katalog progów, zasolenie, grubość lodu) jest wciąż w opracowaniu.'
+  ],
+  introStart: 'Rozpocznij samouczek',
   panelsLabel: 'Panele',
   tabPhase: 'Faza',
   tabTransect: 'Przekrój',
