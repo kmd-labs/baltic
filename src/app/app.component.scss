@@ -6,6 +6,12 @@
   height: 100vh;
   overflow: hidden;
   background: color("bg-deep");
+
+  // On a phone the brand pill is 42 px tall, not the 38 px the design-system token assumes, so
+  // the popup (Sources, Glossary) started right under it. Push it down with a clear gap.
+  @include respond-to("mobile") {
+    --popup-top-padding: calc(42px + 2 * var(--header-offset-top) + 12px);
+  }
 }
 
 .header {
@@ -24,7 +30,8 @@
     z-index: 120;
 
     .header__settings,
-    .header__view {
+    .header__view,
+    .header__tour {
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
