@@ -122,7 +122,8 @@ export class AppComponent implements OnDestroy {
    * switcher sits as its own pill top-left (AGENTS.md puts view switching top-right, but that pill
    * holds the layers menu here).
    */
-  readonly view = signal<StageView>('globe');
+  /** The relief block opens by default (decision 2026-11-09); the globe is one click away. */
+  readonly view = signal<StageView>('block');
 
   readonly viewOptions = computed<DropdownOption<StageView>[]>(() => {
     const t = this.i18n.t();

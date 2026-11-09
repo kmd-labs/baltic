@@ -24,9 +24,9 @@ import { bilinear } from '../../core/data/paleo';
 import { inside, WATER_LAKE, WATER_OCEAN } from '../../core/data/water';
 import { ICE_DOMAIN, ICE_PROFILE_K, ICE_SDF_SCALE, iceBracket } from '../../core/data/ice-field';
 import {
-  BLOCK_DOMAIN,
   BLOCK_LCC,
   BLOCK_RECT,
+  insideBlock,
   UNITS_PER_M,
   UNITS_PER_PROJ,
   lccForward,
@@ -43,11 +43,11 @@ import {
 } from './block-shaders';
 
 /**
- * Depth of the plinth in metres. Below the data (the block bottoms out at −1742 m), so it reads as
- * the material the slab is cut from rather than as terrain; the elevation ticks on the walls stop
- * where the data stops.
+ * Depth of the plinth in metres. Below the data (the widened block bottoms out at −3 916 m in the
+ * Norwegian Basin), so it reads as the material the slab is cut from rather than as terrain; the
+ * elevation ticks on the walls stop where the data stops.
  */
-const PLINTH_M = -3500;
+const PLINTH_M = -4500;
 
 /**
  * The area of interest as a solid slab that can be turned in the hand: the bed — seabed and
@@ -741,8 +741,7 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
         }
         this.tmpW.copy(enter).addScaledVector(ray.direction, (lo + hi) / 2);
         const hit = this.lonLatAt(this.tmpW);
-        const [w, s2, e2, n] = BLOCK_DOMAIN.bbox;
-        const within = hit[0] >= w && hit[0] <= e2 && hit[1] >= s2 && hit[1] <= n;
+        const within = insideBlock(hit[0], hit[1]);
         const at = { lon: hit[0], lat: hit[1], x: e.clientX, y: e.clientY };
         this.zone.run(() => this.hover.emit(within ? at : null));
         return;
@@ -780,11 +779,10 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
     const ex = this.exaggeration();
-    const [bw, bs, be, bn] = BLOCK_DOMAIN.bbox;
     for (let i = 0; i < refs.length; i++) {
       const el = refs[i].nativeElement;
       const d = data[i];
-      if (d.lon < bw || d.lon > be || d.lat < bs || d.lat > bn) {
+      if (!insideBlock(d.lon, d.lat)) {
         el.style.opacity = '0';
         continue;
       }

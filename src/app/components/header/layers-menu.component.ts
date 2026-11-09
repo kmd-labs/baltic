@@ -23,10 +23,14 @@ export interface LayerItem {
       [attr.aria-expanded]="open()"
       aria-haspopup="true"
       [attr.aria-label]="i18n.t().layersLabel"
-      (click)="open.set(!open())">
+      (click)="open.set(!open())"
+      [title]="i18n.t().layersLabel"
+      [class.pill-btn--icon]="compact()">
       <lucide-icon [img]="icons.Layers" [size]="15"></lucide-icon>
-      <span>{{ i18n.t().layersLabel }}</span>
-      <lucide-icon class="chev" [class.chev--up]="open()" [img]="icons.ChevronDown" [size]="13"></lucide-icon>
+      @if (!compact()) {
+        <span>{{ i18n.t().layersLabel }}</span>
+        <lucide-icon class="chev" [class.chev--up]="open()" [img]="icons.ChevronDown" [size]="13"></lucide-icon>
+      }
     </button>
     @if (open()) {
       <ul class="menu glass-panel" role="group" [attr.aria-label]="i18n.t().layersLabel">
@@ -55,6 +59,7 @@ export interface LayerItem {
         color: var(--color-text-bright); cursor: pointer;
       }
       .pill-btn:hover { background: var(--color-btn-hover); }
+      .pill-btn--icon { width: 32px; padding: 0; justify-content: center; }
       .pill-btn span { flex: 1; text-align: left; }
       .chev { transition: transform 0.15s; display: inline-flex; }
       .chev--up { transform: rotate(180deg); }
@@ -86,6 +91,8 @@ export interface LayerItem {
 })
 export class LayersMenuComponent {
   readonly items = input.required<LayerItem[]>();
+  /** Icon-only trigger on narrow screens (≤ 640 px); the name stays in aria-label and title. */
+  readonly compact = input(false);
   readonly toggle = output<string>();
   readonly i18n = inject(I18nService);
   readonly open = signal(false);
