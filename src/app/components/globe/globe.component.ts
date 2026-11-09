@@ -17,7 +17,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { ThemeService } from '@kmd/design-system/services/theme.service';
 import { isAtMost, isMobileLandscape } from '@kmd/design-system/utils/breakpoints';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { IceVariant, PaleoDataService, PaleoFrame, RSL_STEP_YR, TRANSECT } from '../../core/data/paleo-data.service';
+import { IceVariant, PaleoDataService, PaleoFrame, RSL_STEP_YR } from '../../core/data/paleo-data.service';
+import { TransectService } from '../../core/data/transect.service';
 import { WATER_LAKE, WATER_OCEAN } from '../../core/data/water';
 import { nearestFrame, phaseAt, WaterClass } from '../../core/data/timeline';
 import { PATCH_FRAGMENT, PATCH_VERTEX } from './paleo-shaders';
@@ -105,6 +106,8 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   readonly iceExaggeration = input<number>(45);
   readonly labels = input<GlobeLabel[]>([]);
   readonly hover = output<GlobePointer | null>();
+  /** A click on the map (lon/lat), for drawing a custom transect. */
+  readonly pick = output<{ lon: number; lat: number }>();
 
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChildren('lbl') labelRefs!: QueryList<ElementRef<HTMLSpanElement>>;
@@ -113,6 +116,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   private readonly zone = inject(NgZone);
   private readonly theme = inject(ThemeService);
   private readonly data = inject(PaleoDataService);
+  private readonly transects = inject(TransectService);
 
   private readonly R = 5;
   private readonly DEG = Math.PI / 180;
@@ -167,6 +171,13 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
   private pendingHover: PointerEvent | null = null;
 
   constructor() {
+    // Redraw the overlays when the section changes or point A of a custom one is placed.
+    effect(() => {
+      this.transects.line();
+      this.transects.pending();
+      if (!this.patchMat) return;
+      this.zone.runOutsideAngular(() => this.drawOverlay());
+    });
     effect(() => {
       const t = this.t();
       this.data.version();
@@ -700,10 +711,46 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
    */
   private drawOverlay(): void {
     const cv = this.overlayCanvas;
-    if (!cv || !this.data.europe) return;
-    cv.getContext('2d')!.clearRect(0, 0, cv.width, cv.height);
+    const E = this.data.europe;
+    if (!cv || !E) return;
+    const ctx = cv.getContext('2d')!;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    // The transect on the coarse European overlay too: a custom section may leave the Baltic window.
+    if (this.layers().transect) this.drawTransect(ctx, E.bbox, cv.width, cv.height);
     if (this.overlayTex) this.overlayTex.needsUpdate = true;
     this.drawOverlayBaltic();
+  }
+
+  /** The active transect (preset or custom) and, while drawing, the pending point A. */
+  private drawTransect(ctx: CanvasRenderingContext2D, bbox: readonly number[], W: number, H: number): void {
+    const [w, s, e, n] = bbox;
+    const sx = W / (e - w);
+    const sy = H / (n - s);
+    const px = (lon: number) => (lon - w) * sx;
+    const py = (lat: number) => (n - lat) * sy;
+    const scale = W / (e - w); // pixels per degree: line weights in degrees stay equal on both overlays
+    const ink = this.theme.getTokenColor('neutral-800', '#1e293b');
+    const line = this.transects.line().points;
+    ctx.beginPath();
+    line.forEach(([lon, lat], i) => (i ? ctx.lineTo(px(lon), py(lat)) : ctx.moveTo(px(lon), py(lat))));
+    ctx.setLineDash([scale * 0.15, scale * 0.09]);
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = scale * 0.028;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = ink;
+    for (const [lon, lat] of [line[0], line[line.length - 1]]) {
+      ctx.beginPath();
+      ctx.arc(px(lon), py(lat), scale * 0.065, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const a = this.transects.pending();
+    if (a) {
+      ctx.beginPath();
+      ctx.arc(px(a[0]), py(a[1]), scale * 0.09, 0, Math.PI * 2);
+      ctx.fillStyle = this.theme.getTokenColor('accent', '#d37400');
+      ctx.fill();
+    }
   }
 
   /** Lines inside the Baltic window: transect and sills. */
@@ -720,24 +767,7 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
     const sy = H / (n - s);
     const L = this.layers();
     const ink = this.theme.getTokenColor('neutral-800', '#1e293b');
-    if (L.transect) {
-      ctx.beginPath();
-      TRANSECT.forEach(([lon, lat], i) => {
-        if (i) ctx.lineTo((lon - w) * sx, (n - lat) * sy);
-        else ctx.moveTo((lon - w) * sx, (n - lat) * sy);
-      });
-      ctx.setLineDash([W / 160, W / 260]);
-      ctx.strokeStyle = ink;
-      ctx.lineWidth = W / 900;
-      ctx.stroke();
-      ctx.setLineDash([]);
-      for (const [lon, lat] of [TRANSECT[0], TRANSECT[TRANSECT.length - 1]]) {
-        ctx.beginPath();
-        ctx.arc((lon - w) * sx, (n - lat) * sy, W / 380, 0, Math.PI * 2);
-        ctx.fillStyle = ink;
-        ctx.fill();
-      }
-    }
+    if (L.transect) this.drawTransect(ctx, B.bbox, W, H);
     if (L.sills) {
       const r = W / 450;
       ctx.fillStyle = this.theme.getTokenColor('accent', '#d37400');
@@ -766,6 +796,22 @@ export class GlobeComponent implements AfterViewInit, OnDestroy {
       this.pendingHover = null;
       this.zone.run(() => this.hover.emit(null));
     });
+    // A click (press and release without dragging) picks a point — used to draw a custom transect.
+    let down: { x: number; y: number } | null = null;
+    cv.addEventListener('pointerdown', e => (down = { x: e.clientX, y: e.clientY }), { passive: true });
+    cv.addEventListener('pointerup', e => {
+      const d = down;
+      down = null;
+      if (!d || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 5) return;
+      const ll = this.pickAt(e);
+      if (ll) this.zone.run(() => this.pick.emit(ll));
+    });
+  }
+
+  /** Point on the globe under the pointer, if it lies on the block's rectangle. */
+  private pickAt(e: { clientX: number; clientY: number }): { lon: number; lat: number } | null {
+    const ll = this.hit(e);
+    return ll && insideBlock(ll.lon, ll.lat) ? ll : null;
   }
 
   private hit(e: { clientX: number; clientY: number }): { lon: number; lat: number } | null {

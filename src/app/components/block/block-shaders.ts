@@ -162,6 +162,10 @@ export const BLOCK_FRAGMENT = /* glsl */ `
   uniform vec3 cPrev;
   uniform vec3 cWater;
   uniform vec3 cWaterDeep;
+  uniform vec3 cOcean0;
+  uniform vec3 cOcean1;
+  uniform vec3 cLake0;
+  uniform vec3 cLake1;
   uniform float uShowToday;
   uniform float uShowPrev;
   varying vec2 vProj;
@@ -191,8 +195,13 @@ export const BLOCK_FRAGMENT = /* glsl */ `
       float above = toM(vY - vBedY);
       float depth = toM(vTopY - vY);
       vec3 rock = cWall * (m < 0.0 ? 0.93 : 1.0);
-      // Same ramp as the sheet above, so the column and the surface read as one body of water.
-      vec3 water = mix(cWater, cWaterDeep, smoothstep(0.0, 320.0, depth));
+      // Same families as the sheets above (waterLook): the open ocean keeps one constant colour,
+      // only the Baltic basin takes the phase's colour, a lake its own green.
+      float hpW = hNowAt(ll) - rslAt(uRsl, ll);
+      bool lakeW = isLakeAt(waterMask(ll, hpW), hpW);
+      bool basinW = inBox(uBoxB, ll, 0.05) && !oceanSide(ll);
+      float kd = smoothstep(0.0, 320.0, depth);
+      vec3 water = lakeW ? mix(cLake0, cLake1, kd) : basinW ? mix(cWater, cWaterDeep, kd) : mix(cOcean0, cOcean1, kd);
       water = mix(water, cLine, hairline(depth, 1.4) * 0.3);
       // The bed contact is a hard colour edge; one pixel of blend takes the stair-step off it.
       vec3 col = mix(rock, water, clamp(above / max(fwidth(above), 1e-4), 0.0, 1.0));

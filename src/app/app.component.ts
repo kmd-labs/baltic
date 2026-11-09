@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
@@ -35,6 +35,7 @@ import { Lang } from './core/i18n/i18n.types';
 import { BlockComponent } from './components/block/block.component';
 import { GlobeComponent, GlobeLabel, GlobeLayers, GlobePointer } from './components/globe/globe.component';
 import { PaleoDataService } from './core/data/paleo-data.service';
+import { TransectService } from './core/data/transect.service';
 import { ContentService } from './core/content/content.service';
 import { FRAMES, phaseAt, calendarYear } from './core/data/timeline';
 import { PLACES } from './core/data/geo';
@@ -80,6 +81,7 @@ export class AppComponent implements OnDestroy {
   readonly about = inject(AboutService);
   readonly splash = inject(SplashService);
   readonly data = inject(PaleoDataService);
+  readonly transects = inject(TransectService);
   readonly content = inject(ContentService);
 
   @ViewChild(GlobeComponent) globe?: GlobeComponent;
@@ -223,6 +225,12 @@ export class AppComponent implements OnDestroy {
    * of re-targeting the one the animation has not reached yet.
    */
   private glideTarget: number | null = null;
+
+  /** Esc leaves the drawing of a custom transect. */
+  @HostListener('document:keydown.escape')
+  cancelTransectDrawing(): void {
+    this.transects.cancelDrawing();
+  }
 
   ngOnDestroy(): void {
     this.stop();

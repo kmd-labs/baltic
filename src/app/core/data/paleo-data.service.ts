@@ -461,14 +461,22 @@ export class PaleoDataService {
     return null;
   }
 
-  /** Profile along TRANSECT in the Baltic window. Null until the bracketing frames arrive. */
-  transect(t: number, samples = 260): { total: number; points: TransectSample[] } | null {
+  /**
+   * Profile along a line (default: Umeå → Gdańsk). Null until the bracketing frames arrive.
+   * Heights come from the 1/40° Baltic grid inside its window and the 0.05° European grid outside
+   * it, so a user's own section may leave the window (the water there is the threshold rule).
+   */
+  transect(
+    t: number,
+    line: readonly (readonly [number, number])[] = TRANSECT,
+    samples = 260
+  ): { total: number; points: TransectSample[] } | null {
     const s = this.sceneWater(t);
     if (!s) return null;
     const seg: number[] = [];
     let total = 0;
-    for (let n = 0; n + 1 < TRANSECT.length; n++) {
-      const d = distKm(TRANSECT[n], TRANSECT[n + 1]);
+    for (let n = 0; n + 1 < line.length; n++) {
+      const d = distKm(line[n], line[n + 1]);
       seg.push(d);
       total += d;
     }
@@ -480,11 +488,13 @@ export class PaleoDataService {
       let n = 0;
       while (n < seg.length - 1 && d > seg[n]) d -= seg[n++];
       const u = Math.min(1, d / seg[n]);
-      const [a0, a1] = TRANSECT[n];
-      const [b0, b1] = TRANSECT[n + 1];
+      const [a0, a1] = line[n];
+      const [b0, b1] = line[n + 1];
       const lon = a0 + (b0 - a0) * u;
       const lat = a1 + (b1 - a1) * u;
-      const hNow = bilinear(this.hNowBaltic!, b, lon, lat);
+      const hNow = inside(b, lon, lat)
+        ? bilinear(this.hNowBaltic!, b, lon, lat)
+        : bilinear(this.hNowEurope!, this.europe!, lon, lat);
       const hPaleo = hNow - bilinear(rsl, this.rslGrid!, lon, lat);
       const kind = this.kindAt(s, lon, lat, hPaleo);
       points.push({
