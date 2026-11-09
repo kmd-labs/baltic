@@ -534,6 +534,10 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
         // colours too and the cut column matches the surface standing on it.
         cWater: { value: c('paleo-water-shallow', '#bae6fd') },
         cWaterDeep: { value: c('paleo-marine', '#3d6aa3') },
+        cOcean0: { value: c('water-ocean-0', '#dbeef8') },
+        cOcean1: { value: c('water-ocean-1', '#6b93b8') },
+        cLake0: { value: c('water-lake-0', '#d8f0e6') },
+        cLake1: { value: c('water-lake-1', '#4f9a80') },
         uShowToday: { value: this.layers().today ? 1 : 0 },
         uShowPrev: { value: this.layers().prev ? 1 : 0 }
       })
@@ -692,7 +696,8 @@ export class BlockComponent implements AfterViewInit, OnDestroy {
       const cls: WaterClass = phaseAt(t).cls;
       const token = cls === 'marine' ? 'paleo-marine' : cls === 'brackish' ? 'paleo-brackish' : 'paleo-fresh';
       const deep = new THREE.Color(this.theme.getTokenColor(token, '#3d6aa3'));
-      // The slab too: its walls carry the water column, which takes the phase's colour with it.
+      // The slab too: where its walls cut the basin, the column takes the phase's colour (the open
+      // ocean on them stays constant).
       for (const m of [this.slabMat]) (m.uniforms['cWaterDeep'].value as THREE.Color).copy(deep);
       if (this.look) (this.look['wBasin'].value as THREE.Color).copy(deep);
       this.showIce(t);
